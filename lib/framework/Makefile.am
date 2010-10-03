@@ -40,6 +40,7 @@ noinst_HEADERS = \
 	debug.h \
 	file.h \
 	fixedpoint.h \
+	fixedpoint.hpp \
 	frame.h \
 	frameint.h \
 	frameresource.h \

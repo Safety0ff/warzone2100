@@ -28,16 +28,22 @@
 
 #include "wzglobal.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 //! PSX-style float emulation: 12 digit semi-floats stored in an int
 // FIXME!
 #define FP12_SHIFT 12
 #define FP12_MULTIPLIER (1 << FP12_SHIFT)
 
+#ifdef __cplusplus
+# include "fixedpoint.hpp"
+typedef fpml::fixed_point<int32_t, std::numeric_limits<int32_t>::digits - FP12_SHIFT> Fixed;
+#else
+typedef int32_t Fixed;
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif //__cplusplus
 
 /*
  *	Global Definitions (CONSTANTS)
