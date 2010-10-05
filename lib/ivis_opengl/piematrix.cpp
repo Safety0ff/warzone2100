@@ -29,36 +29,69 @@
 #include "piematrix.h"
 #include "lib/ivis_common/piemode.h"
 
+#include <stack>
+
 /***************************************************************************/
 /*
  *	Local Definitions
  */
 /***************************************************************************/
 
-#define MATRIX_MAX 8
-
-/*
- * Matrices are of this form:
- * [ a d g j ]
- * [ b e h k ]
- * [ c f i l ]
- * [ 0 0 0 1 ]
+/**
+ * 3x4 matrix, that's used as a 4x4 matrix with the last row containing
+ * [ 0 0 0 1 ].
  */
-typedef struct { SDWORD a, b, c,  d, e, f,  g, h, i,  j, k, l; } SDMATRIX;
-static SDMATRIX	aMatrixStack[MATRIX_MAX];
-static SDMATRIX *psMatrix = &aMatrixStack[0];
+class Matrix
+{
+	public:
+		enum
+		{
+			ROWS = 3,
+			COLS = 4,
+		};
+
+		inline int32_t operator()(int row, int col) const
+		{
+			ASSERT(row < ROWS && col < COLS, "Row or column index out of range: (%d, %d)", row, col);
+
+			return a[col * ROWS + row];
+		}
+
+		inline int32_t& operator()(int row, int col)
+		{
+			ASSERT(row < ROWS && col < COLS, "Row or column index out of range: (%d, %d)", row, col);
+
+			return a[col * ROWS + row];
+		}
+
+		void setIdentity()
+		{
+			(*this)(0,0) = 1; (*this)(0,1) = 0; (*this)(0,2) = 0; (*this)(0,3) = 0;
+			(*this)(1,0) = 0; (*this)(1,1) = 1; (*this)(1,2) = 0; (*this)(1,3) = 0;
+			(*this)(2,0) = 0; (*this)(2,1) = 0; (*this)(2,2) = 1; (*this)(2,3) = 0;
+
+			*this *= FP12_MULTIPLIER;
+		}
+
+		/**
+		 * Scalar multiplication.
+		 */
+		template <typename NumericType>
+		Matrix& operator*=(NumericType scalar)
+		{
+			for (unsigned i = 0; i < ARRAY_SIZE(a); ++i)
+				a[i] *= scalar;
+			return *this;
+		}
+
+	private:
+		int32_t a[12];
+};
+
+static std::stack<Matrix> matrixStack;
+#define curMatrix (ASSERT(!matrixStack.empty(), "No matrix on the stack"), matrixStack.top())
 
 BOOL drawing_interface = true;
-
-//*************************************************************************
-
-static const SDMATRIX Identitymatrix = {
-	FP12_MULTIPLIER,                  0,               0,
-	              0,    FP12_MULTIPLIER,               0,
-	              0,                  0, FP12_MULTIPLIER,
-	              0,                  0,               0,
-};
-static SDWORD _MATRIX_INDEX;
 
 //*************************************************************************
 //*** reset transformation matrix stack and make current identity
@@ -67,10 +100,14 @@ static SDWORD _MATRIX_INDEX;
 
 static void pie_MatReset(void)
 {
-	psMatrix = &aMatrixStack[0];
+	// Clear the matrix stack
+	while (!matrixStack.empty())
+		matrixStack.pop();
 
 	// make 1st matrix identity
-	*psMatrix = Identitymatrix;
+	Matrix identity;
+	identity.setIdentity();
+	matrixStack.push(identity);
 
 	glLoadIdentity();
 }
@@ -83,12 +120,7 @@ static void pie_MatReset(void)
 
 void pie_MatBegin(void)
 {
-	_MATRIX_INDEX++;
-	ASSERT( _MATRIX_INDEX < MATRIX_MAX, "pie_MatBegin past top of the stack" );
-
-	psMatrix++;
-	aMatrixStack[_MATRIX_INDEX] = aMatrixStack[_MATRIX_INDEX-1];
-
+	matrixStack.push(curMatrix);
 	glPushMatrix();
 }
 
@@ -100,10 +132,8 @@ void pie_MatBegin(void)
 
 void pie_MatEnd(void)
 {
-	_MATRIX_INDEX--;
-	ASSERT( _MATRIX_INDEX >= 0, "pie_MatEnd of the bottom of the stack" );
-
-	psMatrix--;
+	matrixStack.pop();
+	ASSERT(!matrixStack.empty(), "pie_MatEnd past the bottom of the stack" );
 
 	glPopMatrix();
 }
@@ -113,9 +143,9 @@ void pie_MATTRANS(float x, float y, float z)
 {
 	GLfloat matrix[16];
 
-	psMatrix->j = x * FP12_MULTIPLIER;
-	psMatrix->k = y * FP12_MULTIPLIER;
-	psMatrix->l = z * FP12_MULTIPLIER;
+	curMatrix(0,3) = x * FP12_MULTIPLIER;
+	curMatrix(1,3) = y * FP12_MULTIPLIER;
+	curMatrix(2,3) = z * FP12_MULTIPLIER;
 
 	glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 	matrix[12] = x;
@@ -134,9 +164,9 @@ void pie_TRANSLATE(float x, float y, float z)
 	 * curMatrix = curMatrix . [ 0 0 1 z ]
 	 *                         [ 0 0 0 1 ]
 	 */
-	psMatrix->j += x * psMatrix->a + y * psMatrix->d + z * psMatrix->g;
-	psMatrix->k += x * psMatrix->b + y * psMatrix->e + z * psMatrix->h;
-	psMatrix->l += x * psMatrix->c + y * psMatrix->f + z * psMatrix->i;
+	curMatrix(0,3) += x * curMatrix(0,0) + y * curMatrix(0,1) + z * curMatrix(0,2);
+	curMatrix(1,3) += x * curMatrix(1,0) + y * curMatrix(1,1) + z * curMatrix(1,2);
+	curMatrix(2,3) += x * curMatrix(2,0) + y * curMatrix(2,1) + z * curMatrix(2,2);
 
 	glTranslatef(x, y, z);
 }
@@ -159,17 +189,7 @@ void pie_MatScale(float scale)
 	 * curMatrix = scale * curMatrix
 	 */
 
-	psMatrix->a = psMatrix->a * scale;
-	psMatrix->b = psMatrix->b * scale;
-	psMatrix->c = psMatrix->c * scale;
-
-	psMatrix->d = psMatrix->d * scale;
-	psMatrix->e = psMatrix->e * scale;
-	psMatrix->f = psMatrix->f * scale;
-
-	psMatrix->g = psMatrix->g * scale;
-	psMatrix->h = psMatrix->h * scale;
-	psMatrix->i = psMatrix->i * scale;
+	curMatrix *= scale;
 
 	glScalef(scale, scale, scale);
 }
@@ -199,17 +219,17 @@ void pie_MatRotY(uint16_t y)
 		int t;
 		int64_t cra = iCos(y), sra = iSin(y);
 
-		t = (cra*psMatrix->a - sra*psMatrix->g)>>16;
-		psMatrix->g = (sra*psMatrix->a + cra*psMatrix->g)>>16;
-		psMatrix->a = t;
+		t = (cra*curMatrix(0,0) - sra*curMatrix(0,2))>>16;
+		curMatrix(0,2) = (sra*curMatrix(0,0) + cra*curMatrix(0,2))>>16;
+		curMatrix(0,0) = t;
 
-		t = (cra*psMatrix->b - sra*psMatrix->h)>>16;
-		psMatrix->h = (sra*psMatrix->b + cra*psMatrix->h)>>16;
-		psMatrix->b = t;
+		t = (cra*curMatrix(1,0) - sra*curMatrix(1,2))>>16;
+		curMatrix(1,2) = (sra*curMatrix(1,0) + cra*curMatrix(1,2))>>16;
+		curMatrix(1,0) = t;
 
-		t = (cra*psMatrix->c - sra*psMatrix->i)>>16;
-		psMatrix->i = (sra*psMatrix->c + cra*psMatrix->i)>>16;
-		psMatrix->c = t;
+		t = (cra*curMatrix(2,0) - sra*curMatrix(2,2))>>16;
+		curMatrix(2,2) = (sra*curMatrix(2,0) + cra*curMatrix(2,2))>>16;
+		curMatrix(2,0) = t;
 
 		glRotatef(UNDEG(y), 0.0f, 1.0f, 0.0f);
 	}
@@ -240,17 +260,17 @@ void pie_MatRotZ(uint16_t z)
 		int t;
 		int64_t cra = iCos(z), sra = iSin(z);
 
-		t = (cra*psMatrix->a + sra*psMatrix->d)>>16;
-		psMatrix->d = (cra*psMatrix->d - sra*psMatrix->a)>>16;
-		psMatrix->a = t;
+		t = (cra*curMatrix(0,0) + sra*curMatrix(0,1))>>16;
+		curMatrix(0,1) = (cra*curMatrix(0,1) - sra*curMatrix(0,0))>>16;
+		curMatrix(0,0) = t;
 
-		t = (cra*psMatrix->b + sra*psMatrix->e)>>16;
-		psMatrix->e = (cra*psMatrix->e - sra*psMatrix->b)>>16;
-		psMatrix->b = t;
+		t = (cra*curMatrix(1,0) + sra*curMatrix(1,1))>>16;
+		curMatrix(1,1) = (cra*curMatrix(1,1) - sra*curMatrix(1,0))>>16;
+		curMatrix(1,0) = t;
 
-		t = (cra*psMatrix->c + sra*psMatrix->f)>>16;
-		psMatrix->f = (cra*psMatrix->f - sra*psMatrix->c)>>16;
-		psMatrix->c = t;
+		t = (cra*curMatrix(2,0) + sra*curMatrix(2,1))>>16;
+		curMatrix(2,1) = (cra*curMatrix(2,1) - sra*curMatrix(2,0))>>16;
+		curMatrix(2,0) = t;
 
 		glRotatef(UNDEG(z), 0.0f, 0.0f, 1.0f);
 	}
@@ -281,17 +301,17 @@ void pie_MatRotX(uint16_t x)
 		int t;
 		int64_t cra = iCos(x), sra = iSin(x);
 
-		t = (cra*psMatrix->d + sra*psMatrix->g)>>16;
-		psMatrix->g = (cra*psMatrix->g - sra*psMatrix->d)>>16;
-		psMatrix->d = t;
+		t = (cra*curMatrix(0,1) + sra*curMatrix(0,2))>>16;
+		curMatrix(0,2) = (cra*curMatrix(0,2) - sra*curMatrix(0,1))>>16;
+		curMatrix(0,1) = t;
 
-		t = (cra*psMatrix->e + sra*psMatrix->h)>>16;
-		psMatrix->h = (cra*psMatrix->h - sra*psMatrix->e)>>16;
-		psMatrix->e = t;
+		t = (cra*curMatrix(1,1) + sra*curMatrix(1,2))>>16;
+		curMatrix(1,2) = (cra*curMatrix(1,2) - sra*curMatrix(1,1))>>16;
+		curMatrix(1,1) = t;
 
-		t = (cra*psMatrix->f + sra*psMatrix->i)>>16;
-		psMatrix->i = (cra*psMatrix->i - sra*psMatrix->f)>>16;
-		psMatrix->f = t;
+		t = (cra*curMatrix(2,1) + sra*curMatrix(2,2))>>16;
+		curMatrix(2,2) = (cra*curMatrix(2,2) - sra*curMatrix(2,1))>>16;
+		curMatrix(2,1) = t;
 
 		glRotatef(UNDEG(x), 1.0f, 0.0f, 0.0f);
 	}
@@ -311,9 +331,9 @@ int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
 	 * v = curMatrix . v3d
 	 */
 	Vector3i v = {
-		v3d->x * psMatrix->a + v3d->y * psMatrix->d + v3d->z * psMatrix->g + psMatrix->j,
-		v3d->x * psMatrix->b + v3d->y * psMatrix->e + v3d->z * psMatrix->h + psMatrix->k,
-		v3d->x * psMatrix->c + v3d->y * psMatrix->f + v3d->z * psMatrix->i + psMatrix->l
+		v3d->x * curMatrix(0,0) + v3d->y * curMatrix(0,1) + v3d->z * curMatrix(0,2) + curMatrix(0,3),
+		v3d->x * curMatrix(1,0) + v3d->y * curMatrix(1,1) + v3d->z * curMatrix(1,2) + curMatrix(1,3),
+		v3d->x * curMatrix(2,0) + v3d->y * curMatrix(2,1) + v3d->z * curMatrix(2,2) + curMatrix(2,3)
 	};
 
 	const int zz = v.z >> STRETCHED_Z_SHIFT;
@@ -387,9 +407,9 @@ void pie_VectorInverseRotate0(const Vector3i *v1, Vector3i *v2)
 	 * invMatrix = transpose(sub3x3Matrix(curMatrix))
 	 * v2 = invMatrix . v1
 	 */
-	v2->x = (v1->x * psMatrix->a + v1->y * psMatrix->b + v1->z * psMatrix->c) / FP12_MULTIPLIER;
-	v2->y = (v1->x * psMatrix->d + v1->y * psMatrix->e + v1->z * psMatrix->f) / FP12_MULTIPLIER;
-	v2->z = (v1->x * psMatrix->g + v1->y * psMatrix->h + v1->z * psMatrix->i) / FP12_MULTIPLIER;
+	v2->x = (v1->x * curMatrix(0,0) + v1->y * curMatrix(1,0) + v1->z * curMatrix(2,0)) / FP12_MULTIPLIER;
+	v2->y = (v1->x * curMatrix(0,1) + v1->y * curMatrix(1,1) + v1->z * curMatrix(2,1)) / FP12_MULTIPLIER;
+	v2->z = (v1->x * curMatrix(0,2) + v1->y * curMatrix(1,2) + v1->z * curMatrix(2,2)) / FP12_MULTIPLIER;
 }
 
 /** Sets up transformation matrices/quaternions and trig tables
@@ -408,7 +428,7 @@ void pie_RotateTranslate3f(const Vector3f *v, Vector3f *s)
 	 * s = [ 0 1 0 0 ] . curMatrix . [ 0 1 0 0 ] . v
 	 *     [ 0 0 0 1 ]               [ 0 0 0 1 ]
 	 */
-	s->x = (v->x * psMatrix->a + v->y * psMatrix->g + v->z * psMatrix->d + psMatrix->j) / FP12_MULTIPLIER;
-	s->y = (v->x * psMatrix->c + v->y * psMatrix->i + v->z * psMatrix->f + psMatrix->l) / FP12_MULTIPLIER;
-	s->z = (v->x * psMatrix->b + v->y * psMatrix->h + v->z * psMatrix->e + psMatrix->k) / FP12_MULTIPLIER;
+	s->x = (v->x * curMatrix(0,0) + v->y * curMatrix(0,2) + v->z * curMatrix(0,1) + curMatrix(0,3)) / FP12_MULTIPLIER;
+	s->y = (v->x * curMatrix(2,0) + v->y * curMatrix(2,2) + v->z * curMatrix(2,1) + curMatrix(2,3)) / FP12_MULTIPLIER;
+	s->z = (v->x * curMatrix(1,0) + v->y * curMatrix(1,2) + v->z * curMatrix(1,1) + curMatrix(1,3)) / FP12_MULTIPLIER;
 }
