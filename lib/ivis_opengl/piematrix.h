@@ -32,6 +32,11 @@
 
 //*************************************************************************
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif //__cplusplus
+
 /*!
  * Rotate and translate v with the worldmatrix. Store the result in s
  * Float variant
@@ -108,5 +113,9 @@ extern void pie_SetGeometricOffset(int x, int y);
 
 extern void pie_Begin3DScene(void);
 extern void pie_BeginInterface(void);
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif

@@ -12,7 +12,7 @@ libivis_opengl_a_SOURCES = \
 	pieblitfunc.c \
 	piedraw.c \
 	piefunc.c \
-	piematrix.c \
+	piematrix.cpp \
 	piemode.c \
 	piepalette.c \
 	piestate.c \

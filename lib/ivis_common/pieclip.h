@@ -34,7 +34,6 @@
 #include "lib/framework/frame.h"
 #include "piedef.h"
 
-
 /***************************************************************************/
 /*
  *	Global Definitions
@@ -54,11 +53,20 @@ typedef struct
  */
 /***************************************************************************/
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif //__cplusplus
+
 extern BOOL pie_SetVideoBufferDepth(UDWORD depth);
 extern BOOL pie_SetVideoBufferWidth(UDWORD width);
 extern BOOL pie_SetVideoBufferHeight(UDWORD height);
 extern UDWORD pie_GetVideoBufferDepth( void ) WZ_DECL_PURE;
 extern UDWORD pie_GetVideoBufferWidth( void ) WZ_DECL_PURE;
 extern UDWORD pie_GetVideoBufferHeight( void ) WZ_DECL_PURE;
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif // _pieclip_h

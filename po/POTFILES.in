@@ -188,7 +188,7 @@ lib/ivis_opengl/ivi.c
 lib/ivis_opengl/pieblitfunc.c
 lib/ivis_opengl/piedraw.c
 lib/ivis_opengl/piefunc.c
-lib/ivis_opengl/piematrix.c
+lib/ivis_opengl/piematrix.cpp
 lib/ivis_opengl/piemode.c
 lib/ivis_opengl/piepalette.c
 lib/ivis_opengl/piestate.c
