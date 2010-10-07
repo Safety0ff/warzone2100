@@ -50,14 +50,16 @@ class Matrix
 			COLS = 4,
 		};
 
-		inline int32_t operator()(int row, int col) const
+		inline Fixed operator()(int row, int col) const
 		{
 			ASSERT(row < ROWS && col < COLS, "Row or column index out of range: (%d, %d)", row, col);
+			STATIC_ASSERT(sizeof(Fixed) == sizeof(int32_t));
+			STATIC_ASSERT(sizeof(a) == sizeof(int32_t) * ARRAY_SIZE(a));
 
 			return a[col * ROWS + row];
 		}
 
-		inline int32_t& operator()(int row, int col)
+		inline Fixed& operator()(int row, int col)
 		{
 			ASSERT(row < ROWS && col < COLS, "Row or column index out of range: (%d, %d)", row, col);
 
@@ -66,9 +68,9 @@ class Matrix
 
 		void setIdentity()
 		{
-			(*this)(0,0) = 1; (*this)(0,1) = 0; (*this)(0,2) = 0; (*this)(0,3) = 0;
-			(*this)(1,0) = 0; (*this)(1,1) = 1; (*this)(1,2) = 0; (*this)(1,3) = 0;
-			(*this)(2,0) = 0; (*this)(2,1) = 0; (*this)(2,2) = 1; (*this)(2,3) = 0;
+			(*this)(0,0).value_ = 1; (*this)(0,1).value_ = 0; (*this)(0,2).value_ = 0; (*this)(0,3).value_ = 0;
+			(*this)(1,0).value_ = 0; (*this)(1,1).value_ = 1; (*this)(1,2).value_ = 0; (*this)(1,3).value_ = 0;
+			(*this)(2,0).value_ = 0; (*this)(2,1).value_ = 0; (*this)(2,2).value_ = 1; (*this)(2,3).value_ = 0;
 
 			*this *= FP12_MULTIPLIER;
 		}
@@ -80,12 +82,12 @@ class Matrix
 		Matrix& operator*=(NumericType scalar)
 		{
 			for (unsigned i = 0; i < ARRAY_SIZE(a); ++i)
-				a[i] *= scalar;
+				a[i].value_ *= scalar;
 			return *this;
 		}
 
 	private:
-		int32_t a[12];
+		Fixed a[12];
 };
 
 static std::stack<Matrix> matrixStack;
@@ -143,9 +145,9 @@ void pie_MATTRANS(float x, float y, float z)
 {
 	GLfloat matrix[16];
 
-	curMatrix(0,3) = x * FP12_MULTIPLIER;
-	curMatrix(1,3) = y * FP12_MULTIPLIER;
-	curMatrix(2,3) = z * FP12_MULTIPLIER;
+	curMatrix(0,3).value_ = x * FP12_MULTIPLIER;
+	curMatrix(1,3).value_ = y * FP12_MULTIPLIER;
+	curMatrix(2,3).value_ = z * FP12_MULTIPLIER;
 
 	glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 	matrix[12] = x;
@@ -164,9 +166,9 @@ void pie_TRANSLATE(float x, float y, float z)
 	 * curMatrix = curMatrix . [ 0 0 1 z ]
 	 *                         [ 0 0 0 1 ]
 	 */
-	curMatrix(0,3) += x * curMatrix(0,0) + y * curMatrix(0,1) + z * curMatrix(0,2);
-	curMatrix(1,3) += x * curMatrix(1,0) + y * curMatrix(1,1) + z * curMatrix(1,2);
-	curMatrix(2,3) += x * curMatrix(2,0) + y * curMatrix(2,1) + z * curMatrix(2,2);
+	curMatrix(0,3).value_ += x * curMatrix(0,0).value_ + y * curMatrix(0,1).value_ + z * curMatrix(0,2).value_;
+	curMatrix(1,3).value_ += x * curMatrix(1,0).value_ + y * curMatrix(1,1).value_ + z * curMatrix(1,2).value_;
+	curMatrix(2,3).value_ += x * curMatrix(2,0).value_ + y * curMatrix(2,1).value_ + z * curMatrix(2,2).value_;
 
 	glTranslatef(x, y, z);
 }
@@ -219,17 +221,17 @@ void pie_MatRotY(uint16_t y)
 		int t;
 		int64_t cra = iCos(y), sra = iSin(y);
 
-		t = (cra*curMatrix(0,0) - sra*curMatrix(0,2))>>16;
-		curMatrix(0,2) = (sra*curMatrix(0,0) + cra*curMatrix(0,2))>>16;
-		curMatrix(0,0) = t;
+		t = (cra*curMatrix(0,0).value_ - sra*curMatrix(0,2).value_)>>16;
+		curMatrix(0,2).value_ = (sra*curMatrix(0,0).value_ + cra*curMatrix(0,2).value_)>>16;
+		curMatrix(0,0).value_ = t;
 
-		t = (cra*curMatrix(1,0) - sra*curMatrix(1,2))>>16;
-		curMatrix(1,2) = (sra*curMatrix(1,0) + cra*curMatrix(1,2))>>16;
-		curMatrix(1,0) = t;
+		t = (cra*curMatrix(1,0).value_ - sra*curMatrix(1,2).value_)>>16;
+		curMatrix(1,2).value_ = (sra*curMatrix(1,0).value_ + cra*curMatrix(1,2).value_)>>16;
+		curMatrix(1,0).value_ = t;
 
-		t = (cra*curMatrix(2,0) - sra*curMatrix(2,2))>>16;
-		curMatrix(2,2) = (sra*curMatrix(2,0) + cra*curMatrix(2,2))>>16;
-		curMatrix(2,0) = t;
+		t = (cra*curMatrix(2,0).value_ - sra*curMatrix(2,2).value_)>>16;
+		curMatrix(2,2).value_ = (sra*curMatrix(2,0).value_ + cra*curMatrix(2,2).value_)>>16;
+		curMatrix(2,0).value_ = t;
 
 		glRotatef(UNDEG(y), 0.0f, 1.0f, 0.0f);
 	}
@@ -260,17 +262,17 @@ void pie_MatRotZ(uint16_t z)
 		int t;
 		int64_t cra = iCos(z), sra = iSin(z);
 
-		t = (cra*curMatrix(0,0) + sra*curMatrix(0,1))>>16;
-		curMatrix(0,1) = (cra*curMatrix(0,1) - sra*curMatrix(0,0))>>16;
-		curMatrix(0,0) = t;
+		t = (cra*curMatrix(0,0).value_ + sra*curMatrix(0,1).value_)>>16;
+		curMatrix(0,1).value_ = (cra*curMatrix(0,1).value_ - sra*curMatrix(0,0).value_)>>16;
+		curMatrix(0,0).value_ = t;
 
-		t = (cra*curMatrix(1,0) + sra*curMatrix(1,1))>>16;
-		curMatrix(1,1) = (cra*curMatrix(1,1) - sra*curMatrix(1,0))>>16;
-		curMatrix(1,0) = t;
+		t = (cra*curMatrix(1,0).value_ + sra*curMatrix(1,1).value_)>>16;
+		curMatrix(1,1).value_ = (cra*curMatrix(1,1).value_ - sra*curMatrix(1,0).value_)>>16;
+		curMatrix(1,0).value_ = t;
 
-		t = (cra*curMatrix(2,0) + sra*curMatrix(2,1))>>16;
-		curMatrix(2,1) = (cra*curMatrix(2,1) - sra*curMatrix(2,0))>>16;
-		curMatrix(2,0) = t;
+		t = (cra*curMatrix(2,0).value_ + sra*curMatrix(2,1).value_)>>16;
+		curMatrix(2,1).value_ = (cra*curMatrix(2,1).value_ - sra*curMatrix(2,0).value_)>>16;
+		curMatrix(2,0).value_ = t;
 
 		glRotatef(UNDEG(z), 0.0f, 0.0f, 1.0f);
 	}
@@ -301,17 +303,17 @@ void pie_MatRotX(uint16_t x)
 		int t;
 		int64_t cra = iCos(x), sra = iSin(x);
 
-		t = (cra*curMatrix(0,1) + sra*curMatrix(0,2))>>16;
-		curMatrix(0,2) = (cra*curMatrix(0,2) - sra*curMatrix(0,1))>>16;
-		curMatrix(0,1) = t;
+		t = (cra*curMatrix(0,1).value_ + sra*curMatrix(0,2).value_)>>16;
+		curMatrix(0,2).value_ = (cra*curMatrix(0,2).value_ - sra*curMatrix(0,1).value_)>>16;
+		curMatrix(0,1).value_ = t;
 
-		t = (cra*curMatrix(1,1) + sra*curMatrix(1,2))>>16;
-		curMatrix(1,2) = (cra*curMatrix(1,2) - sra*curMatrix(1,1))>>16;
-		curMatrix(1,1) = t;
+		t = (cra*curMatrix(1,1).value_ + sra*curMatrix(1,2).value_)>>16;
+		curMatrix(1,2).value_ = (cra*curMatrix(1,2).value_ - sra*curMatrix(1,1).value_)>>16;
+		curMatrix(1,1).value_ = t;
 
-		t = (cra*curMatrix(2,1) + sra*curMatrix(2,2))>>16;
-		curMatrix(2,2) = (cra*curMatrix(2,2) - sra*curMatrix(2,1))>>16;
-		curMatrix(2,1) = t;
+		t = (cra*curMatrix(2,1).value_ + sra*curMatrix(2,2).value_)>>16;
+		curMatrix(2,2).value_ = (cra*curMatrix(2,2).value_ - sra*curMatrix(2,1).value_)>>16;
+		curMatrix(2,1).value_ = t;
 
 		glRotatef(UNDEG(x), 1.0f, 0.0f, 0.0f);
 	}
@@ -331,9 +333,9 @@ int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
 	 * v = curMatrix . v3d
 	 */
 	Vector3i v = {
-		v3d->x * curMatrix(0,0) + v3d->y * curMatrix(0,1) + v3d->z * curMatrix(0,2) + curMatrix(0,3),
-		v3d->x * curMatrix(1,0) + v3d->y * curMatrix(1,1) + v3d->z * curMatrix(1,2) + curMatrix(1,3),
-		v3d->x * curMatrix(2,0) + v3d->y * curMatrix(2,1) + v3d->z * curMatrix(2,2) + curMatrix(2,3)
+		v3d->x * curMatrix(0,0).value_ + v3d->y * curMatrix(0,1).value_ + v3d->z * curMatrix(0,2).value_ + curMatrix(0,3).value_,
+		v3d->x * curMatrix(1,0).value_ + v3d->y * curMatrix(1,1).value_ + v3d->z * curMatrix(1,2).value_ + curMatrix(1,3).value_,
+		v3d->x * curMatrix(2,0).value_ + v3d->y * curMatrix(2,1).value_ + v3d->z * curMatrix(2,2).value_ + curMatrix(2,3).value_
 	};
 
 	const int zz = v.z >> STRETCHED_Z_SHIFT;
@@ -407,9 +409,9 @@ void pie_VectorInverseRotate0(const Vector3i *v1, Vector3i *v2)
 	 * invMatrix = transpose(sub3x3Matrix(curMatrix))
 	 * v2 = invMatrix . v1
 	 */
-	v2->x = (v1->x * curMatrix(0,0) + v1->y * curMatrix(1,0) + v1->z * curMatrix(2,0)) / FP12_MULTIPLIER;
-	v2->y = (v1->x * curMatrix(0,1) + v1->y * curMatrix(1,1) + v1->z * curMatrix(2,1)) / FP12_MULTIPLIER;
-	v2->z = (v1->x * curMatrix(0,2) + v1->y * curMatrix(1,2) + v1->z * curMatrix(2,2)) / FP12_MULTIPLIER;
+	v2->x = (v1->x * curMatrix(0,0).value_ + v1->y * curMatrix(1,0).value_ + v1->z * curMatrix(2,0).value_) / FP12_MULTIPLIER;
+	v2->y = (v1->x * curMatrix(0,1).value_ + v1->y * curMatrix(1,1).value_ + v1->z * curMatrix(2,1).value_) / FP12_MULTIPLIER;
+	v2->z = (v1->x * curMatrix(0,2).value_ + v1->y * curMatrix(1,2).value_ + v1->z * curMatrix(2,2).value_) / FP12_MULTIPLIER;
 }
 
 /** Sets up transformation matrices/quaternions and trig tables
@@ -428,7 +430,7 @@ void pie_RotateTranslate3f(const Vector3f *v, Vector3f *s)
 	 * s = [ 0 1 0 0 ] . curMatrix . [ 0 1 0 0 ] . v
 	 *     [ 0 0 0 1 ]               [ 0 0 0 1 ]
 	 */
-	s->x = (v->x * curMatrix(0,0) + v->y * curMatrix(0,2) + v->z * curMatrix(0,1) + curMatrix(0,3)) / FP12_MULTIPLIER;
-	s->y = (v->x * curMatrix(2,0) + v->y * curMatrix(2,2) + v->z * curMatrix(2,1) + curMatrix(2,3)) / FP12_MULTIPLIER;
-	s->z = (v->x * curMatrix(1,0) + v->y * curMatrix(1,2) + v->z * curMatrix(1,1) + curMatrix(1,3)) / FP12_MULTIPLIER;
+	s->x = (v->x * curMatrix(0,0).value_ + v->y * curMatrix(0,2).value_ + v->z * curMatrix(0,1).value_ + curMatrix(0,3).value_) / FP12_MULTIPLIER;
+	s->y = (v->x * curMatrix(2,0).value_ + v->y * curMatrix(2,2).value_ + v->z * curMatrix(2,1).value_ + curMatrix(2,3).value_) / FP12_MULTIPLIER;
+	s->z = (v->x * curMatrix(1,0).value_ + v->y * curMatrix(1,2).value_ + v->z * curMatrix(1,1).value_ + curMatrix(1,3).value_) / FP12_MULTIPLIER;
 }

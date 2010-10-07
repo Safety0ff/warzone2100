@@ -1048,7 +1048,7 @@ public:
 		return root;
 	}
 
-private:
+public:
 	/// The value in fixed point format.
 	B value_;
 };
