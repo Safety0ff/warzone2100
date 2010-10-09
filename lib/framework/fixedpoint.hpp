@@ -532,6 +532,37 @@ public:
 			typedef unsigned long long type;
 		};
 
+		/// Promotes the largest of the two given integer types if it doesn't exceed max_type
+		template <typename T1, typename T2>
+		struct two_arg_promote_type
+		{
+			BOOST_CONCEPT_ASSERT((boost::Integer<T1>));
+			BOOST_CONCEPT_ASSERT((boost::Integer<T2>));
+
+			static const bool is_signed = std::numeric_limits<T1>::is_signed
+			                           || std::numeric_limits<T2>::is_signed;
+
+			typedef typename boost::mpl::if_c<
+				is_signed,
+				signed long long,
+				unsigned long long>::type max_type;
+
+			static const unsigned char max_bits = std::numeric_limits<max_type>::digits + !!is_signed;
+			static const unsigned char T1bits = std::numeric_limits<T1>::digits + !!std::numeric_limits<T1>::is_signed;
+			static const unsigned char T2bits = std::numeric_limits<T1>::digits + !!std::numeric_limits<T1>::is_signed;
+
+			// Promote the largest of the two, if and only if it
+			// hasn't reached max_type yet.
+			typedef typename boost::mpl::if_c<
+				(T1bits + T2bits <= max_bits),
+				typename promote_type<typename boost::mpl::if_c<
+					(T1bits < T2bits),
+					T2, T1
+				>::type>::type,
+				max_type
+			>::type type;
+		};
+
 	public:
 
 	/// Multiplication.
@@ -540,15 +571,23 @@ public:
 	//! implemented by calling this operator.
 	//!
 	//! /return A reference to this object.
+	template <typename B2, unsigned char I2, unsigned char F2>
+	fpml::fixed_point<B, I, F> & operator *=(
+		/// Factor for mutliplication.
+		fpml::fixed_point<B2, I2, F2> const& factor)
+	{
+		value_ = (static_cast<typename two_arg_promote_type<B, B2>::type>
+			(value_) * factor.value_) >> F2;
+		return *this;
+	}
+
+	/// Explicitly overloaded function to allow implicit conversion from
+	/// the built-in arithmetic types
 	fpml::fixed_point<B, I, F> & operator *=(
 		/// Factor for mutliplication.
 		fpml::fixed_point<B, I, F> const& factor)
 	{
-
-		value_ = (static_cast< typename fpml::fixed_point<B, I, F>::template
-				promote_type<B>::type>
-			(value_) * factor.value_) >> F;
-		return *this;
+		return this->operator*=<B, I, F>(factor);
 	}
 
 	/// Division.
@@ -557,14 +596,23 @@ public:
 	//! implemented by calling this operator.
 	//!
 	//! /return A reference to this object.
+	template <typename B2, unsigned char I2, unsigned char F2>
+	fpml::fixed_point<B, I, F> & operator /=(
+		/// Divisor for division.
+		fpml::fixed_point<B2, I2, F2> const& divisor)
+	{
+		value_ = (static_cast<typename two_arg_promote_type<B, B2>::type>
+			(value_) << F2) / divisor.value_;
+		return *this;
+	}
+
+	/// Explicitly overloaded function to allow implicit conversion from
+	/// the built-in arithmetic types
 	fpml::fixed_point<B, I, F> & operator /=(
 		/// Divisor for division.
 		fpml::fixed_point<B, I, F> const& divisor)
 	{
-		value_ = (static_cast<typename fpml::fixed_point<B, I, F>::template
-				promote_type<B>::type>
-			(value_) << F) / divisor.value_;
-		return *this;
+		return this->operator/=<B, I, F>(divisor);
 	}
 
 	/// Shift right.
