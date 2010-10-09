@@ -91,5 +91,5 @@ libframework_a_SOURCES = \
 	strres.c \
 	tagfile.c \
 	treap.c \
-	trig.c \
+	trig.cpp \
 	utf.c

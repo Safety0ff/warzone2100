@@ -216,20 +216,20 @@ void pie_MatRotY(uint16_t y)
 	 */
 	if (y != 0)
 	{
-		int t;
-		int64_t cra = iCos(y), sra = iSin(y);
+		const TrigFixed cra(iCosF(y)), sra(iSinF(y));
+		Fixed t;
 
-		t = (cra*curMatrix(0,0).value_ - sra*curMatrix(0,2).value_)>>16;
-		curMatrix(0,2).value_ = (sra*curMatrix(0,0).value_ + cra*curMatrix(0,2).value_)>>16;
-		curMatrix(0,0).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(0,0).value_ - (int64_t)sra.value_ * curMatrix(0,2).value_) >> 16;
+		curMatrix(0,2).value_ = ((int64_t)sra.value_ * curMatrix(0,0).value_ + (int64_t)cra.value_ * curMatrix(0,2).value_) >> 16;
+		curMatrix(0,0) = t;
 
-		t = (cra*curMatrix(1,0).value_ - sra*curMatrix(1,2).value_)>>16;
-		curMatrix(1,2).value_ = (sra*curMatrix(1,0).value_ + cra*curMatrix(1,2).value_)>>16;
-		curMatrix(1,0).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(1,0).value_ - (int64_t)sra.value_ * curMatrix(1,2).value_) >> 16;
+		curMatrix(1,2).value_ = ((int64_t)sra.value_ * curMatrix(1,0).value_ + (int64_t)cra.value_ * curMatrix(1,2).value_) >> 16;
+		curMatrix(1,0) = t;
 
-		t = (cra*curMatrix(2,0).value_ - sra*curMatrix(2,2).value_)>>16;
-		curMatrix(2,2).value_ = (sra*curMatrix(2,0).value_ + cra*curMatrix(2,2).value_)>>16;
-		curMatrix(2,0).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(2,0).value_ - (int64_t)sra.value_ * curMatrix(2,2).value_) >> 16;
+		curMatrix(2,2).value_ = ((int64_t)sra.value_ * curMatrix(2,0).value_ + (int64_t)cra.value_ * curMatrix(2,2).value_) >> 16;
+		curMatrix(2,0) = t;
 
 		glRotatef(UNDEG(y), 0.0f, 1.0f, 0.0f);
 	}
@@ -257,20 +257,20 @@ void pie_MatRotZ(uint16_t z)
 	 */
 	if (z != 0)
 	{
-		int t;
-		int64_t cra = iCos(z), sra = iSin(z);
+		const TrigFixed cra(iCosF(z)), sra(iSinF(z));
+		Fixed t;
 
-		t = (cra*curMatrix(0,0).value_ + sra*curMatrix(0,1).value_)>>16;
-		curMatrix(0,1).value_ = (cra*curMatrix(0,1).value_ - sra*curMatrix(0,0).value_)>>16;
-		curMatrix(0,0).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(0,0).value_ + (int64_t)sra.value_ * curMatrix(0,1).value_) >> 16;
+		curMatrix(0,1).value_ = ((int64_t)cra.value_ * curMatrix(0,1).value_ - (int64_t)sra.value_ * curMatrix(0,0).value_) >> 16;
+		curMatrix(0,0) = t;
 
-		t = (cra*curMatrix(1,0).value_ + sra*curMatrix(1,1).value_)>>16;
-		curMatrix(1,1).value_ = (cra*curMatrix(1,1).value_ - sra*curMatrix(1,0).value_)>>16;
-		curMatrix(1,0).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(1,0).value_ + (int64_t)sra.value_ * curMatrix(1,1).value_) >> 16;
+		curMatrix(1,1).value_ = ((int64_t)cra.value_ * curMatrix(1,1).value_ - (int64_t)sra.value_ * curMatrix(1,0).value_) >> 16;
+		curMatrix(1,0) = t;
 
-		t = (cra*curMatrix(2,0).value_ + sra*curMatrix(2,1).value_)>>16;
-		curMatrix(2,1).value_ = (cra*curMatrix(2,1).value_ - sra*curMatrix(2,0).value_)>>16;
-		curMatrix(2,0).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(2,0).value_ + (int64_t)sra.value_ * curMatrix(2,1).value_) >> 16;
+		curMatrix(2,1).value_ = ((int64_t)cra.value_ * curMatrix(2,1).value_ - (int64_t)sra.value_ * curMatrix(2,0).value_) >> 16;
+		curMatrix(2,0) = t;
 
 		glRotatef(UNDEG(z), 0.0f, 0.0f, 1.0f);
 	}
@@ -298,20 +298,20 @@ void pie_MatRotX(uint16_t x)
 	 */
 	if (x != 0.f)
 	{
-		int t;
-		int64_t cra = iCos(x), sra = iSin(x);
+		const TrigFixed cra(iCosF(x)), sra(iSinF(x));
+		Fixed t;
 
-		t = (cra*curMatrix(0,1).value_ + sra*curMatrix(0,2).value_)>>16;
-		curMatrix(0,2).value_ = (cra*curMatrix(0,2).value_ - sra*curMatrix(0,1).value_)>>16;
-		curMatrix(0,1).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(0,1).value_ + (int64_t)sra.value_ * curMatrix(0,2).value_) >> 16;
+		curMatrix(0,2).value_ = ((int64_t)cra.value_ * curMatrix(0,2).value_ - (int64_t)sra.value_ * curMatrix(0,1).value_) >> 16;
+		curMatrix(0,1) = t;
 
-		t = (cra*curMatrix(1,1).value_ + sra*curMatrix(1,2).value_)>>16;
-		curMatrix(1,2).value_ = (cra*curMatrix(1,2).value_ - sra*curMatrix(1,1).value_)>>16;
-		curMatrix(1,1).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(1,1).value_ + (int64_t)sra.value_ * curMatrix(1,2).value_) >> 16;
+		curMatrix(1,2).value_ = ((int64_t)cra.value_ * curMatrix(1,2).value_ - (int64_t)sra.value_ * curMatrix(1,1).value_) >> 16;
+		curMatrix(1,1) = t;
 
-		t = (cra*curMatrix(2,1).value_ + sra*curMatrix(2,2).value_)>>16;
-		curMatrix(2,2).value_ = (cra*curMatrix(2,2).value_ - sra*curMatrix(2,1).value_)>>16;
-		curMatrix(2,1).value_ = t;
+		t.value_ = ((int64_t)cra.value_ * curMatrix(2,1).value_ + (int64_t)sra.value_ * curMatrix(2,2).value_) >> 16;
+		curMatrix(2,2).value_ = ((int64_t)cra.value_ * curMatrix(2,2).value_ - (int64_t)sra.value_ * curMatrix(2,1).value_) >> 16;
+		curMatrix(2,1) = t;
 
 		glRotatef(UNDEG(x), 1.0f, 0.0f, 0.0f);
 	}

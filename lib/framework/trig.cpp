@@ -103,6 +103,20 @@ int32_t iCos(uint16_t a)
 	return sign[q]*(trigSinTable[rvr] + !!rvr);  // +!!rvr = add 1, unless rvr == 0.
 }
 
+TrigFixed iSinF(uint16_t a)
+{
+	TrigFixed r;
+	r.value_ = iSin(a);
+	return r;
+}
+
+TrigFixed iCosF(uint16_t a)
+{
+	TrigFixed r;
+	r.value_ = iCos(a);
+	return r;
+}
+
 int32_t iSinR(uint16_t a, int32_t r)
 {
 	return ((int64_t)r*iSin(a))/65536;

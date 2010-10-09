@@ -36,8 +36,12 @@
 #ifdef __cplusplus
 # include "fixedpoint.hpp"
 typedef fpml::fixed_point<int32_t, std::numeric_limits<int32_t>::digits - FP12_SHIFT> Fixed;
+typedef fpml::fixed_point<int32_t, std::numeric_limits<int32_t>::digits - 16> TrigFixed;
+typedef fpml::fixed_point<uint16_t, 0> Angle;
 #else
 typedef int32_t Fixed;
+typedef int32_t TrigFixed;
+typedef uint16_t Angle;
 #endif
 
 #ifdef __cplusplus

@@ -27,6 +27,7 @@
 #define _trig_h
 
 #include "frame.h"
+#include "fixedpoint.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -39,6 +40,8 @@ extern bool trigInitialise(void);
 // Deterministic trig functions.
 WZ_DECL_PURE int32_t iSin(uint16_t a);               ///< Returns sin(a*2π >> 16) << 16, rounded to nearest integer. Used as the x component in this game.
 WZ_DECL_PURE int32_t iCos(uint16_t a);               ///< Returns cos(a*2π >> 16) << 16, rounded to nearest integer. Used as the y component in this game.
+WZ_DECL_PURE TrigFixed iSinF(uint16_t a);            ///< Returns sin(a*2π >> 16), with up to 16 bits of precision.
+WZ_DECL_PURE TrigFixed iCosF(uint16_t a);            ///< Returns cos(a*2π >> 16), with up to 16 bits of precision.
 WZ_DECL_PURE int32_t iSinR(uint16_t a, int32_t r);   ///< Returns r*sin(a*2π >> 16), with up to 16 bits precision.
 WZ_DECL_PURE int32_t iCosR(uint16_t a, int32_t r);   ///< Returns r*cos(a*2π >> 16), with up to 16 bits precision.
 WZ_DECL_PURE int32_t iSinSR(int32_t a, int32_t s, int32_t r);  ///< Returns r*sin(a*2π/s), with up to 16 bits precision.
