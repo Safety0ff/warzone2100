@@ -361,6 +361,8 @@ public:
 	}
 
 	template<
+		/// The other integer base type.
+		typename B2,
 		/// The other integer part bit count.
 		unsigned char I2,
 		/// The other fractional part bit count.
@@ -368,7 +370,7 @@ public:
 	/// Converting copy assignment operator.
 	fpml::fixed_point<B, I, F> & operator =(
 		/// The right hand side.
-		fpml::fixed_point<B, I2, F2> const& rhs)
+		fpml::fixed_point<B2, I2, F2> const& rhs)
 	{
 		fpml::fixed_point<B, I, F> temp(rhs);
 		swap(temp);
