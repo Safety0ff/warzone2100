@@ -281,6 +281,34 @@ public:
 		: value_(rhs.value_)
 	{ }
 
+	private:
+		template <unsigned char I2, unsigned char F2,
+		          bool this_larger_frac = (F > F2)>
+		struct do_convert_fp;
+
+		template <unsigned char I2, unsigned char F2>
+		struct do_convert_fp<I2, F2, false>
+		{
+			BOOST_STATIC_ASSERT(F2 > F);
+
+			static B apply(fixed_point<B, I2, F2> const& rhs)
+			{
+				return rhs.value_ >> (F2-F);
+			}
+		};
+
+		template <unsigned char I2, unsigned char F2>
+		struct do_convert_fp<I2, F2, true>
+		{
+			BOOST_STATIC_ASSERT(F > F2);
+
+			static B apply(fixed_point<B, I2, F2> const& rhs)
+			{
+				return rhs.value_ << (F-F2);
+			}
+		};
+	public:
+
 	template<
 		/// The other integer part bit count.
 		unsigned char I2,
@@ -290,12 +318,8 @@ public:
 	fixed_point(
 		/// The right hand side.
 		fixed_point<B, I2, F2> const& rhs)
-		: value_(rhs.value_)
+		: value_(do_convert_fp<I2, F2>::apply(rhs))
 	{
-		if (I-I2 > 0)
-			value_ >>= I-I2;
-		if (I2-I > 0)
-			value_ <<= I2-I;
 	}
 
 	/// Copy assignment operator.
