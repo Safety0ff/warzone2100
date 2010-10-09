@@ -635,15 +635,6 @@ public:
 		return *this;
 	}
 
-	/// Explicitly overloaded function to allow implicit conversion from
-	/// the built-in arithmetic types
-	fpml::fixed_point<B, I, F> & operator *=(
-		/// Factor for mutliplication.
-		fpml::fixed_point<B, I, F> const& factor)
-	{
-		return this->operator*=<B, I, F>(factor);
-	}
-
 	/// Division.
 	//!
 	//! Through the use of boost::multiplicative operator / is also defined and
@@ -660,14 +651,46 @@ public:
 		return *this;
 	}
 
-	/// Explicitly overloaded function to allow implicit conversion from
-	/// the built-in arithmetic types
-	fpml::fixed_point<B, I, F> & operator /=(
-		/// Divisor for division.
-		fpml::fixed_point<B, I, F> const& divisor)
-	{
-		return this->operator/=<B, I, F>(divisor);
-	}
+#define INT_ARITHMETIC_OPERATORS(TYPE) \
+	fpml::fixed_point<B, I, F>& operator*=(TYPE const rhs) \
+	  { value_ *= rhs; return *this; } \
+	fpml::fixed_point<B, I, F>& operator/=(TYPE const rhs) \
+	  { value_ /= rhs; return *this; } \
+	fpml::fixed_point<B, I, F>& operator+=(TYPE const rhs) \
+	  { return *this += fpml::fixed_point<B, I, F>(rhs); } \
+	fpml::fixed_point<B, I, F>& operator-=(TYPE const rhs) \
+	  { return *this -= fpml::fixed_point<B, I, F>(rhs); } \
+	friend fpml::fixed_point<B, I, F> operator*(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
+	  { fpml::fixed_point<B, I, F> result(rhs); result *= lhs; return result; } \
+	friend fpml::fixed_point<B, I, F> operator*(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { fpml::fixed_point<B, I, F> result(lhs); result *= rhs; return result; } \
+	friend fpml::fixed_point<B, I, F> operator/(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
+	  { fpml::fixed_point<B, I, F> result(lhs); result /= rhs; return result; } \
+	friend fpml::fixed_point<B, I, F> operator/(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { fpml::fixed_point<B, I, F> result(lhs); result /= rhs; return result; } \
+	friend fpml::fixed_point<B, I, F> operator+(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
+	  { fpml::fixed_point<B, I, F> result(lhs); result += rhs; return result; } \
+	friend fpml::fixed_point<B, I, F> operator+(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { fpml::fixed_point<B, I, F> result(lhs); result += rhs; return result; } \
+	friend fpml::fixed_point<B, I, F> operator-(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
+	  { fpml::fixed_point<B, I, F> result(lhs); result -= rhs; return result; } \
+	friend fpml::fixed_point<B, I, F> operator-(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { fpml::fixed_point<B, I, F> result(lhs); result -= rhs; return result; }
+
+	INT_ARITHMETIC_OPERATORS(unsigned char         )
+	INT_ARITHMETIC_OPERATORS(  signed char         )
+	INT_ARITHMETIC_OPERATORS(unsigned short        )
+	INT_ARITHMETIC_OPERATORS(  signed short        )
+	INT_ARITHMETIC_OPERATORS(unsigned int          )
+	INT_ARITHMETIC_OPERATORS(  signed int          )
+	INT_ARITHMETIC_OPERATORS(unsigned long int     )
+	INT_ARITHMETIC_OPERATORS(  signed long int     )
+	INT_ARITHMETIC_OPERATORS(unsigned long long int)
+	INT_ARITHMETIC_OPERATORS(  signed long long int)
+	INT_ARITHMETIC_OPERATORS(         float        )
+	INT_ARITHMETIC_OPERATORS(         double       )
+	INT_ARITHMETIC_OPERATORS(         long double  )
+#undef INT_ARITHMETIC_OPERATORS
 
 	/// Shift right.
 	//!
