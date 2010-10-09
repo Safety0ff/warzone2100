@@ -282,34 +282,62 @@ public:
 	{ }
 
 	private:
-		template <unsigned char I2, unsigned char F2,
-		          bool this_larger_frac = (F > F2)>
+		template <typename B2, unsigned char I2, unsigned char F2,
+		          bool this_type_larger = (I + F > I2 + F2), bool this_larger_frac = (F > F2)>
 		struct do_convert_fp;
 
-		template <unsigned char I2, unsigned char F2>
-		struct do_convert_fp<I2, F2, false>
+		template <typename B2, unsigned char I2, unsigned char F2>
+		struct do_convert_fp<B2, I2, F2, false, false>
 		{
 			BOOST_STATIC_ASSERT(F2 > F);
+			BOOST_STATIC_ASSERT(I2 + F2 >= I + F);
 
-			static B apply(fixed_point<B, I2, F2> const& rhs)
+			static B apply(fixed_point<B2, I2, F2> const& rhs)
 			{
 				return rhs.value_ >> (F2-F);
 			}
 		};
 
-		template <unsigned char I2, unsigned char F2>
-		struct do_convert_fp<I2, F2, true>
+		template <typename B2, unsigned char I2, unsigned char F2>
+		struct do_convert_fp<B2, I2, F2, false, true>
 		{
 			BOOST_STATIC_ASSERT(F > F2);
+			BOOST_STATIC_ASSERT(I2 + F2 >= I + F);
 
-			static B apply(fixed_point<B, I2, F2> const& rhs)
+			static B apply(fixed_point<B2, I2, F2> const& rhs)
 			{
 				return rhs.value_ << (F-F2);
+			}
+		};
+
+		template <typename B2, unsigned char I2, unsigned char F2>
+		struct do_convert_fp<B2, I2, F2, true, false>
+		{
+			BOOST_STATIC_ASSERT(F2 > F);
+			BOOST_STATIC_ASSERT(I + F > I2 + F2);
+
+			static B apply(fixed_point<B2, I2, F2> const& rhs)
+			{
+				return static_cast<B>(rhs.value_) >> (F2-F);
+			}
+		};
+
+		template <typename B2, unsigned char I2, unsigned char F2>
+		struct do_convert_fp<B2, I2, F2, true, true>
+		{
+			BOOST_STATIC_ASSERT(F > F2);
+			BOOST_STATIC_ASSERT(I + F > I2 + F2);
+
+			static B apply(fixed_point<B2, I2, F2> const& rhs)
+			{
+				return static_cast<B>(rhs.value_) << (F-F2);
 			}
 		};
 	public:
 
 	template<
+		/// The other integer base type.
+		typename B2,
 		/// The other integer part bit count.
 		unsigned char I2,
 		/// The other fractional part bit count.
@@ -317,8 +345,8 @@ public:
 	/// Converting copy constructor.
 	fixed_point(
 		/// The right hand side.
-		fixed_point<B, I2, F2> const& rhs)
-		: value_(do_convert_fp<I2, F2>::apply(rhs))
+		fixed_point<B2, I2, F2> const& rhs)
+		: value_(do_convert_fp<B2, I2, F2>::apply(rhs))
 	{
 	}
 
