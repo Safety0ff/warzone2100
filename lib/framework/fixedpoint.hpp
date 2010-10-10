@@ -1575,6 +1575,97 @@ public:
 
 } // namespace std
 
+/// Eigen compatibility code
+namespace Eigen {
+template<typename T> struct NumTraits;
+
+template<
+	/// The base type of the fixed_point type.
+	typename B,
+	/// The integer part bit count of the fixed_point type.
+	unsigned char I,
+	/// The fractional part bit count of the fixed_point type.
+	unsigned char F>
+struct NumTraits<fpml::fixed_point<B, I, F> >
+{
+	typedef fpml::fixed_point<B, I, F> Real;
+	typedef double FloatingPoint;
+	enum {
+		IsComplex = 0,
+		HasFloatingPoint = 1,
+		ReadCost = 1,
+		AddCost = 1,
+		MulCost = 1,
+	};
+};
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> precision()
+{
+	return std::numeric_limits< fpml::fixed_point<B, I, F> >::epsilon();
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> machine_epsilon()
+{
+	return std::numeric_limits< fpml::fixed_point<B, I, F> >::epsilon();
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_real(fpml::fixed_point<B, I, F> const& x)
+{
+	return x;
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_imag(fpml::fixed_point<B, I, F> const& x)
+{
+	return 0;
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_conj(fpml::fixed_point<B, I, F> const& x)
+{
+	return x;
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_abs(fpml::fixed_point<B, I, F> const& x)
+{
+	return x < 0 ? -x : x;
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_abs2(fpml::fixed_point<B, I, F> const& x)
+{
+	return x * x;
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_sqrt(fpml::fixed_point<B, I, F> const& x)
+{
+	return sqrt(x);
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_exp(fpml::fixed_point<B, I, F> const& x)
+{
+	return exp(x);
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_sin(fpml::fixed_point<B, I, F> const& x)
+{
+	return sin(x);
+}
+
+template <typename B, unsigned char I, unsigned char F>
+inline fpml::fixed_point<B, I, F> ei_cos(fpml::fixed_point<B, I, F> const& x)
+{
+	return cos(x);
+}
+} // namespace Eigen
+
 #ifdef __FPML_DEFINED_USE_MATH_DEFINES__
 	#undef _USE_MATH_DEFINES
 	#undef __FPML_DEFINED_USE_MATH_DEFINES__
