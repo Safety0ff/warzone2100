@@ -43,6 +43,8 @@
 
 #include <boost/assert.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/mpl/min_max.hpp>
 #include <boost/operators.hpp>
 #include <boost/concept_check.hpp>
 #include <limits>
@@ -596,12 +598,12 @@ public:
 			static const bool is_signed = std::numeric_limits<T1>::is_signed
 			                           || std::numeric_limits<T2>::is_signed;
 
-			typedef typename boost::mpl::if_c<
+			typedef boost::mpl::if_c<
 				is_signed,
 				signed long long,
-				unsigned long long>::type max_type;
+				unsigned long long> max_type;
 
-			static const unsigned char max_bits = std::numeric_limits<max_type>::digits + !!is_signed;
+			static const unsigned char max_bits = std::numeric_limits<typename max_type::type>::digits + !!is_signed;
 			static const unsigned char T1bits = std::numeric_limits<T1>::digits + !!std::numeric_limits<T1>::is_signed;
 			static const unsigned char T2bits = std::numeric_limits<T1>::digits + !!std::numeric_limits<T1>::is_signed;
 
@@ -609,12 +611,40 @@ public:
 			// hasn't reached max_type yet.
 			typedef typename boost::mpl::if_c<
 				(T1bits + T2bits <= max_bits),
-				typename promote_type<typename boost::mpl::if_c<
+				promote_type<typename boost::mpl::if_c<
 					(T1bits < T2bits),
 					T2, T1
-				>::type>::type,
+				>::type>,
 				max_type
-			>::type type;
+			>::type::type type;
+		};
+
+		template <typename B2, unsigned char I2, unsigned char F2>
+		struct two_arg_mul_promote
+		{
+			BOOST_CONCEPT_ASSERT((boost::Integer<B2>));
+
+			typedef two_arg_promote_type<B, B2> base_type;
+
+			static const unsigned char maxI = (I  + !!std::numeric_limits<B >::is_signed)
+			                                + (I2 + !!std::numeric_limits<B2>::is_signed);
+			static const unsigned char maxF = F + F2;
+
+			static const unsigned char maxAllowed = base_type::max_bits - boost::mpl::min<
+				typename boost::mpl::min<
+				boost::mpl::int_<maxI>,
+				boost::mpl::int_<maxF> >::type,
+				boost::mpl::int_<32> >::type::value;
+			static const unsigned char pickI = boost::mpl::min<
+				boost::mpl::int_<maxI>,
+				boost::mpl::int_<maxAllowed> >::type::value - !!base_type::is_signed;
+			static const unsigned char pickF = boost::mpl::min<
+				boost::mpl::int_<maxF>,
+				boost::mpl::int_<maxAllowed> >::type::value;
+
+			BOOST_STATIC_ASSERT((pickI + pickF == std::numeric_limits<typename base_type::type>::digits));
+
+			typedef fpml::fixed_point<typename base_type::type, pickI, pickF> type;
 		};
 
 	public:
@@ -633,6 +663,25 @@ public:
 		value_ = (static_cast<typename two_arg_promote_type<B, B2>::type>
 			(value_) * factor.value_) >> F2;
 		return *this;
+	}
+
+	template <typename B2, unsigned char I2, unsigned char F2>
+	typename two_arg_mul_promote<B2, I2, F2>::type operator*(
+		/// Factor for mutliplication.
+		fpml::fixed_point<B2, I2, F2> const& factor) const
+	{
+		typedef typename two_arg_mul_promote<B2, I2, F2>::type mul_type;
+		static const unsigned char goal_f = mul_type::fractional_bit_count;
+		static const unsigned char have_f = F + F2;
+
+		mul_type result(static_cast<typename mul_type::base_type>
+			(value_) * factor.value_, true);
+
+		if (goal_f > have_f)
+			result.value_ >>= goal_f - have_f;
+		if (have_f > goal_f)
+			result.value_ <<= have_f - goal_f;
+		return result;
 	}
 
 	/// Division.
