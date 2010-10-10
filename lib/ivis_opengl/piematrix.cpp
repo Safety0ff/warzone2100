@@ -164,9 +164,9 @@ void pie_TRANSLATE(float x, float y, float z)
 	 * curMatrix = curMatrix . [ 0 0 1 z ]
 	 *                         [ 0 0 0 1 ]
 	 */
-	curMatrix(0,3) += Fixed(x) * curMatrix(0,0) + Fixed(y) * curMatrix(0,1) + Fixed(z) * curMatrix(0,2);
-	curMatrix(1,3) += Fixed(x) * curMatrix(1,0) + Fixed(y) * curMatrix(1,1) + Fixed(z) * curMatrix(1,2);
-	curMatrix(2,3) += Fixed(x) * curMatrix(2,0) + Fixed(y) * curMatrix(2,1) + Fixed(z) * curMatrix(2,2);
+	curMatrix(0,3) += x * curMatrix(0,0) + y * curMatrix(0,1) + z * curMatrix(0,2);
+	curMatrix(1,3) += x * curMatrix(1,0) + y * curMatrix(1,1) + z * curMatrix(1,2);
+	curMatrix(2,3) += x * curMatrix(2,0) + y * curMatrix(2,1) + z * curMatrix(2,2);
 
 	glTranslatef(x, y, z);
 }
@@ -219,16 +219,16 @@ void pie_MatRotY(uint16_t y)
 		const TrigFixed cra(iCosF(y)), sra(iSinF(y));
 		Fixed t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(0,0).value_ - (int64_t)sra.value_ * curMatrix(0,2).value_) >> 16;
-		curMatrix(0,2).value_ = ((int64_t)sra.value_ * curMatrix(0,0).value_ + (int64_t)cra.value_ * curMatrix(0,2).value_) >> 16;
+		t = cra * curMatrix(0,0) - sra * curMatrix(0,2);
+		curMatrix(0,2) = sra * curMatrix(0,0) + cra * curMatrix(0,2);
 		curMatrix(0,0) = t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(1,0).value_ - (int64_t)sra.value_ * curMatrix(1,2).value_) >> 16;
-		curMatrix(1,2).value_ = ((int64_t)sra.value_ * curMatrix(1,0).value_ + (int64_t)cra.value_ * curMatrix(1,2).value_) >> 16;
+		t = cra * curMatrix(1,0) - sra * curMatrix(1,2);
+		curMatrix(1,2) = sra * curMatrix(1,0) + cra * curMatrix(1,2);
 		curMatrix(1,0) = t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(2,0).value_ - (int64_t)sra.value_ * curMatrix(2,2).value_) >> 16;
-		curMatrix(2,2).value_ = ((int64_t)sra.value_ * curMatrix(2,0).value_ + (int64_t)cra.value_ * curMatrix(2,2).value_) >> 16;
+		t = cra * curMatrix(2,0) - sra * curMatrix(2,2);
+		curMatrix(2,2) = sra * curMatrix(2,0) + cra * curMatrix(2,2);
 		curMatrix(2,0) = t;
 
 		glRotatef(UNDEG(y), 0.0f, 1.0f, 0.0f);
@@ -260,16 +260,16 @@ void pie_MatRotZ(uint16_t z)
 		const TrigFixed cra(iCosF(z)), sra(iSinF(z));
 		Fixed t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(0,0).value_ + (int64_t)sra.value_ * curMatrix(0,1).value_) >> 16;
-		curMatrix(0,1).value_ = ((int64_t)cra.value_ * curMatrix(0,1).value_ - (int64_t)sra.value_ * curMatrix(0,0).value_) >> 16;
+		t = cra * curMatrix(0,0) + sra * curMatrix(0,1);
+		curMatrix(0,1) = cra * curMatrix(0,1) - sra * curMatrix(0,0);
 		curMatrix(0,0) = t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(1,0).value_ + (int64_t)sra.value_ * curMatrix(1,1).value_) >> 16;
-		curMatrix(1,1).value_ = ((int64_t)cra.value_ * curMatrix(1,1).value_ - (int64_t)sra.value_ * curMatrix(1,0).value_) >> 16;
+		t = cra * curMatrix(1,0) + sra * curMatrix(1,1);
+		curMatrix(1,1) = cra * curMatrix(1,1) - sra * curMatrix(1,0);
 		curMatrix(1,0) = t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(2,0).value_ + (int64_t)sra.value_ * curMatrix(2,1).value_) >> 16;
-		curMatrix(2,1).value_ = ((int64_t)cra.value_ * curMatrix(2,1).value_ - (int64_t)sra.value_ * curMatrix(2,0).value_) >> 16;
+		t = cra * curMatrix(2,0) + sra * curMatrix(2,1);
+		curMatrix(2,1) = cra * curMatrix(2,1) - sra * curMatrix(2,0);
 		curMatrix(2,0) = t;
 
 		glRotatef(UNDEG(z), 0.0f, 0.0f, 1.0f);
@@ -301,16 +301,16 @@ void pie_MatRotX(uint16_t x)
 		const TrigFixed cra(iCosF(x)), sra(iSinF(x));
 		Fixed t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(0,1).value_ + (int64_t)sra.value_ * curMatrix(0,2).value_) >> 16;
-		curMatrix(0,2).value_ = ((int64_t)cra.value_ * curMatrix(0,2).value_ - (int64_t)sra.value_ * curMatrix(0,1).value_) >> 16;
+		t = cra * curMatrix(0,1) + sra * curMatrix(0,2);
+		curMatrix(0,2) = cra * curMatrix(0,2) - sra * curMatrix(0,1);
 		curMatrix(0,1) = t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(1,1).value_ + (int64_t)sra.value_ * curMatrix(1,2).value_) >> 16;
-		curMatrix(1,2).value_ = ((int64_t)cra.value_ * curMatrix(1,2).value_ - (int64_t)sra.value_ * curMatrix(1,1).value_) >> 16;
+		t = cra * curMatrix(1,1) + sra * curMatrix(1,2);
+		curMatrix(1,2) = cra * curMatrix(1,2) - sra * curMatrix(1,1);
 		curMatrix(1,1) = t;
 
-		t.value_ = ((int64_t)cra.value_ * curMatrix(2,1).value_ + (int64_t)sra.value_ * curMatrix(2,2).value_) >> 16;
-		curMatrix(2,2).value_ = ((int64_t)cra.value_ * curMatrix(2,2).value_ - (int64_t)sra.value_ * curMatrix(2,1).value_) >> 16;
+		t = cra * curMatrix(2,1) + sra * curMatrix(2,2);
+		curMatrix(2,2) = cra * curMatrix(2,2) - sra * curMatrix(2,1);
 		curMatrix(2,1) = t;
 
 		glRotatef(UNDEG(x), 1.0f, 0.0f, 0.0f);
@@ -330,9 +330,9 @@ int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
 	/*
 	 * v = curMatrix . v3d
 	 */
-	const Fixed x = Fixed(v3d->x) * curMatrix(0,0) + Fixed(v3d->y) * curMatrix(0,1) + Fixed(v3d->z) * curMatrix(0,2) + curMatrix(0,3);
-	const Fixed y = Fixed(v3d->x) * curMatrix(1,0) + Fixed(v3d->y) * curMatrix(1,1) + Fixed(v3d->z) * curMatrix(1,2) + curMatrix(1,3);
-	const Fixed z = Fixed(v3d->x) * curMatrix(2,0) + Fixed(v3d->y) * curMatrix(2,1) + Fixed(v3d->z) * curMatrix(2,2) + curMatrix(2,3);
+	const Fixed x = v3d->x * curMatrix(0,0) + v3d->y * curMatrix(0,1) + v3d->z * curMatrix(0,2) + curMatrix(0,3);
+	const Fixed y = v3d->x * curMatrix(1,0) + v3d->y * curMatrix(1,1) + v3d->z * curMatrix(1,2) + curMatrix(1,3);
+	const Fixed z = v3d->x * curMatrix(2,0) + v3d->y * curMatrix(2,1) + v3d->z * curMatrix(2,2) + curMatrix(2,3);
 
 	const int zz = z.value_ >> STRETCHED_Z_SHIFT;
 
@@ -405,9 +405,9 @@ void pie_VectorInverseRotate0(const Vector3i *v1, Vector3i *v2)
 	 * invMatrix = transpose(sub3x3Matrix(curMatrix))
 	 * v2 = invMatrix . v1
 	 */
-	v2->x = Fixed(v1->x) * curMatrix(0,0) + Fixed(v1->y) * curMatrix(1,0) + Fixed(v1->z) * curMatrix(2,0);
-	v2->y = Fixed(v1->x) * curMatrix(0,1) + Fixed(v1->y) * curMatrix(1,1) + Fixed(v1->z) * curMatrix(2,1);
-	v2->z = Fixed(v1->x) * curMatrix(0,2) + Fixed(v1->y) * curMatrix(1,2) + Fixed(v1->z) * curMatrix(2,2);
+	v2->x = v1->x * curMatrix(0,0) + v1->y * curMatrix(1,0) + v1->z * curMatrix(2,0);
+	v2->y = v1->x * curMatrix(0,1) + v1->y * curMatrix(1,1) + v1->z * curMatrix(2,1);
+	v2->z = v1->x * curMatrix(0,2) + v1->y * curMatrix(1,2) + v1->z * curMatrix(2,2);
 }
 
 /** Sets up transformation matrices/quaternions and trig tables
@@ -426,7 +426,7 @@ void pie_RotateTranslate3f(const Vector3f *v, Vector3f *s)
 	 * s = [ 0 1 0 0 ] . curMatrix . [ 0 1 0 0 ] . v
 	 *     [ 0 0 0 1 ]               [ 0 0 0 1 ]
 	 */
-	s->x = Fixed(v->x) * curMatrix(0,0) + Fixed(v->y) * curMatrix(0,2) + Fixed(v->z) * curMatrix(0,1) + curMatrix(0,3);
-	s->y = Fixed(v->x) * curMatrix(2,0) + Fixed(v->y) * curMatrix(2,2) + Fixed(v->z) * curMatrix(2,1) + curMatrix(2,3);
-	s->z = Fixed(v->x) * curMatrix(1,0) + Fixed(v->y) * curMatrix(1,2) + Fixed(v->z) * curMatrix(1,1) + curMatrix(1,3);
+	s->x = v->x * curMatrix(0,0) + v->y * curMatrix(0,2) + v->z * curMatrix(0,1) + curMatrix(0,3);
+	s->y = v->x * curMatrix(2,0) + v->y * curMatrix(2,2) + v->z * curMatrix(2,1) + curMatrix(2,3);
+	s->z = v->x * curMatrix(1,0) + v->y * curMatrix(1,2) + v->z * curMatrix(1,1) + curMatrix(1,3);
 }

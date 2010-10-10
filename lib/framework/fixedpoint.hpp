@@ -122,10 +122,12 @@ template<
 //! >>=  ==>  >> (right_shiftable),
 //! <<=  ==>  << (left_shiftable).
 class fixed_point
-	: boost::ordered_field_operators<fpml::fixed_point<B, I, F>
+	: boost::dividable<fpml::fixed_point<B, I, F>
+	, boost::less_than_comparable<fpml::fixed_point<B, I, F>
+	, boost::equality_comparable<fpml::fixed_point<B, I, F>
 	, boost::unit_steppable<fpml::fixed_point<B, I, F>
 	, boost::shiftable<fpml::fixed_point<B, I, F>, size_t
-	> > >
+	> > > > >
 {
 	// Only integer types qualify for base type. If this line triggers an error,
 	// the base type is not an integer type. Note: char does not qualify as an
@@ -472,10 +474,13 @@ public:
 	//! implemented by calling this operator.
 	//!
 	//! /return A reference to this object.
+	template <typename B2, unsigned char I2, unsigned char F2>
 	fpml::fixed_point<B, I, F> & operator +=(
 		/// Summand for addition.
-		fpml::fixed_point<B, I, F> const& summand)
+		fpml::fixed_point<B2, I2, F2> const& rhs)
 	{
+		fpml::fixed_point<B, I, F> summand(rhs);
+
 		value_ += summand.value_;
 		return *this;
 	}
@@ -486,10 +491,13 @@ public:
 	//! implemented by calling this operator.
 	//!
 	//! /return A reference to this object.
+	template <typename B2, unsigned char I2, unsigned char F2>
 	fpml::fixed_point<B, I, F> & operator -=(
 		/// Diminuend for subtraction.
-		fpml::fixed_point<B, I, F> const& diminuend)
+		fpml::fixed_point<B2, I2, F2> const& rhs)
 	{
+		fpml::fixed_point<B, I, F> diminuend(rhs);
+
 		value_ -= diminuend.value_;
 		return *this;
 	}
@@ -647,7 +655,59 @@ public:
 			typedef fpml::fixed_point<typename base_type::type, pickI, pickF> type;
 		};
 
+		template <typename B2, unsigned char I2, unsigned char F2>
+		struct two_arg_add_promote
+		{
+			BOOST_CONCEPT_ASSERT((boost::Integer<B2>));
+
+			typedef typename boost::mpl::if_c<
+				sizeof(B) < sizeof(B2),
+				B2, B>::type base_type;
+
+			static const bool is_signed = std::numeric_limits<base_type>::is_signed;
+			static const unsigned char max_bits = std::numeric_limits<base_type>::digits + !!is_signed;
+
+			static const unsigned char maxI = boost::mpl::max<
+				boost::mpl::int_<I  + !!std::numeric_limits<B >::is_signed>,
+				boost::mpl::int_<I2 + !!std::numeric_limits<B2>::is_signed>
+			>::type::value;
+			static const unsigned char pickF = boost::mpl::min<
+				typename boost::mpl::max<
+					boost::mpl::int_<F >,
+					boost::mpl::int_<F2>
+				>::type,
+				boost::mpl::int_<max_bits - maxI>
+			>::type::value;
+			static const unsigned char pickI = boost::mpl::min<
+				boost::mpl::int_<maxI>,
+				boost::mpl::int_<max_bits - pickF>
+			>::type::value - !!is_signed;
+
+			BOOST_STATIC_ASSERT((pickI + pickF == std::numeric_limits<base_type>::digits));
+
+			typedef fpml::fixed_point<base_type, pickI, pickF> type;
+		};
 	public:
+
+	template <typename B2, unsigned char I2, unsigned char F2>
+	typename two_arg_add_promote<B2, I2, F2>::type operator+(
+		/// Summand for addition.
+		fpml::fixed_point<B2, I2, F2> const& summand) const
+	{
+		typename two_arg_add_promote<B2, I2, F2>::type result(*this);
+		result += summand;
+		return result;
+	}
+
+	template <typename B2, unsigned char I2, unsigned char F2>
+	typename two_arg_add_promote<B2, I2, F2>::type operator-(
+		/// Diminuend for subtraction.
+		fpml::fixed_point<B2, I2, F2> const& diminuend) const
+	{
+		typename two_arg_add_promote<B2, I2, F2>::type result(*this);
+		result -= diminuend;
+		return result;
+	}
 
 	/// Multiplication.
 	//!
