@@ -784,7 +784,25 @@ public:
 	friend fpml::fixed_point<B, I, F> operator-(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
 	  { fpml::fixed_point<B, I, F> result(lhs); result -= rhs; return result; } \
 	friend fpml::fixed_point<B, I, F> operator-(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
-	  { fpml::fixed_point<B, I, F> result(lhs); result -= rhs; return result; }
+	  { fpml::fixed_point<B, I, F> result(lhs); result -= rhs; return result; } \
+	friend bool operator<(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
+	  { return lhs < fpml::fixed_point<B, I, F>(rhs); } \
+	friend bool operator<(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { return lhs < fpml::fixed_point<B, I, F>(rhs); } \
+	friend bool operator>(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
+	  { return lhs > fpml::fixed_point<B, I, F>(rhs); } \
+	friend bool operator>(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { return lhs > fpml::fixed_point<B, I, F>(rhs); } \
+	friend bool operator<=(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
+	  { return lhs <= fpml::fixed_point<B, I, F>(rhs); } \
+	friend bool operator<=(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { return lhs <= fpml::fixed_point<B, I, F>(rhs); } \
+	friend bool operator>=(TYPE const lhs, fpml::fixed_point<B, I, F> const& rhs) \
+	  { return lhs >= fpml::fixed_point<B, I, F>(rhs); } \
+	friend bool operator>=(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { return lhs >= fpml::fixed_point<B, I, F>(rhs); } \
+	friend bool operator==(fpml::fixed_point<B, I, F> const& lhs, TYPE const rhs) \
+	  { return lhs == fpml::fixed_point<B, I, F>(rhs); }
 
 	INT_ARITHMETIC_OPERATORS(unsigned char         )
 	INT_ARITHMETIC_OPERATORS(  signed char         )

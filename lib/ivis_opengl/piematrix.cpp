@@ -248,7 +248,7 @@ int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
 	Vector3 v(v3d->x, v3d->y, v3d->z);
 	v = curMatrix * v;
 
-	const int zz = v.z().value_ >> STRETCHED_Z_SHIFT;
+	const Fixed zz = v.z() * 4;
 
 	if (zz < MIN_STRETCHED_Z)
 	{
@@ -257,8 +257,8 @@ int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
 	}
 	else
 	{
-		v2d->x = rendSurface.xcentre + (v.x().value_ / zz);
-		v2d->y = rendSurface.ycentre - (v.y().value_ / zz);
+		v2d->x = rendSurface.xcentre + (v.x() / zz).value_;
+		v2d->y = rendSurface.ycentre - (v.y() / zz).value_;
 	}
 
 	return zz;
