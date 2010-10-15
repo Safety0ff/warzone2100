@@ -23,7 +23,16 @@
 
 #include "ivisdef.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif //__cplusplus
+
 extern void iV_SurfaceDestroy(iSurface *s);
 extern iSurface *iV_SurfaceCreate(int width, int height);
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif

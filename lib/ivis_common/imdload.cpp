@@ -94,7 +94,7 @@ static bool _imd_load_polys( const char **ppFileData, iIMDShape *s, int pieVersi
 		poly->flags = flags;
 		poly->npnts = npnts;
 
-		poly->pindex = malloc(sizeof(*poly->pindex) * poly->npnts);
+		poly->pindex = (VERTEXID*)malloc(sizeof(*poly->pindex) * poly->npnts);
 		if (poly->pindex == NULL)
 		{
 			debug(LOG_ERROR, "(_load_polys) [poly %u] memory alloc fail (poly indices)", i);
@@ -174,7 +174,7 @@ static bool _imd_load_polys( const char **ppFileData, iIMDShape *s, int pieVersi
 		// PC texture coord routine
 		if (poly->flags & iV_IMD_TEX)
 		{
-			poly->texCoord = malloc(sizeof(Vector2f) * poly->npnts);
+			poly->texCoord = (Vector2f*)malloc(sizeof(Vector2f) * poly->npnts);
 			if (poly->texCoord == NULL)
 			{
 				debug(LOG_ERROR, "(_load_polys) [poly %u] memory alloc fail (vertex struct)", i);

@@ -25,7 +25,7 @@ noinst_HEADERS = \
 libivis_common_a_SOURCES = \
 	bitimage.c \
 	imd.c \
-	imdload.c \
+	imdload.cpp \
 	jpeg_encoder.c \
 	pieclip.c \
 	piestate.c \

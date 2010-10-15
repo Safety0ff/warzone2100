@@ -30,6 +30,11 @@
 
 #include "lib/ivis_common/piedef.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif //__cplusplus
+
 //*************************************************************************
 
 /*!
@@ -108,5 +113,9 @@ extern void pie_SetGeometricOffset(int x, int y);
 
 extern void pie_Begin3DScene(void);
 extern void pie_BeginInterface(void);
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif
