@@ -217,30 +217,12 @@ static bool _imd_load_polys( const char **ppFileData, iIMDShape *s, int pieVersi
 }
 
 
-static BOOL ReadPoints( const char **ppFileData, iIMDShape *s )
+static BOOL _imd_load_points( const char **ppFileData, iIMDShape *s )
 {
 	const char *pFileData = *ppFileData;
 	unsigned int i;
 	int cnt;
 
-	for (i = 0; i < s->npoints; i++)
-	{
-		if (sscanf(pFileData, "%f %f %f%n", &s->points[i].x, &s->points[i].y, &s->points[i].z, &cnt) != 3)
-		{
-			debug(LOG_ERROR, "(_load_points) file corrupt -K");
-			return false;
-		}
-		pFileData += cnt;
-	}
-
-	*ppFileData = pFileData;
-
-	return true;
-}
-
-
-static BOOL _imd_load_points( const char **ppFileData, iIMDShape *s )
-{
 	//load the points then pass through a second time to setup bounding datavalues
 	s->points = (Vector3f*)malloc(sizeof(Vector3f) * s->npoints);
 	if (s->points == NULL)
@@ -248,13 +230,20 @@ static BOOL _imd_load_points( const char **ppFileData, iIMDShape *s )
 		return false;
 	}
 
-	// Read in points and remove duplicates (!)
-	if ( ReadPoints( ppFileData, s ) == false )
+	// Read in points
+	for (i = 0; i < s->npoints; i++)
 	{
-		free(s->points);
-		s->points = NULL;
-		return false;
+		if (sscanf(pFileData, "%f %f %f%n", &s->points[i].x, &s->points[i].y, &s->points[i].z, &cnt) != 3)
+		{
+			debug(LOG_ERROR, "(_load_points) file corrupt -K");
+			free(s->points);
+			s->points = NULL;
+			return false;
+		}
+		pFileData += cnt;
 	}
+
+	*ppFileData = pFileData;
 
 	_imd_compute_bounds(s);
 
