@@ -136,7 +136,6 @@ static unsigned int nb_tshapes = 0;
 
 static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELIGHT teamcolour, WZ_DECL_UNUSED PIELIGHT specular, int pieFlag, int pieFlagData)
 {
-	iIMDPoly *pPolys;
 	bool light = lighting;
 
 	pie_SetAlphaTest(true);
@@ -174,6 +173,7 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 		pie_SetRendMode(REND_OPAQUE);
 	}
 
+#if 0
 	if (light)
 	{
 		const float ambient[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -189,6 +189,7 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 	}
+#endif
 
 	if (pieFlag & pie_HEIGHT_SCALED)	// construct
 	{
@@ -267,79 +268,58 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 #endif
 	}
 
-	for (pPolys = shape->polys; pPolys < shape->polys + shape->npolys; pPolys++)
+#if 0
+	if (light)
 	{
-		Vector2f	texCoords[pie_MAX_VERTICES_PER_POLYGON];
-		Vector3f	vertexCoords[pie_MAX_VERTICES_PER_POLYGON];
-		unsigned int n;
-		VERTEXID	*index;
-
-		for (n = 0, index = pPolys->pindex;
-				n < pPolys->npnts;
-				n++, index++)
-		{
-			vertexCoords[n].x = shape->points[*index].x;
-			vertexCoords[n].y = shape->points[*index].y;
-			vertexCoords[n].z = shape->points[*index].z;
-			texCoords[n].x = pPolys->texCoord[n].x;
-			texCoords[n].y = pPolys->texCoord[n].y;
-		}
-
-		polyCount++;
-
-		// Run TextureAnimation (exluding the new teamcoloured models)
-		if (frame && pPolys->flags & iV_IMD_TEXANIM && !(shape->flags & iV_IMD_TCMASK))
-		{
-			frame %= shape->numFrames;
-
-			if (frame > 0)
-			{
-				const int framesPerLine = OLD_TEXTURE_SIZE_FIX / (pPolys->texAnim.x * OLD_TEXTURE_SIZE_FIX);
-				const int uFrame = (frame % framesPerLine) * (pPolys->texAnim.x * OLD_TEXTURE_SIZE_FIX);
-				const int vFrame = (frame / framesPerLine) * (pPolys->texAnim.y * OLD_TEXTURE_SIZE_FIX);
-
-				for (n = 0; n < pPolys->npnts; n++)
-				{
-					texCoords[n].x += uFrame / OLD_TEXTURE_SIZE_FIX;
-					texCoords[n].y += vFrame / OLD_TEXTURE_SIZE_FIX;
-				}
-			}
-		}
-
-		{
-			Vector3f normals[pie_MAX_VERTICES_PER_POLYGON];
-
-			if (light)
-			{
-				for (n = 0; n < pPolys->npnts; ++n)
-					normals[n] = pPolys->normal;
-				glNormalPointer(GL_FLOAT, 0, normals);
-				glEnableClientState(GL_NORMAL_ARRAY);
-			}
-
-			glVertexPointer(3, GL_FLOAT, 0, vertexCoords);
-			glEnableClientState(GL_VERTEX_ARRAY);
-
-			glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glClientActiveTexture(GL_TEXTURE1);
-
-			if (shape->flags & iV_IMD_TCMASK
-			 && rendStates.rendMode == REND_OPAQUE
-			 && !pie_GetShadersStatus())
-			{
-				glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
-				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			}
-
-			glDrawArrays(GL_TRIANGLE_FAN, 0, pPolys->npnts);
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-			glClientActiveTexture(GL_TEXTURE0);
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-			glDisableClientState(GL_VERTEX_ARRAY);
-			glDisableClientState(GL_NORMAL_ARRAY);
-		}
+		glNormalPointer(GL_FLOAT, 0, shape->normals);
+		glEnableClientState(GL_NORMAL_ARRAY);
 	}
+#endif
+
+	glVertexPointer(3, GL_FLOAT, 0, shape->points);
+	glEnableClientState(GL_VERTEX_ARRAY);
+
+	if (shape->flags & iV_IMD_TCMASK)
+	{
+		frame = 0;
+	}
+	else
+	{
+		frame %= shape->numFrames;
+	}
+
+	glTexCoordPointer(2, GL_FLOAT, 0, &shape->textureArrays[frame * shape->npoints]);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	if (shape->flags & iV_IMD_TCMASK
+	 && rendStates.rendMode == REND_OPAQUE
+	 && !pie_GetShadersStatus())
+	{
+		glClientActiveTexture(GL_TEXTURE1);
+		glTexCoordPointer(2, GL_FLOAT, 0, &shape->textureArrays[frame * shape->npoints]);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
+	glDrawElements(GL_TRIANGLES, shape->npolys * 3, GL_UNSIGNED_SHORT, shape->polys);
+
+	if (shape->flags & iV_IMD_TCMASK
+	 && rendStates.rendMode == REND_OPAQUE
+	 && !pie_GetShadersStatus())
+	{
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glClientActiveTexture(GL_TEXTURE0);
+	}
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+#if 0
+	if (light)
+	{
+		glDisableClientState(GL_NORMAL_ARRAY);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_NORMALIZE);
+	}
+#endif
 
 	// Deactivate TCMask if it was previously enabled
 	if (shape->flags & iV_IMD_TCMASK && rendStates.rendMode == REND_OPAQUE)
@@ -365,14 +345,9 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 	{
 		pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_ON);
 	}
-
-	if (light)
-	{
-		glDisable(GL_LIGHTING);
-		glDisable(GL_NORMALIZE);
-	}
 }
 
+#if 0
 /// returns true if the edges are adjacent
 static int compare_edge (EDGE *A, EDGE *B, const Vector3f *pVertices )
 {
@@ -425,6 +400,7 @@ static void addToEdgeList(int a, int b, EDGE *edgelist, unsigned int* edge_count
 		(*edge_count)++;
 	}
 }
+#endif
 
 /// scale the height according to the flags
 static inline float scale_y(float y, int flag, int flag_data)
@@ -444,6 +420,7 @@ static inline float scale_y(float y, int flag, int flag_data)
 /// Draw the shadow for a shape
 static void pie_DrawShadow(iIMDShape *shape, int flag, int flag_data, Vector3f* light)
 {
+	#if 0
 	unsigned int i, j, n;
 	Vector3f *pVertices;
 	iIMDPoly *pPolys;
@@ -576,6 +553,7 @@ static void pie_DrawShadow(iIMDShape *shape, int flag, int flag_data, Vector3f* 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glEnable(GL_DEPTH_TEST);
+#endif
 #endif
 }
 

@@ -62,45 +62,38 @@ typedef struct _iSurface {
 /// Stores the from and to verticles from an edge
 typedef struct edge_
 {
-	int from, to;
+	short from, to;
 } EDGE;
 
-typedef int VERTEXID;	// Size of the entry for vertex id in the imd polygon structure
-
-typedef struct {
-	uint32_t flags;
-	int32_t zcentre;
-	unsigned int npnts;
-	Vector3f normal;
-	VERTEXID *pindex;
-	Vector2f *texCoord;
-	Vector2f texAnim;
-} iIMDPoly;
-
-typedef struct _iIMDShape {
-	unsigned int flags;	
+typedef struct _iIMDShape
+{
+	unsigned int flags;
 	int texpage;
 	int tcmaskpage;
-	int sradius, radius;
-	Vector3f min, max;
-
-	Vector3f ocen;
-	unsigned short numFrames;
-	unsigned short animInterval;
 
 	unsigned int npoints;
-	Vector3f *points;
+	Vector3f *points; // 2D array of floats: points[npoints][3]
+//	Vector3f *normals;
 
 	unsigned int npolys;
-	iIMDPoly *polys;
+	unsigned short *polys;  // 2D array of shorts: points[npolys][3]
+
+	unsigned short animInterval;
+	unsigned short numFrames;
+
+	Vector2f *textureArrays; // 3D array of floats: textureArrays[numFrames][npoints][2]
 
 	unsigned int nconnectors;
 	Vector3f *connectors;
 
+	int sradius, radius;
+	Vector3f min, max;
+	Vector3f ocen;
+
 	unsigned int nShadowEdges;
 	EDGE *shadowEdgeList;
 
-	struct _iIMDShape *next; // next pie in multilevel pies (NULL for non multilevel !)
+	struct _iIMDShape *next; // next imd in multilevel pies (NULL for non multilevel !)
 } iIMDShape;
 
 

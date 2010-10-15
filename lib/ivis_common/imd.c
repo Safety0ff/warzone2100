@@ -32,26 +32,29 @@
 //******
 void iV_IMDRelease(iIMDShape *s)
 {
-   unsigned int i;
-   iIMDShape *d;
+	iIMDShape *d;
 
-   if (s) {
-		if (s->points) {
+	if (s)
+	{
+		if (s->points)
+		{
 			free(s->points);
+			s->points = NULL;
 		}
-		if (s->connectors) {
-			free(s->connectors);
-		}
-		if (s->polys) {
-			for (i = 0; i < s->npolys; i++) {
-				if (s->polys[i].pindex) {
-					free(s->polys[i].pindex);
-				}
-				if (s->polys[i].texCoord) {
-					free(s->polys[i].texCoord);
-				}
-			}
+		if (s->polys)
+		{
 			free(s->polys);
+			s->polys = NULL;
+		}
+		if (s->textureArrays)
+		{
+			free(s->textureArrays);
+			s->textureArrays = NULL;
+		}
+		if (s->connectors)
+		{
+			free(s->connectors);
+			s->connectors = NULL;
 		}
 		if (s->shadowEdgeList)
 		{
