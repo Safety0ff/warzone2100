@@ -340,7 +340,7 @@ static iIMDShape *_imd_load_level(const char **ppFileData, const char *FileDataE
 	s->points = (Vector3f*)malloc(sizeof(Vector3f) * s->npoints);
 	if (s->points == NULL)
 	{
-		return false;
+		return NULL;
 	}
 
 	// Read in points
@@ -351,7 +351,7 @@ static iIMDShape *_imd_load_level(const char **ppFileData, const char *FileDataE
 			debug(LOG_ERROR, "(_load_points) file corrupt -K");
 			free(s->points);
 			s->points = NULL;
-			return false;
+			return NULL;
 		}
 		pFileData += cnt;
 	}
