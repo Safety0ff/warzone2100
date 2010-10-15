@@ -72,9 +72,6 @@ static bool _imd_load_polys( const char **ppFileData, iIMDShape *s, int pieVersi
 	unsigned int i, j;
 	iIMDPoly *poly;
 
-	s->numFrames = 0;
-	s->animInterval = 0;
-
 	s->polys = (iIMDPoly*)malloc(sizeof(iIMDPoly) * s->npolys);
 	if (s->polys == NULL)
 	{
@@ -143,12 +140,6 @@ static bool _imd_load_polys( const char **ppFileData, iIMDShape *s, int pieVersi
 		{
 			unsigned int nFrames, pbRate, tWidth, tHeight;
 
-			if (pieVersion == PIE_FLOAT_VER)
-			{
-				debug(LOG_ERROR, "PIE version %d doesn't support texanim data! Use PIE2 instead.", pieVersion);
-				return false;
-			}
-
 			// even the psx needs to skip the data
 			if (sscanf(pFileData, "%d %d %d %d%n", &nFrames, &pbRate, &tWidth, &tHeight, &cnt) != 4)
 			{
@@ -164,8 +155,16 @@ static bool _imd_load_polys( const char **ppFileData, iIMDShape *s, int pieVersi
 			s->numFrames = nFrames;
 			s->animInterval = pbRate;
 
-			poly->texAnim.x = tWidth / OLD_TEXTURE_SIZE_FIX;
-			poly->texAnim.y = tHeight / OLD_TEXTURE_SIZE_FIX;
+			if (pieVersion == PIE_FLOAT_VER)
+			{
+				poly->texAnim.x = tWidth;
+				poly->texAnim.y = tHeight;
+			}
+			else
+			{
+				poly->texAnim.x = tWidth / OLD_TEXTURE_SIZE_FIX;
+				poly->texAnim.y = tHeight / OLD_TEXTURE_SIZE_FIX;
+			}
 		}
 		else
 		{
