@@ -54,167 +54,6 @@ static BOOL AtEndOfFile(const char *CurPos, const char *EndOfFile)
 	return false;
 }
 
-
-/*!
- * Load shape level polygons
- * \param ppFileData Pointer to the data (usualy read from a file)
- * \param s Pointer to shape level
- * \return false on error (memory allocation failure/bad file format), true otherwise
- * \pre ppFileData loaded
- * \pre s allocated
- * \pre s->npolys set
- * \post s->polys allocated (iFSDPoly * s->npolys)
- * \post s->pindex allocated for each poly
- */
-static bool _imd_load_polys( const char **ppFileData, iIMDShape *s, int pieVersion)
-{
-	const char *pFileData = *ppFileData;
-	unsigned int i, j;
-	iIMDPoly *poly;
-
-	s->polys = (iIMDPoly*)malloc(sizeof(iIMDPoly) * s->npolys);
-	if (s->polys == NULL)
-	{
-		debug(LOG_ERROR, "(_load_polys) Out of memory (polys)");
-		return false;
-	}
-
-	for (i = 0, poly = s->polys; i < s->npolys; i++, poly++)
-	{
-		unsigned int flags, npnts;
-		int cnt;
-
-		if (sscanf(pFileData, "%x %u%n", &flags, &npnts, &cnt) != 2)
-		{
-			debug(LOG_ERROR, "(_load_polys) [poly %u] error loading flags and npoints", i);
-		}
-		pFileData += cnt;
-
-		poly->flags = flags;
-		poly->npnts = npnts;
-
-		poly->pindex = (VERTEXID*)malloc(sizeof(*poly->pindex) * poly->npnts);
-		if (poly->pindex == NULL)
-		{
-			debug(LOG_ERROR, "(_load_polys) [poly %u] memory alloc fail (poly indices)", i);
-			return false;
-		}
-
-		for (j = 0; j < poly->npnts; j++)
-		{
-			int newID;
-
-			if (sscanf(pFileData, "%d%n", &newID, &cnt) != 1)
-			{
-				debug(LOG_ERROR, "failed poly %u. point %d", i, j);
-				return false;
-			}
-			pFileData += cnt;
-			poly->pindex[j] = newID;
-		}
-
-		assert(poly->npnts > 2);
-
-		// calc poly normal
-		{
-			Vector3f p0, p1, p2;
-
-			//assumes points already set
-			p0.x = s->points[poly->pindex[0]].x;
-			p0.y = s->points[poly->pindex[0]].y;
-			p0.z = s->points[poly->pindex[0]].z;
-
-			p1.x = s->points[poly->pindex[1]].x;
-			p1.y = s->points[poly->pindex[1]].y;
-			p1.z = s->points[poly->pindex[1]].z;
-
-			p2.x = s->points[poly->pindex[poly->npnts-1]].x;
-			p2.y = s->points[poly->pindex[poly->npnts-1]].y;
-			p2.z = s->points[poly->pindex[poly->npnts-1]].z;
-
-			poly->normal = pie_SurfaceNormal3fv(p0, p1, p2);
-		}
-
-		// PIE2 only
-		if (poly->flags & iV_IMD_TEXANIM)
-		{
-			unsigned int nFrames, pbRate, tWidth, tHeight;
-
-			// even the psx needs to skip the data
-			if (sscanf(pFileData, "%d %d %d %d%n", &nFrames, &pbRate, &tWidth, &tHeight, &cnt) != 4)
-			{
-				debug(LOG_ERROR, "(_load_polys) [poly %u] error reading texanim data", i);
-				return false;
-			}
-			pFileData += cnt;
-
-			ASSERT(tWidth > 0, "%s: texture width = %d", GetLastResourceFilename(), tWidth);
-			ASSERT(tHeight > 0, "%s: texture height = %d (width=%d)", GetLastResourceFilename(), tHeight, tWidth);
-
-			/* Must have same number of frames and same playback rate for all polygons */
-			s->numFrames = nFrames;
-			s->animInterval = pbRate;
-
-			if (pieVersion == PIE_FLOAT_VER)
-			{
-				poly->texAnim.x = tWidth;
-				poly->texAnim.y = tHeight;
-			}
-			else
-			{
-				poly->texAnim.x = tWidth / OLD_TEXTURE_SIZE_FIX;
-				poly->texAnim.y = tHeight / OLD_TEXTURE_SIZE_FIX;
-			}
-		}
-		else
-		{
-			poly->texAnim.x = 0;
-			poly->texAnim.y = 0;
-		}
-
-		// PC texture coord routine
-		if (poly->flags & iV_IMD_TEX)
-		{
-			poly->texCoord = (Vector2f*)malloc(sizeof(Vector2f) * poly->npnts);
-			if (poly->texCoord == NULL)
-			{
-				debug(LOG_ERROR, "(_load_polys) [poly %u] memory alloc fail (vertex struct)", i);
-				return false;
-			}
-
-			for (j = 0; j < poly->npnts; j++)
-			{
-				float VertexU, VertexV;
-				if (sscanf(pFileData, "%f %f%n", &VertexU, &VertexV, &cnt) != 2)
-				{
-					debug(LOG_ERROR, "(_load_polys) [poly %u] error reading tex outline", i);
-					return false;
-				}
-				pFileData += cnt;
-
-				if (pieVersion == PIE_FLOAT_VER)
-				{
-					poly->texCoord[j].x = VertexU;
-					poly->texCoord[j].y = VertexV;
-				}
-				else
-				{
-					poly->texCoord[j].x = VertexU / OLD_TEXTURE_SIZE_FIX;
-					poly->texCoord[j].y = VertexV / OLD_TEXTURE_SIZE_FIX;
-				}
-			}
-		}
-		else
-		{
-			poly->texCoord = NULL;
-		}
-	}
-
-	*ppFileData = pFileData;
-
-	return true;
-}
-
 /*!
  * Load shape level connectors
  * \param ppFileData Pointer to the data (usualy read from a file)
@@ -304,8 +143,9 @@ static iIMDShape *_imd_load_level(const char **ppFileData, const char *FileDataE
 	const char *pFileData = *ppFileData;
 	char buffer[PATH_MAX] = {'\0'};
 	int cnt = 0, n = 0;
-	unsigned i;
+	unsigned i, j;
 	iIMDShape *s = NULL;
+	iIMDPoly *poly;
 
 	if (nlevels == 0)
 		return NULL;
@@ -373,8 +213,145 @@ static iIMDShape *_imd_load_level(const char **ppFileData, const char *FileDataE
 		return NULL;
 	}
 
-	_imd_load_polys( &pFileData, s, pieVersion);
+	s->polys = (iIMDPoly*)malloc(sizeof(iIMDPoly) * s->npolys);
+	if (s->polys == NULL)
+	{
+		debug(LOG_ERROR, "(_load_polys) Out of memory (polys)");
+		return NULL;
+	}
 
+	for (i = 0, poly = s->polys; i < s->npolys; i++, poly++)
+	{
+		unsigned int flags, npnts;
+		int cnt;
+
+		if (sscanf(pFileData, "%x %u%n", &flags, &npnts, &cnt) != 2)
+		{
+			debug(LOG_ERROR, "(_load_polys) [poly %u] error loading flags and npoints", i);
+		}
+		pFileData += cnt;
+
+		poly->flags = flags;
+		poly->npnts = npnts;
+
+		poly->pindex = (VERTEXID*)malloc(sizeof(*poly->pindex) * poly->npnts);
+		if (poly->pindex == NULL)
+		{
+			debug(LOG_ERROR, "(_load_polys) [poly %u] memory alloc fail (poly indices)", i);
+			return NULL;
+		}
+
+		for (j = 0; j < poly->npnts; j++)
+		{
+			int newID;
+
+			if (sscanf(pFileData, "%d%n", &newID, &cnt) != 1)
+			{
+				debug(LOG_ERROR, "failed poly %u. point %d", i, j);
+				return NULL;
+			}
+			pFileData += cnt;
+			poly->pindex[j] = newID;
+		}
+
+		ASSERT(poly->npnts > 2, "Lines and points not supported.");
+
+		// calc poly normal
+		{
+			Vector3f p0, p1, p2;
+
+			//assumes points already set
+			p0.x = s->points[poly->pindex[0]].x;
+			p0.y = s->points[poly->pindex[0]].y;
+			p0.z = s->points[poly->pindex[0]].z;
+
+			p1.x = s->points[poly->pindex[1]].x;
+			p1.y = s->points[poly->pindex[1]].y;
+			p1.z = s->points[poly->pindex[1]].z;
+
+			p2.x = s->points[poly->pindex[poly->npnts-1]].x;
+			p2.y = s->points[poly->pindex[poly->npnts-1]].y;
+			p2.z = s->points[poly->pindex[poly->npnts-1]].z;
+
+			poly->normal = pie_SurfaceNormal3fv(p0, p1, p2);
+		}
+
+		// PIE2 only
+		if (poly->flags & iV_IMD_TEXANIM)
+		{
+			unsigned int nFrames, pbRate, tWidth, tHeight;
+
+			// even the psx needs to skip the data
+			if (sscanf(pFileData, "%d %d %d %d%n", &nFrames, &pbRate, &tWidth, &tHeight, &cnt) != 4)
+			{
+				debug(LOG_ERROR, "(_load_polys) [poly %u] error reading texanim data", i);
+				return NULL;
+			}
+			pFileData += cnt;
+
+			ASSERT(tWidth > 0, "%s: texture width = %d", GetLastResourceFilename(), tWidth);
+			ASSERT(tHeight > 0, "%s: texture height = %d (width=%d)", GetLastResourceFilename(), tHeight, tWidth);
+
+			/* Must have same number of frames and same playback rate for all polygons */
+			s->numFrames = nFrames;
+			s->animInterval = pbRate;
+
+			if (pieVersion == PIE_FLOAT_VER)
+			{
+				poly->texAnim.x = tWidth;
+				poly->texAnim.y = tHeight;
+			}
+			else
+			{
+				poly->texAnim.x = tWidth / OLD_TEXTURE_SIZE_FIX;
+				poly->texAnim.y = tHeight / OLD_TEXTURE_SIZE_FIX;
+			}
+		}
+		else
+		{
+			poly->texAnim.x = 0;
+			poly->texAnim.y = 0;
+		}
+
+		// PC texture coord routine
+		if (poly->flags & iV_IMD_TEX)
+		{
+			poly->texCoord = (Vector2f*)malloc(sizeof(Vector2f) * poly->npnts);
+			if (poly->texCoord == NULL)
+			{
+				debug(LOG_ERROR, "(_load_polys) [poly %u] memory alloc fail (vertex struct)", i);
+				return NULL;
+			}
+
+			for (j = 0; j < poly->npnts; j++)
+			{
+				float VertexU, VertexV;
+				if (sscanf(pFileData, "%f %f%n", &VertexU, &VertexV, &cnt) != 2)
+				{
+					debug(LOG_ERROR, "(_load_polys) [poly %u] error reading tex outline", i);
+					return NULL;
+				}
+				pFileData += cnt;
+
+				if (pieVersion == PIE_FLOAT_VER)
+				{
+					poly->texCoord[j].x = VertexU;
+					poly->texCoord[j].y = VertexV;
+				}
+				else
+				{
+					poly->texCoord[j].x = VertexU / OLD_TEXTURE_SIZE_FIX;
+					poly->texCoord[j].y = VertexV / OLD_TEXTURE_SIZE_FIX;
+				}
+			}
+		}
+		else
+		{
+			poly->texCoord = NULL;
+		}
+	}
+
+	*ppFileData = pFileData;
 
 	// NOW load optional stuff
 	while (!AtEndOfFile(pFileData, FileDataEnd)) // check for end of file (give or take white space)
