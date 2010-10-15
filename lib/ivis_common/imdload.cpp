@@ -216,41 +216,6 @@ static bool _imd_load_polys( const char **ppFileData, iIMDShape *s, int pieVersi
 	return true;
 }
 
-
-static BOOL _imd_load_points( const char **ppFileData, iIMDShape *s )
-{
-	const char *pFileData = *ppFileData;
-	unsigned int i;
-	int cnt;
-
-	//load the points then pass through a second time to setup bounding datavalues
-	s->points = (Vector3f*)malloc(sizeof(Vector3f) * s->npoints);
-	if (s->points == NULL)
-	{
-		return false;
-	}
-
-	// Read in points
-	for (i = 0; i < s->npoints; i++)
-	{
-		if (sscanf(pFileData, "%f %f %f%n", &s->points[i].x, &s->points[i].y, &s->points[i].z, &cnt) != 3)
-		{
-			debug(LOG_ERROR, "(_load_points) file corrupt -K");
-			free(s->points);
-			s->points = NULL;
-			return false;
-		}
-		pFileData += cnt;
-	}
-
-	*ppFileData = pFileData;
-
-	_imd_compute_bounds(s);
-
-	return true;
-}
-
-
 /*!
  * Load shape level connectors
  * \param ppFileData Pointer to the data (usualy read from a file)
@@ -289,6 +254,7 @@ static BOOL _imd_load_connectors(const char **ppFileData, iIMDShape *s)
 
 	return true;
 }
+
 static iIMDShape *_imd_new(void)
 {
 	iIMDShape *s = (iIMDShape*)malloc(sizeof(iIMDShape));
@@ -339,6 +305,7 @@ static iIMDShape *_imd_load_level(const char **ppFileData, const char *FileDataE
 	const char *pFileData = *ppFileData;
 	char buffer[PATH_MAX] = {'\0'};
 	int cnt = 0, n = 0;
+	unsigned i;
 	iIMDShape *s = NULL;
 
 	if (nlevels == 0)
@@ -370,8 +337,29 @@ static iIMDShape *_imd_load_level(const char **ppFileData, const char *FileDataE
 		return NULL;
 	}
 
-	_imd_load_points( &pFileData, s );
+	//load the points
+	s->points = (Vector3f*)malloc(sizeof(Vector3f) * s->npoints);
+	if (s->points == NULL)
+	{
+		return false;
+	}
 
+	// Read in points
+	for (i = 0; i < s->npoints; i++)
+	{
+		if (sscanf(pFileData, "%f %f %f%n", &s->points[i].x, &s->points[i].y, &s->points[i].z, &cnt) != 3)
+		{
+			debug(LOG_ERROR, "(_load_points) file corrupt -K");
+			free(s->points);
+			s->points = NULL;
+			return false;
+		}
+		pFileData += cnt;
+	}
+
+	*ppFileData = pFileData;
+
+	_imd_compute_bounds(s);
 
 	if (sscanf(pFileData, "%s %d%n", buffer, &s->npolys, &cnt) != 2)
 	{
