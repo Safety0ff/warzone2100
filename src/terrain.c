@@ -1484,6 +1484,4 @@ void drawWater(void)
 	glDisable(GL_TEXTURE_GEN_S);
 	glDisable(GL_TEXTURE_GEN_T);
 	glMatrixMode(GL_MODELVIEW);
-	glDisable(GL_TEXTURE_GEN_S);
-	glDisable(GL_TEXTURE_GEN_T);
 }
