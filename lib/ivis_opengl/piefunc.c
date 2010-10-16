@@ -122,7 +122,6 @@ void pie_DrawSkybox(float scale, int u, int v, int w, int h)
 	// enable alpha
 	pie_SetRendMode(REND_ALPHA);
 
-	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT | GL_FOG_BIT);
 	// no use in updating the depth buffer
 	glDepthMask(GL_FALSE);
 
@@ -158,7 +157,11 @@ void pie_DrawSkybox(float scale, int u, int v, int w, int h)
 		glTexCoord2f(u + w * 8, v); 	glVertex3f(-r, r, r); // top r
 	glEnd();
 
-	glPopAttrib();
+	glDepthMask(GL_TRUE);
+	if (rendStates.fogEnabled)
+	{
+		glEnable(GL_FOG);
+	}
 }
 
 /// Draws a fog colored box which is wider at the top
@@ -172,7 +175,6 @@ void pie_DrawFogBox(float left, float right, float front, float back, float heig
 
 	pie_SetRendMode(REND_OPAQUE);
 
-	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT | GL_FOG_BIT);
 	// no use in updating the depth buffer
 	glDepthMask(GL_FALSE);
 	glDisable(GL_FOG);
@@ -195,7 +197,12 @@ void pie_DrawFogBox(float left, float right, float front, float back, float heig
 		glVertex3f(-left, 0, front); // bottom r
 		glVertex3f(-left-wider, height, front+wider); // top r
 	glEnd();
-	glPopAttrib();
+
+	glDepthMask(GL_TRUE);
+	if (rendStates.fogEnabled)
+	{
+		glEnable(GL_FOG);
+	}
 }
 
 UBYTE pie_ByteScale(UBYTE a, UBYTE b)
