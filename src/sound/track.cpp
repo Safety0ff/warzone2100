@@ -19,10 +19,10 @@
 */
 
 #include "tracklib.h"
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
 #include "audio_id.h"
-#include "src/droid.h"
+#include "droid.h"
 
 //*
 //

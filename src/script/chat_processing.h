@@ -25,7 +25,7 @@
 #ifndef _chat_processing_h
 #define _chat_processing_h
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "script.h"
 
 #ifndef MAXSTRLEN

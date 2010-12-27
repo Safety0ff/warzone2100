@@ -26,18 +26,18 @@
  */
 /***************************************************************************/
 
-#include "lib/framework/frame.h"
-#include "lib/framework/opengl.h"
+#include "framework/frame.h"
+#include "framework/opengl.h"
 #include <time.h>
 
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/pieclip.h"
-#include "lib/ivis_common/piefunc.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_common/tex.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/piemode.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/pieclip.h"
+#include "ivis_common/piefunc.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_common/tex.h"
 #include "piematrix.h"
 #include "screen.h"
 

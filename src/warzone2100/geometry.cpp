@@ -20,11 +20,11 @@
 /* Geometry.c - holds trig/vector deliverance specific stuff for 3D */
 /* Alex McLean, Pumpkin Studios, EIDOS Interactive */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
-#include "lib/ivis_common/ivisdef.h"
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/gamelib/gtime.h"
+#include "ivis_common/ivisdef.h"
+#include "ivis_opengl/piematrix.h"
+#include "gamelib/gtime.h"
 
 #include "geometry.h"
 #include "objectdef.h"

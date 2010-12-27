@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_STRUCTUREDEF_H__
 #define __INCLUDED_STRUCTUREDEF_H__
 
-#include "lib/gamelib/animobj.h"
+#include "gamelib/animobj.h"
 #include "positiondef.h"
 #include "basedef.h"
 #include "statsdef.h"

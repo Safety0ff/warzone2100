@@ -21,8 +21,8 @@
 #ifndef __INCLUDED_SRC_DESIGN_H__
 #define __INCLUDED_SRC_DESIGN_H__
 
-#include "lib/widget/widgbase.h"
-#include "src/droiddef.h"
+#include "widget/widgbase.h"
+#include "droiddef.h"
 
 /* Design screen ID's */
 #define IDDES_FORM			5000		// The base form for the design screen

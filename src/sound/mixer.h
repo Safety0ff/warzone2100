@@ -21,7 +21,7 @@
 #ifndef __INCLUDED_LIB_SOUND_MIXER_H__
 #define __INCLUDED_LIB_SOUND_MIXER_H__
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "audio.h"
 
 float sound_GetMusicVolume(void);

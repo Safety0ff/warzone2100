@@ -22,7 +22,7 @@
 #define __INCLUDED_LIB_SOUND_OPENAL_ERROR_H__
 
 #if !defined(WZ_NOSOUND)
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #ifdef WZ_OS_MAC
 # include <OpenAL/al.h>

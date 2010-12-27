@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_LIB_SOUND_AUD_H__
 #define __INCLUDED_LIB_SOUND_AUD_H__
 
-#include "lib/framework/vector.h"
+#include "framework/vector.h"
 
 struct SIMPLE_OBJECT;
 

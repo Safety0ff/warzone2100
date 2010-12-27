@@ -28,7 +28,7 @@
 #ifndef _pieMatrix_h
 #define _pieMatrix_h
 
-#include "lib/ivis_common/piedef.h"
+#include "ivis_common/piedef.h"
 
 //*************************************************************************
 

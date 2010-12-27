@@ -18,8 +18,8 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/rendmode.h"
+#include "framework/frame.h"
+#include "ivis_common/rendmode.h"
 
 iSurface *iV_SurfaceCreate(int width, int height)
 {

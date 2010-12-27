@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_RESEARCHDEF_H__
 #define __INCLUDED_RESEARCHDEF_H__
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 /* Research struct type definitions */
 typedef enum

@@ -23,13 +23,13 @@
  *  Lexical analyser for multiplayer chat messages.
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 // FIXME: #include from src/
-#include "src/scriptfuncs.h"
+#include "scriptfuncs.h"
 
-#include "lib/script/script.h"
-#include "lib/script/chat_processing.h"
+#include "script/script.h"
+#include "script/chat_processing.h"
 
 /* Get the Yacc definitions */
 #include "chat_parser.tab.hpp"

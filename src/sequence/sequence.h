@@ -20,7 +20,7 @@
 #ifndef __INCLUDED_LIB_SEQUENCE_SEQUENCE_H__
 #define __INCLUDED_LIB_SEQUENCE_SEQUENCE_H__
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 extern bool seq_Play(const char* filename);
 extern bool seq_Playing(void);

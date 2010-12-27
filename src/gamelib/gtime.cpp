@@ -26,12 +26,11 @@
 
 #include <time.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/wzapp_c.h"
+#include "framework/frame.h"
+#include "framework/wzapp_c.h"
 #include "gtime.h"
-#include "src/multiplay.h"
-#include "lib/netplay/netplay.h"
-
+#include "netplay/netplay.h"
+#include "multiplay.h"
 
 /* See header file for documentation */
 UDWORD gameTime = 0, deltaGameTime = 0, graphicsTime = 0, deltaGraphicsTime = 0, realTime = 0, deltaRealTime = 0;

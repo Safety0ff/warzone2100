@@ -24,11 +24,11 @@
  *
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "map.h"
 
-#include "lib/script/script.h"
-#include "lib/netplay/netplay.h"
+#include "script/script.h"
+#include "netplay/netplay.h"
 #include "scripttabs.h"
 #include "scriptextern.h"
 
@@ -38,7 +38,7 @@
 
 #include "main.h"
 #include "hci.h"
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 
 
 // current game level

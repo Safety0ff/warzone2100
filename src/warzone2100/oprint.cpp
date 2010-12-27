@@ -21,7 +21,7 @@
  *  Object information printing routines
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "objects.h"
 #include "projectile.h"
 #include "console.h"

@@ -24,9 +24,9 @@
  *
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
-#include "lib/framework/listmacs.h"
+#include "framework/listmacs.h"
 #include "map.h"
 #include "wrappers.h"
 

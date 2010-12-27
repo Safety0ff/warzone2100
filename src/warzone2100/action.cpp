@@ -24,11 +24,11 @@
  *
  */
 
-#include "lib/framework/frame.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
-#include "lib/netplay/netplay.h"
+#include "framework/frame.h"
+#include "script/script.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
+#include "netplay/netplay.h"
 
 #include "action.h"
 #include "combat.h"

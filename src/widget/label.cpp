@@ -21,14 +21,14 @@
  *  Functions for the label widget.
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "widget.h"
 #include "widgint.h"
 #include "label.h"
 #include "form.h"
 #include "tip.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_common/textdraw.h"
+#include "ivis_common/textdraw.h"
 
 W_LABINIT::W_LABINIT()
 	: pText(NULL)

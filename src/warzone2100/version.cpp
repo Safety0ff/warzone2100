@@ -18,15 +18,15 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/debug.h"
-#include "lib/framework/string_ext.h"
-#include "lib/framework/stdio_ext.h"
+#include "framework/frame.h"
+#include "framework/debug.h"
+#include "framework/string_ext.h"
+#include "framework/stdio_ext.h"
 #include "version.h"
 #include "stringdef.h"
 
 #define SVN_AUTOREVISION_STATIC static
-#include "src/autorevision.h"
+#include "autorevision.h"
 
 #if (SVN_LOW_REV < SVN_REV)
 # define SVN_FULL_REV_STR "r" SVN_LOW_REV_STR ":" SVN_REV_STR

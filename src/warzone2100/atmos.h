@@ -21,8 +21,8 @@
 #ifndef __INCLUDED_SRC_ATMOS_H__
 #define __INCLUDED_SRC_ATMOS_H__
 
-#include "lib/framework/vector.h"
-#include "lib/ivis_common/ivisdef.h"
+#include "framework/vector.h"
+#include "ivis_common/ivisdef.h"
 
 typedef struct _atmosParticle
 {

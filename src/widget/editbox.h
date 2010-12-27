@@ -26,8 +26,8 @@
 
 #include "widget.h"
 #include "widgbase.h"
-#include "lib/ivis_common/textdraw.h"
-#include "lib/framework/utf.h"
+#include "ivis_common/textdraw.h"
+#include "framework/utf.h"
 
 /* Edit Box states */
 #define WEDBS_FIXED		0x0001		// No editing is going on

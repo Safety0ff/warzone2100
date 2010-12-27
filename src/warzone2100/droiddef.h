@@ -26,7 +26,7 @@
 
 #include <vector>
 
-#include "lib/gamelib/animobj.h"
+#include "gamelib/animobj.h"
 
 #include "stringdef.h"
 #include "actiondef.h"

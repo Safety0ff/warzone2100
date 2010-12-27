@@ -24,8 +24,8 @@
 #ifndef __INCLUDED_OBJECTDEF_H__
 #define __INCLUDED_OBJECTDEF_H__
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/pietypes.h"
+#include "framework/frame.h"
+#include "ivis_common/pietypes.h"
 
 #include "functiondef.h"
 #include "movedef.h"

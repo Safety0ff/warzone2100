@@ -25,7 +25,7 @@
 #ifndef __INCLUDED_SRC_MULTISTATS_H__
 #define __INCLUDED_SRC_MULTISTATS_H__
 
-#include "lib/netplay/netplay.h"
+#include "netplay/netplay.h"
 
 typedef struct
 {

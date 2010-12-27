@@ -25,15 +25,15 @@
  */
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/framework/frameresource.h"
-#include "lib/gamelib/gtime.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "framework/frameresource.h"
+#include "gamelib/gtime.h"
 #include "objects.h"
 #include "stats.h"
 #include "map.h"
 #include "main.h"
-#include "lib/sound/audio_id.h"
+#include "sound/audio_id.h"
 #include "projectile.h"
 #include "text.h"
 

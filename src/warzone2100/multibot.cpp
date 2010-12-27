@@ -23,7 +23,7 @@
  * Alex Lee , 97/98 Pumpkin Studios, Bath
  * Multiplay stuff relevant to droids only.
  */
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include "droid.h"						// for droid sending and ordering.
 #include "droiddef.h"
@@ -34,7 +34,7 @@
 #include "order.h"
 #include "map.h"
 #include "group.h"
-#include "lib/netplay/netplay.h"					// the netplay library.
+#include "netplay/netplay.h"					// the netplay library.
 #include "multiplay.h"					// warzone net stuff.
 #include "multijoin.h"
 #include "cmddroid.h"					// command droids

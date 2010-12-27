@@ -24,11 +24,11 @@
  *
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/strres.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "framework/strres.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
 
 #include "console.h"
 #include "hci.h"

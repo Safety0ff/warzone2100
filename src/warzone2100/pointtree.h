@@ -20,7 +20,7 @@
 #ifndef _point_tree_h
 #define _point_tree_h
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 #include <vector>
 

@@ -33,7 +33,7 @@
 #include "frameint.h"
 #include "configfile.h"
 
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 
 /* The possible states for keys */
 typedef enum _key_state

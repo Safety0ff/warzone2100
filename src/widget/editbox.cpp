@@ -23,16 +23,16 @@
 
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/utf.h"
-#include "lib/framework/wzapp_c.h"
+#include "framework/frame.h"
+#include "framework/utf.h"
+#include "framework/wzapp_c.h"
 #include "widget.h"
 #include "widgint.h"
 #include "editbox.h"
 #include "form.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/textdraw.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/textdraw.h"
 #include "scrap.h"
 
 

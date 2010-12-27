@@ -17,7 +17,7 @@
 	along with Warzone 2100; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "parsetest.h"
 #include "levels.h"
 

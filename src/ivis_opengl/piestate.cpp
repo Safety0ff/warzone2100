@@ -22,12 +22,12 @@
  */
 
 #include <GLee.h>
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include <SDL.h>
 #include <SDL_mouse.h>
 #include <physfs.h>
-#include "lib/framework/opengl.h"
+#include "framework/opengl.h"
 
 #if defined(WZ_OS_MAC)
 # include <OpenGL/glu.h>
@@ -35,11 +35,11 @@
 # include <GL/glu.h>
 #endif
 
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/tex.h"
-#include "lib/ivis_common/piepalette.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/tex.h"
+#include "ivis_common/piepalette.h"
 #include "screen.h"
 
 /*

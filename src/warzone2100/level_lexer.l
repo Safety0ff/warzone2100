@@ -23,11 +23,11 @@
  * lexer for loading level description files
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/string_ext.h"
+#include "framework/frame.h"
+#include "framework/string_ext.h"
 
-#include "src/levels.h"
-#include "src/levelint.h"
+#include "levels.h"
+#include "levelint.h"
 
 // fwrite declared with warn_unused_result, resulting in mysterious errors in "%%" on some distros.
 static inline bool no_warn_unused_result(int ignore) { if (ignore) {} return true; }
@@ -38,7 +38,7 @@ static inline bool no_warn_unused_result(int ignore) { if (ignore) {} return tru
 #define YYLMAX	255
 #endif
 
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 
 /* Store for any string values */
 static char aText[YYLMAX];

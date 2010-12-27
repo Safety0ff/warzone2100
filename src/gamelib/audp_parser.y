@@ -19,11 +19,11 @@
 */
 %{
 
-#include "lib/framework/frame.h"
-#include "lib/gamelib/parser.h"
-#include "lib/sound/audio.h"
-#include "lib/gamelib/anim.h"
-#include "lib/framework/lexer_input.h"
+#include "framework/frame.h"
+#include "gamelib/parser.h"
+#include "sound/audio.h"
+#include "gamelib/anim.h"
+#include "framework/lexer_input.h"
 
 static int		g_iCurAnimID = 0;
 static Vector3i vecPos, vecRot, vecScale;

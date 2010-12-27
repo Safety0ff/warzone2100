@@ -22,10 +22,10 @@
  * Draws component objects - oh yes indeed.
 */
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/netplay/netplay.h"
+#include "framework/frame.h"
+#include "ivis_common/piestate.h"
+#include "ivis_opengl/piematrix.h"
+#include "netplay/netplay.h"
 
 #include "action.h"
 #include "component.h"

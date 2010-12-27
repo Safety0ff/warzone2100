@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_LIB_WIDGET_WIDGINT_H__
 #define __INCLUDED_LIB_WIDGET_WIDGINT_H__
 
-#include "lib/framework/input.h"
+#include "framework/input.h"
 #include "widgbase.h"
 
 /* Set the id number for widgRunScreen to return */

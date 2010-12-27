@@ -23,9 +23,9 @@
  *  Parser for string resource files
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/framework/strresly.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "framework/strresly.h"
 
 extern int strres_lex(void);
 extern int strres_get_lineno(void);

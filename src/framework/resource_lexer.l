@@ -23,16 +23,16 @@
  *  Lexical analyser for resource (*.wrf) files
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
-#include "lib/framework/resly.h"
+#include "framework/resly.h"
 
 /* Get the Yacc definitions */
 #include "resource_parser.tab.hpp"
 
 extern void res_error(const char* msg);
 
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 
 // fwrite declared with warn_unused_result, resulting in mysterious errors in "%%" on some distros.
 static inline bool no_warn_unused_result(int ignore) { if (ignore) {} return true; }

@@ -27,8 +27,8 @@
 	and overlays and needs to render to a specified buffer for later use.
 */
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_opengl/piematrix.h"
+#include "framework/frame.h"
+#include "ivis_opengl/piematrix.h"
 
 #include "component.h"
 #include "intdisplay.h"

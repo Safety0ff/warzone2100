@@ -23,11 +23,11 @@
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0500
 #endif
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "dumpinfo.h"
 #include "exchndl.h"
 // FIXME: #include from src/
-#include "src/version.h"
+#include "version.h"
 
 #include <assert.h>
 #include <windows.h>

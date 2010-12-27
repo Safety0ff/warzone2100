@@ -23,9 +23,9 @@
 #ifndef _resly_h
 #define _resly_h
 
-#include "lib/framework/wzglobal.h"
+#include "framework/wzglobal.h"
 
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 
 /* The initial resource directory and the current resource directory */
 extern char aResDir[PATH_MAX];

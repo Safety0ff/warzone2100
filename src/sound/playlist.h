@@ -21,7 +21,7 @@
 #ifndef __INCLUDED_LIB_SOUND_PLAYLIST_H__
 #define __INCLUDED_LIB_SOUND_PLAYLIST_H__
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 void PlayList_Init(void);
 void PlayList_Quit(void);

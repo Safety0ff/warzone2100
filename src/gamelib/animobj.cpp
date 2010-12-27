@@ -29,7 +29,7 @@
 
 #include <string.h>
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "hashtable.h"
 #include "gtime.h"
 #include "animobj.h"

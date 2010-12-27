@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_SRC_TRANSPORTER_H__
 #define __INCLUDED_SRC_TRANSPORTER_H__
 
-#include "lib/widget/widget.h"
+#include "widget/widget.h"
 
 #define IDTRANS_FORM			9000	//The Transporter base form
 #define IDTRANS_CONTENTFORM		9003	//The Transporter Contents form

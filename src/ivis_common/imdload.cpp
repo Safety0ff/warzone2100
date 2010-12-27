@@ -24,11 +24,11 @@
  * Load IMD (.pie) files
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/string_ext.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/fixedpoint.h"
-#include "lib/ivis_opengl/piematrix.h"
+#include "framework/frame.h"
+#include "framework/string_ext.h"
+#include "framework/frameresource.h"
+#include "framework/fixedpoint.h"
+#include "ivis_opengl/piematrix.h"
 
 #include "ivisdef.h" // for imd structures
 #include "imd.h" // for imd structures

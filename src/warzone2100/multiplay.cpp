@@ -26,9 +26,9 @@
  */
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/input.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/input.h"
+#include "framework/strres.h"
 #include "map.h"
 
 #include "stats.h"									// for templates.
@@ -44,8 +44,8 @@
 #include "wrappers.h"								// for game over
 #include "component.h"
 #include "frontend.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
 #include "levels.h"
 #include "selection.h"
 
@@ -53,15 +53,15 @@
 #include "warcam.h"	// these 4 for fireworks
 #include "mission.h"
 #include "effects.h"
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 #include "keybind.h"
 
-#include "lib/script/script.h"				//Because of "ScriptTabs.h"
+#include "script/script.h"				//Because of "ScriptTabs.h"
 #include "scripttabs.h"			//because of CALL_AI_MSG
 #include "scriptcb.h"			//for console callback
 #include "scriptfuncs.h"
 
-#include "lib/netplay/netplay.h"								// the netplay library.
+#include "netplay/netplay.h"								// the netplay library.
 #include "multiplay.h"								// warzone net stuff.
 #include "multijoin.h"								// player management stuff.
 #include "multirecv.h"								// incoming messages stuff

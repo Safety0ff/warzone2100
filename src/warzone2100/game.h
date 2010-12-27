@@ -29,7 +29,7 @@
 #ifndef __INCLUDED_SRC_GAME_H__
 #define __INCLUDED_SRC_GAME_H__
 
-#include "lib/framework/vector.h"
+#include "framework/vector.h"
 
 /***************************************************************************/
 /*

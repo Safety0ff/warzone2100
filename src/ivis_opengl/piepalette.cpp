@@ -17,10 +17,10 @@
 	along with Warzone 2100; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
-#include "lib/framework/frame.h"
-#include "lib/framework/file.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/piepalette.h"
+#include "framework/frame.h"
+#include "framework/file.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/piepalette.h"
 #include "screen.h"
 
 PIELIGHT psPalette[WZCOL_MAX];

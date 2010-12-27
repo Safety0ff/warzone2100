@@ -24,8 +24,8 @@
  *
  */
 
-#include "lib/framework/frame.h"
-#include "lib/script/script.h"
+#include "framework/frame.h"
+#include "script/script.h"
 
 #include "cluster.h"
 #include "map.h"

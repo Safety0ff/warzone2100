@@ -22,19 +22,19 @@
  *  Handles the In Game MultiPlayer Screen, alliances etc...
  *  Also the selection of disk files..
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/widget/button.h"
-#include "lib/widget/widget.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "widget/button.h"
+#include "widget/widget.h"
 
 #include "display3d.h"
 #include "intdisplay.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/gamelib/gtime.h"
-#include "lib/ivis_opengl/piematrix.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/piepalette.h"
+#include "gamelib/gtime.h"
+#include "ivis_opengl/piematrix.h"
 #include "levels.h"
 #include "objmem.h"		 	//for droid lists.
 #include "component.h"		// for disaplycomponentobj.
@@ -45,7 +45,7 @@
 #include "console.h"
 #include "ai.h"
 #include "frend.h"
-#include "lib/netplay/netplay.h"
+#include "netplay/netplay.h"
 #include "multiplay.h"
 #include "multistat.h"
 #include "multimenu.h"
@@ -57,7 +57,7 @@
 #include "keymap.h"
 #include "keybind.h"
 #include "loop.h"
-#include "lib/framework/frameint.h"
+#include "framework/frameint.h"
 
 // ////////////////////////////////////////////////////////////////////////////
 // defines

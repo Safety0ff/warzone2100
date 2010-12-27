@@ -24,8 +24,8 @@
 #ifndef __INCLUDED_SRC_SCRIPTTABS_H__
 #define __INCLUDED_SRC_SCRIPTTABS_H__
 
-#include "lib/script/event.h" // needed for _scr_user_types
-#include "lib/script/parse.h"
+#include "script/event.h" // needed for _scr_user_types
+#include "script/parse.h"
 
 // How many game ticks for one event tick
 #define SCR_TICKRATE	100

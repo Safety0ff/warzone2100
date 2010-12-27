@@ -20,7 +20,7 @@
 #ifndef _netlog_h
 #define _netlog_h
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include "netplay.h"
 

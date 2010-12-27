@@ -18,8 +18,8 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include "lib/framework/frame.h"
-#include "lib/sound/audio.h"
+#include "framework/frame.h"
+#include "sound/audio.h"
 
 #include "baseobject.h"
 #include "droid.h"

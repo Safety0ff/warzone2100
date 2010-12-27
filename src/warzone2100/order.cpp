@@ -25,9 +25,9 @@
  */
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/input.h"
-#include "lib/framework/math_ext.h"
+#include "framework/frame.h"
+#include "framework/input.h"
+#include "framework/math_ext.h"
 
 #include "objects.h"
 #include "order.h"
@@ -36,14 +36,14 @@
 #include "geometry.h"
 #include "projectile.h"
 #include "effects.h"	// for waypoint display
-#include "lib/gamelib/gtime.h"
-#include "lib/netplay/netplay.h"
+#include "gamelib/gtime.h"
+#include "netplay/netplay.h"
 #include "intorder.h"
 #include "orderdef.h"
 #include "transporter.h"
 #include "group.h"
 #include "cmddroid.h"
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scripttabs.h"
 #include "scriptcb.h"
 
@@ -55,8 +55,8 @@
 #include "display.h"
 #include "ai.h"
 #include "warcam.h"
-#include "lib/sound/audio_id.h"
-#include "lib/sound/audio.h"
+#include "sound/audio_id.h"
+#include "sound/audio.h"
 #include "fpath.h"
 #include "display3d.h"
 #include "combat.h"

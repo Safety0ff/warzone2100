@@ -21,15 +21,15 @@
  *  Functions for the button widget
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameint.h"
+#include "framework/frame.h"
+#include "framework/frameint.h"
 #include "widget.h"
 #include "widgint.h"
 #include "button.h"
 #include "form.h"
 #include "tip.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/gamelib/gtime.h"
+#include "ivis_common/pieblitfunc.h"
+#include "gamelib/gtime.h"
 
 
 /* Initialise the button module */

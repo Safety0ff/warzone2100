@@ -24,14 +24,14 @@
  * Alex Lee. Pumpkin Studios. Eidos PLC 98,
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/input.h"
-#include "lib/ivis_common/bitimage.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/sound/mixer.h"
-#include "lib/widget/button.h"
-#include "lib/widget/label.h"
-#include "lib/widget/slider.h"
+#include "framework/frame.h"
+#include "framework/input.h"
+#include "ivis_common/bitimage.h"
+#include "ivis_common/pieblitfunc.h"
+#include "sound/mixer.h"
+#include "widget/button.h"
+#include "widget/label.h"
+#include "widget/slider.h"
 
 #include "advvis.h"
 #include "challenge.h"

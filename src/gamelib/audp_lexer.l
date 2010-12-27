@@ -20,11 +20,11 @@
 %{
 
 /* include framework */
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include <physfs.h>
 
-#include "lib/gamelib/parser.h"
+#include "gamelib/parser.h"
 
 /* Get the Yacc definitions */
 #include "audp_parser.tab.hpp"
@@ -38,7 +38,7 @@ static inline bool no_warn_unused_result(int ignore) { if (ignore) {} return tru
 
 void audp_error(const char* fmt);
 
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 
 #ifndef yyextra
 # define yyextra yyget_extra()

@@ -33,7 +33,7 @@
 #error Framework header files MUST be included from Frame.h ONLY.
 #endif
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 /* ------------------------------------------------------------------------------------------- */
 

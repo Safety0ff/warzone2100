@@ -21,7 +21,7 @@
 #ifndef __INCLUDED_SRC_MESSAGELY_H__
 #define __INCLUDED_SRC_MESSAGELY_H__
 
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 
 extern int message_parse(void* ppsViewData);
 extern void message_set_extra(YY_EXTRA_TYPE user_defined);

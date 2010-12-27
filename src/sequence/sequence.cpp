@@ -55,16 +55,16 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameint.h"
-#include "lib/framework/opengl.h"
+#include "framework/frame.h"
+#include "framework/frameint.h"
+#include "framework/opengl.h"
 #include "sequence.h"
 #include "timer.h"
-#include "lib/framework/math_ext.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/openal_error.h"
-#include "lib/sound/mixer.h"
+#include "framework/math_ext.h"
+#include "ivis_common/piestate.h"
+#include "sound/audio.h"
+#include "sound/openal_error.h"
+#include "sound/mixer.h"
 
 #include <theora/theora.h>
 #include <physfs.h>

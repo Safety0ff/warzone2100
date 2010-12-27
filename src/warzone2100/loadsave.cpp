@@ -29,22 +29,22 @@
 #include <physfs.h>
 #include <time.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/framework/input.h"
-#include "lib/framework/stdio_ext.h"
-#include "lib/widget/button.h"
-#include "lib/widget/editbox.h"
-#include "lib/widget/widget.h"
-#include "lib/ivis_common/piepalette.h"		// for predefined colours.
-#include "lib/ivis_common/bitimage.h"
-#include "lib/ivis_common/pieblitfunc.h"		// for boxfill
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "framework/input.h"
+#include "framework/stdio_ext.h"
+#include "widget/button.h"
+#include "widget/editbox.h"
+#include "widget/widget.h"
+#include "ivis_common/piepalette.h"		// for predefined colours.
+#include "ivis_common/bitimage.h"
+#include "ivis_common/pieblitfunc.h"		// for boxfill
 #include "hci.h"
 #include "loadsave.h"
 #include "multiplay.h"
 #include "game.h"
-#include "lib/sound/audio_id.h"
-#include "lib/sound/audio.h"
+#include "sound/audio_id.h"
+#include "sound/audio.h"
 #include "frontend.h"
 #include "main.h"
 #include "display3d.h"
@@ -54,11 +54,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #endif
-#include "lib/netplay/netplay.h"
+#include "netplay/netplay.h"
 #include "loop.h"
 #include "intdisplay.h"
 #include "mission.h"
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 
 #define totalslots 36			// saves slots
 #define slotsInColumn 12		// # of slots in a column

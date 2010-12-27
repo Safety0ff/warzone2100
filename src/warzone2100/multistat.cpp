@@ -25,9 +25,9 @@
  * load / update / store multiplayer statistics for league tables etc...
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/file.h"
-#include "lib/netplay/nettypes.h"
+#include "framework/frame.h"
+#include "framework/file.h"
+#include "netplay/nettypes.h"
 
 #include "main.h"
 #include "mission.h" // for cheats

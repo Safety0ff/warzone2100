@@ -29,10 +29,10 @@
 
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/input.h"
-#include "lib/framework/strres.h"
-#include "lib/gamelib/gtime.h"
+#include "framework/frame.h"
+#include "framework/input.h"
+#include "framework/strres.h"
+#include "gamelib/gtime.h"
 #include "keymap.h"
 #include "console.h"
 #include "keybind.h"
@@ -40,7 +40,7 @@
 #include "keymap.h"
 #include "keyedit.h"
 #include "scriptcb.h"
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scripttabs.h"
 
 

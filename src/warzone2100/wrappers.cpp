@@ -23,15 +23,15 @@
  * AlexL. Pumpkin Studios, EIDOS Interactive, 1997
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_opengl/screen.h"
-#include "lib/netplay/netplay.h"	// multiplayer
-#include "lib/sound/audio.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piemode.h"
+#include "ivis_common/piestate.h"
+#include "ivis_opengl/screen.h"
+#include "netplay/netplay.h"	// multiplayer
+#include "sound/audio.h"
 
 #include "frontend.h"
 #include "keyedit.h"

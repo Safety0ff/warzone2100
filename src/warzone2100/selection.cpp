@@ -25,9 +25,9 @@
  * Alex McLean, Pumpkin studios, EIDOS.
 */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/math_ext.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/math_ext.h"
+#include "framework/strres.h"
 
 #include "objects.h"
 #include "basedef.h"

@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_SRC_MULTIMENU__
 #define __INCLUDED_SRC_MULTIMENU__
 
-#include "lib/widget/widgbase.h"
+#include "widget/widgbase.h"
 #include "stringdef.h"
 
 // requester

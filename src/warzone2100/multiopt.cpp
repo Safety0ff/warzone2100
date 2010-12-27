@@ -24,25 +24,25 @@
  *
  * Routines for setting the game options and starting the init process.
  */
-#include "lib/framework/frame.h"			// for everything
+#include "framework/frame.h"			// for everything
 #include "map.h"
 #include "game.h"			// for loading maps
 #include "message.h"		// for clearing messages.
 #include "main.h"
 #include "display3d.h"		// for changing the viewpoint
 #include "power.h"
-#include "lib/widget/widget.h"
-#include "lib/gamelib/gtime.h"
-#include "lib/netplay/netplay.h"
+#include "widget/widget.h"
+#include "gamelib/gtime.h"
+#include "netplay/netplay.h"
 #include "hci.h"
 #include "configuration.h"			// lobby cfg.
 #include "clparse.h"
-#include "lib/ivis_common/piestate.h"
+#include "ivis_common/piestate.h"
 
 #include "component.h"
 #include "console.h"
 #include "multiplay.h"
-#include "lib/sound/audio.h"
+#include "sound/audio.h"
 #include "multijoin.h"
 #include "frontend.h"
 #include "levels.h"

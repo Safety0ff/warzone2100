@@ -24,13 +24,13 @@
 
 #define DEFINE_DRIVE_INLINE
 
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/framework/input.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "framework/input.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/gamelib/animobj.h"
-#include "lib/sound/audio.h"
+#include "gamelib/gtime.h"
+#include "gamelib/animobj.h"
+#include "sound/audio.h"
 
 #include "drive.h"
 #include "objects.h"
@@ -56,7 +56,7 @@
 #include "multiplay.h"
 
 // all the bollox needed for script callbacks
-#include "lib/script/parse.h"				// needed to define types in scripttabs.h (Arse!)
+#include "script/parse.h"				// needed to define types in scripttabs.h (Arse!)
 #include "scripttabs.h"			// needed to define the callback
 #include "scriptextern.h"		// needed to include the GLOBAL for checking bInTutorial
 #include "group.h"

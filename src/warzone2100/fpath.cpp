@@ -24,11 +24,11 @@
  *
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/crc.h"
-#include "lib/netplay/netplay.h"
+#include "framework/frame.h"
+#include "framework/crc.h"
+#include "netplay/netplay.h"
 
-#include "lib/framework/wzapp_c.h"
+#include "framework/wzapp_c.h"
 
 #include "objects.h"
 #include "map.h"

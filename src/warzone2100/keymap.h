@@ -21,7 +21,7 @@
 #ifndef __INCLUDED_SRC_KEYMAP_H__
 #define __INCLUDED_SRC_KEYMAP_H__
 
-#include "lib/framework/input.h"
+#include "framework/input.h"
 
 #define NO_META_KEY				9999
 #define KEYFUNC_TOGGLE_RADAR	20

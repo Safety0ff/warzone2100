@@ -23,33 +23,33 @@
  * Callback and display functions for interface.
  *
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/framework/math_ext.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "framework/math_ext.h"
 
 /* Includes direct access to render library */
-#include "lib/ivis_common/ivisdef.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/piepalette.h"
+#include "ivis_common/ivisdef.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/piepalette.h"
 
-#include "lib/ivis_common/piemode.h"			// ffs
-#include "lib/ivis_common/pieclip.h"			// ffs
-#include "lib/ivis_common/pieblitfunc.h"
+#include "ivis_common/piemode.h"			// ffs
+#include "ivis_common/pieclip.h"			// ffs
+#include "ivis_common/pieblitfunc.h"
 
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_common/bitimage.h"
-#include "lib/ivis_common/rendmode.h"
-#include "lib/ivis_opengl/piematrix.h"
+#include "ivis_common/bitimage.h"
+#include "ivis_common/rendmode.h"
+#include "ivis_opengl/piematrix.h"
 
-#include "lib/framework/input.h"
-#include "lib/widget/slider.h"
-#include "lib/widget/editbox.h"
-#include "lib/widget/button.h"
-#include "lib/widget/label.h"
-#include "lib/widget/bar.h"
+#include "framework/input.h"
+#include "widget/slider.h"
+#include "widget/editbox.h"
+#include "widget/button.h"
+#include "widget/label.h"
+#include "widget/bar.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/sound/audio.h"
+#include "gamelib/gtime.h"
+#include "sound/audio.h"
 
 #include "intdisplay.h"
 

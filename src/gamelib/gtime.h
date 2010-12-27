@@ -24,7 +24,7 @@
 #ifndef _gtime_h
 #define _gtime_h
 
-//#include "lib/netplay/nettypes.h"
+//#include "netplay/nettypes.h"
 typedef struct _netqueue NETQUEUE_;
 
 /// The number of time units per second of the game clock.

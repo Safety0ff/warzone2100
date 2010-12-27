@@ -26,7 +26,7 @@
 #define __INCLUDED_LIB_SOUND_TRACKLIB_H__
 
 #include "track.h"
-#include "lib/framework/vector.h"
+#include "framework/vector.h"
 
 BOOL	sound_InitLibrary( void );
 void	sound_ShutdownLibrary( void );

@@ -24,7 +24,7 @@
  *
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include "action.h"
 #include "cmddroid.h"

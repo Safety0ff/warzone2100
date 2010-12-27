@@ -23,20 +23,20 @@
  *  Lexical analyser resource files
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 /* Allow frame header files to be singly included */
 #define FRAME_LIB_INCLUDE
 
-#include "lib/framework/strres.h"
-#include "lib/framework/strresly.h"
+#include "framework/strres.h"
+#include "framework/strresly.h"
 
 #include <physfs.h>
 
 /* Get the Yacc definitions */
 #include "strres_parser.tab.hpp"
 
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 
 // fwrite declared with warn_unused_result, resulting in mysterious errors in "%%" on some distros.
 static inline bool no_warn_unused_result(int ignore) { if (ignore) {} return true; }

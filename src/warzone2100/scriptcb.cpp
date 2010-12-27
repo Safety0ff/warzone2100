@@ -26,9 +26,9 @@
 
 #include <string.h>
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "objects.h"
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scripttabs.h"
 #include "scriptcb.h"
 #include "projectile.h"

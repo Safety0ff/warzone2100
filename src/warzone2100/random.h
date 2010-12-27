@@ -20,7 +20,7 @@
 #ifndef _RAND_H_
 #define _RAND_H_
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 // Pseudorandom number generator with 19937 bit state and period of 2**19937 - 1. Equidistributed in up to 623 dimensions.
 // See http://en.wikipedia.org/wiki/Mersenne_twister

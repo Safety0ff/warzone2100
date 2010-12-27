@@ -23,8 +23,8 @@
  * Store function stats for the Structures etc.
  *
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
 
 #include "function.h"
 #include "stats.h"

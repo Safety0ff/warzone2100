@@ -27,10 +27,10 @@
 #include <deque>
 #include <sstream>
 #include <physfs.h>
-#include "lib/framework/stdio_ext.h"
-#include "lib/framework/wzglobal.h" // required for config.h
+#include "framework/stdio_ext.h"
+#include "framework/wzglobal.h" // required for config.h
 // FIXME: #include from src/
-#include "src/version.h"
+#include "version.h"
 
 #if defined(WZ_OS_UNIX)
 # include <sys/utsname.h>

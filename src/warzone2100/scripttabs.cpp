@@ -25,10 +25,10 @@
  */
 
 
-#include "lib/framework/frame.h"
-#include "lib/widget/widget.h"
+#include "framework/frame.h"
+#include "widget/widget.h"
 #include "objects.h"
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scripttabs.h"
 
 // Get all the function prototypes
@@ -46,7 +46,7 @@
 #include "levels.h"
 #include "order.h"
 #include "action.h"		//new member variable - .action
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 #include "mission.h"
 
 #include "design.h"			// for the iddes_...
@@ -55,8 +55,8 @@
 #include "multiplay.h"
 #include "intfac.h"
 #include "multimenu.h"
-#include "lib/framework/input.h"		//for key constants
-#include "lib/script/chat_processing.h"
+#include "framework/input.h"		//for key constants
+#include "script/chat_processing.h"
 
 
 /* The table of user defined types

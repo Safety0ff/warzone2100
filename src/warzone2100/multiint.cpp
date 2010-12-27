@@ -25,36 +25,36 @@
  * along with connection and game options.
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include <time.h>
 
-#include "lib/framework/frameresource.h"
-#include "lib/framework/frameint.h"
-#include "lib/framework/file.h"
-#include "lib/framework/stdio_ext.h"
+#include "framework/frameresource.h"
+#include "framework/frameint.h"
+#include "framework/file.h"
+#include "framework/stdio_ext.h"
 
 /* Includes direct access to render library */
-#include "lib/ivis_common/bitimage.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/pieclip.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_opengl/piematrix.h"			// for setgeometricoffset
-#include "lib/ivis_opengl/screen.h"
+#include "ivis_common/bitimage.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/pieclip.h"
+#include "ivis_common/piemode.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_opengl/piematrix.h"			// for setgeometricoffset
+#include "ivis_opengl/screen.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/netplay/netplay.h"
-#include "lib/script/script.h"
-#include "lib/widget/editbox.h"
-#include "lib/widget/button.h"
-#include "lib/widget/widget.h"
-#include "lib/widget/widgint.h"
-#include "lib/widget/label.h"
+#include "gamelib/gtime.h"
+#include "netplay/netplay.h"
+#include "script/script.h"
+#include "widget/editbox.h"
+#include "widget/button.h"
+#include "widget/widget.h"
+#include "widget/widgint.h"
+#include "widget/label.h"
 
-#include "lib/iniparser/iniparser.h"
+#include "iniparser/iniparser.h"
 
 #include "challenge.h"
 #include "main.h"

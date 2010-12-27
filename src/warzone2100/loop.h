@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_SRC_LOOP_H__
 #define __INCLUDED_SRC_LOOP_H__
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 typedef enum {
 	GAMECODE_CONTINUE,

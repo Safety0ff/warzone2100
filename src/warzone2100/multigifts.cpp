@@ -23,9 +23,9 @@
  * Also home to Deathmatch hardcoded RULES.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/widget/widget.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "widget/widget.h"
 #include "objmem.h"
 #include "console.h"
 #include "map.h"
@@ -35,19 +35,19 @@
 #include "anim_id.h"
 #include "hci.h"
 #include "scriptfuncs.h"		// for objectinrange.
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 #include "effects.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"			// for samples.
+#include "sound/audio.h"
+#include "sound/audio_id.h"			// for samples.
 #include "wrappers.h"			// for gameover..
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scripttabs.h"
 #include "scriptcb.h"
 #include "loop.h"
 #include "transporter.h"
 #include "mission.h" // for INVALID_XY
 
-#include "lib/netplay/netplay.h"
+#include "netplay/netplay.h"
 #include "multiplay.h"
 #include "multigifts.h"
 #include "multiint.h"			// for force name.

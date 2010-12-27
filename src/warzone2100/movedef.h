@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_MOVEDEF_H__
 #define __INCLUDED_MOVEDEF_H__
 
-#include "lib/framework/vector.h"
+#include "framework/vector.h"
 
 //Watermelon:num of VTOL weapons should be same as DROID_MAXWEAPS
 #define VTOL_MAXWEAPS		3

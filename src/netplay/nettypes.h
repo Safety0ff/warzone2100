@@ -24,9 +24,9 @@
 #ifndef __INCLUDE_LIB_NETPLAY_NETTYPES_H__
 #define __INCLUDE_LIB_NETPLAY_NETTYPES_H__
 
-#include "lib/framework/frame.h"
-#include "lib/framework/vector.h"
-#include "lib/netplay/netqueue.h"
+#include "framework/frame.h"
+#include "framework/vector.h"
+#include "netplay/netqueue.h"
 
 typedef enum packetDirectionEnum
 {

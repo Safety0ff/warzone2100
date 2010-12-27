@@ -32,14 +32,14 @@
 #include <GLee.h>
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/ivisdef.h"
-#include "lib/ivis_common/imd.h"
-#include "lib/ivis_common/piefunc.h"
-#include "lib/ivis_common/tex.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/pieclip.h"
+#include "framework/frame.h"
+#include "ivis_common/ivisdef.h"
+#include "ivis_common/imd.h"
+#include "ivis_common/piefunc.h"
+#include "ivis_common/tex.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/pieclip.h"
 
 #include "terrain.h"
 #include "map.h"

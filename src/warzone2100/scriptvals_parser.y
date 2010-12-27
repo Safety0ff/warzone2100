@@ -24,25 +24,25 @@
  * yacc grammar for loading script variable values
  *
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "framework/strres.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio.h"
+#include "gamelib/gtime.h"
+#include "script/script.h"
+#include "sound/audio.h"
 
-#include "src/scriptvals.h"
-#include "lib/framework/lexer_input.h"
+#include "scriptvals.h"
+#include "framework/lexer_input.h"
 #include "scriptvals_parser.tab.hpp"
-#include "src/scripttabs.h"
-#include "src/objects.h"
-#include "src/droid.h"
-#include "src/structure.h"
-#include "src/message.h"
-#include "src/levels.h"
-#include "src/research.h"
-#include "src/text.h"
+#include "scripttabs.h"
+#include "objects.h"
+#include "droid.h"
+#include "structure.h"
+#include "message.h"
+#include "levels.h"
+#include "research.h"
+#include "text.h"
 
 // The current script code
 static SCRIPT_CODE		*psCurrScript;

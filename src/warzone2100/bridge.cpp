@@ -18,9 +18,9 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/ivis_common/piepalette.h"
+#include "framework/frame.h"
+#include "ivis_opengl/piematrix.h"
+#include "ivis_common/piepalette.h"
 
 #include "bridge.h"
 #include "display3d.h"

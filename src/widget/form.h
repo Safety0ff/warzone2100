@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_LIB_WIDGET_FORM_H__
 #define __INCLUDED_LIB_WIDGET_FORM_H__
 
-#include "lib/widget/widget.h"
+#include "widget/widget.h"
 
 
 /* Respond to a mouse click */

@@ -35,7 +35,7 @@
 #include "frameint.h"
 #include "frameresource.h"
 #include "input.h"
-#include "lib/widget/scrap.h"
+#include "widget/scrap.h"
 #include "SDL_framerate.h"
 #include "physfs_ext.h"
 

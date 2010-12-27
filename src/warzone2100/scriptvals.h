@@ -24,8 +24,8 @@
 #ifndef __INCLUDED_SRC_SCRIPTVALS_H__
 #define __INCLUDED_SRC_SCRIPTVALS_H__
 
-#include "lib/script/interpreter.h"
-#include "lib/script/event.h"
+#include "script/interpreter.h"
+#include "script/event.h"
 #include "basedef.h"
 #include <physfs.h>
 

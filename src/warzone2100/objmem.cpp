@@ -25,15 +25,15 @@
  */
 #include <string.h>
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "objects.h"
-#include "lib/gamelib/gtime.h"
-#include "lib/netplay/netplay.h"
+#include "gamelib/gtime.h"
+#include "netplay/netplay.h"
 #include "hci.h"
 #include "map.h"
 #include "power.h"
 #include "objects.h"
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scriptvals.h"
 #include "scripttabs.h"
 #include "scriptcb.h"

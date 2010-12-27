@@ -24,8 +24,8 @@
 #ifndef __INCLUDED_LIB_WIDGET_TIP_H__
 #define __INCLUDED_LIB_WIDGET_TIP_H__
 
-#include "lib/ivis_common/textdraw.h"
-#include "lib/widget/widgbase.h"
+#include "ivis_common/textdraw.h"
+#include "widget/widgbase.h"
 
 /* Initialise the tool tip module */
 extern void tipInitialise(void);

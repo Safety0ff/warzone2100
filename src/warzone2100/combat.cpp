@@ -24,8 +24,8 @@
  *
  */
 
-#include "lib/framework/frame.h"
-#include "lib/netplay/netplay.h"
+#include "framework/frame.h"
+#include "netplay/netplay.h"
 
 #include "action.h"
 #include "cluster.h"

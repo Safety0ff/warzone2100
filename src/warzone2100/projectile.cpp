@@ -25,31 +25,31 @@
 /***************************************************************************/
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/trig.h"
+#include "framework/frame.h"
+#include "framework/trig.h"
 
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 #include "objects.h"
 #include "move.h"
 #include "action.h"
 #include "combat.h"
 #include "effects.h"
 #include "map.h"
-#include "lib/sound/audio_id.h"
-#include "lib/sound/audio.h"
+#include "sound/audio_id.h"
+#include "sound/audio.h"
 #include "anim_id.h"
 #include "projectile.h"
 #include "visibility.h"
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scripttabs.h"
 #include "scriptcb.h"
 #include "group.h"
 #include "cmddroid.h"
 #include "feature.h"
-#include "lib/ivis_common/piestate.h"
+#include "ivis_common/piestate.h"
 #include "loop.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_opengl/piematrix.h"
+#include "ivis_opengl/piematrix.h"
 
 #include "scores.h"
 

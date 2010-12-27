@@ -21,13 +21,13 @@
  *  The tool tip display system.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameint.h"
+#include "framework/frame.h"
+#include "framework/frameint.h"
 #include "widget.h"
 #include "widgint.h"
 #include "tip.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_common/pieblitfunc.h"
+#include "ivis_common/pieblitfunc.h"
 
 /* Time delay before showing the tool tip */
 #define TIP_PAUSE	200

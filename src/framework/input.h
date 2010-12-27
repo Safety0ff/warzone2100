@@ -32,7 +32,7 @@
 
 #include <SDL.h>
 #include "types.h"
-#include "lib/framework/utf.h"
+#include "framework/utf.h"
 #include "vector.h"
 
 /** Defines for all the key codes used. */

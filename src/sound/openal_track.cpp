@@ -22,10 +22,10 @@
  */
 
 // this has to be first
-#include "lib/framework/frame.h"
-#include "lib/framework/math_ext.h"
-#include "lib/framework/frameresource.h"
-#include "lib/exceptionhandler/dumpinfo.h"
+#include "framework/frame.h"
+#include "framework/math_ext.h"
+#include "framework/frameresource.h"
+#include "exceptionhandler/dumpinfo.h"
 
 #ifndef WZ_NOSOUND
 # ifdef WZ_OS_MAC

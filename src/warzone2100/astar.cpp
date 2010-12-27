@@ -41,7 +41,7 @@
  */
 
 #ifndef WZ_TESTING
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include "astar.h"
 #include "map.h"
@@ -51,8 +51,8 @@
 #include <vector>
 #include <algorithm>
 
-#include "lib/framework/crc.h"
-#include "lib/netplay/netplay.h"
+#include "framework/crc.h"
+#include "netplay/netplay.h"
 
 /// A coordinate.
 struct PathCoord

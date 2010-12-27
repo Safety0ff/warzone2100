@@ -24,7 +24,7 @@
  * The objects are stored in the quad-tree.
  *
  */
-#include "lib/framework/types.h"
+#include "framework/types.h"
 #include "objects.h"
 #include "map.h"
 

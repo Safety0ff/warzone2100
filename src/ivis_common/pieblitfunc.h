@@ -31,8 +31,8 @@
 
 /***************************************************************************/
 
-#include "lib/framework/frame.h"
-#include "lib/framework/string_ext.h"
+#include "framework/frame.h"
+#include "framework/string_ext.h"
 #include "piedef.h"
 
 /***************************************************************************/

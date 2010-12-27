@@ -23,11 +23,11 @@
  * alexl.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/bitimage.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
+#include "framework/frame.h"
+#include "ivis_common/bitimage.h"
+#include "ivis_common/pieblitfunc.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
 
 #include "frend.h"
 #include "frontend.h"

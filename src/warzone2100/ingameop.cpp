@@ -25,20 +25,20 @@
 
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/widget/widget.h"
-#include "lib/netplay/netplay.h"
-#include "lib/ivis_common/piestate.h"		// for getrendertype
-#include "lib/sound/audio.h"					// for sound.
-#include "lib/sound/cdaudio.h"
-#include "lib/sound/mixer.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "widget/widget.h"
+#include "netplay/netplay.h"
+#include "ivis_common/piestate.h"		// for getrendertype
+#include "sound/audio.h"					// for sound.
+#include "sound/cdaudio.h"
+#include "sound/mixer.h"
 
 #include "display3d.h"
 #include "intdisplay.h"
 #include "hci.h"			// for wFont def.& intmode.
 #include "loop.h"
-#include "lib/framework/cursors.h"
+#include "framework/cursors.h"
 #include "frontend.h"		// for textdisplay function
 #include "loadsave.h"		// for textdisplay function
 #include "console.h"		// to add console message

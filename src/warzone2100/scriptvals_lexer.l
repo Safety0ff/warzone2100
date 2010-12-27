@@ -24,12 +24,12 @@
  * lexer for loading script variable values
  *
  */
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include <physfs.h>
 
-#include "lib/script/script.h"
-#include "src/scriptvals.h"
+#include "script/script.h"
+#include "scriptvals.h"
 
 /* Get the Yacc definitions */
 #include "scriptvals_parser.tab.hpp"
@@ -44,7 +44,7 @@
 static char aText[TEXT_BUFFERS][YYLMAX];
 static UDWORD currText=0;
 
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 
 #ifndef yyextra
 # define yyextra yyget_extra()

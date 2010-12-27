@@ -23,8 +23,8 @@
  */
 /* Alex M 19th - Jan. 1999 */
 
-#include "lib/framework/frame.h"
-#include "lib/exceptionhandler/dumpinfo.h"
+#include "framework/frame.h"
+#include "exceptionhandler/dumpinfo.h"
 
 #include "cheat.h"
 #include "keybind.h"

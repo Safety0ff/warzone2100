@@ -23,13 +23,13 @@
  *  Parser for message data
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
-#include "lib/framework/frameresource.h"
-#include "src/message.h"
-#include "src/messagedef.h"
-#include "src/messagely.h"
-#include "src/text.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
+#include "framework/frameresource.h"
+#include "message.h"
+#include "messagedef.h"
+#include "messagely.h"
+#include "text.h"
 
 extern void yyerror(const char* msg);
 void yyerror(const char* msg)

@@ -23,7 +23,7 @@
 #ifndef _strresly_h
 #define _strresly_h
 
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 
 /* Set the current input buffer for the lexer - used by strresLoad */
 extern void strres_set_extra(YY_EXTRA_TYPE user_defined);

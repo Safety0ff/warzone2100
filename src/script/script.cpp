@@ -23,7 +23,7 @@
  * A few general functions for the script library
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "script.h"
 #include <assert.h>
 

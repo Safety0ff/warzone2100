@@ -15,9 +15,9 @@
 /*---------------------------- Includes ------------------------------------*/
 #include <ctype.h>
 
-#include "lib/framework/wzglobal.h"
-#include "lib/framework/types.h"
-#include "lib/framework/physfs_ext.h"
+#include "framework/wzglobal.h"
+#include "framework/types.h"
+#include "framework/physfs_ext.h"
 
 #include "iniparser.h"
 

@@ -35,23 +35,23 @@
 	* STILL NEED TO REMOVE SOME MAGIC NUMBERS INTO #DEFINES!!! *
 	************************************************************
 */
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/input.h"
-#include "lib/framework/tagfile.h"
-#include "lib/framework/math_ext.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "framework/input.h"
+#include "framework/tagfile.h"
+#include "framework/math_ext.h"
 
-#include "lib/ivis_common/ivisdef.h" //ivis matrix code
-#include "lib/ivis_common/piedef.h" //ivis matrix code
-#include "lib/framework/fixedpoint.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/ivis_common/piemode.h"
+#include "ivis_common/ivisdef.h" //ivis matrix code
+#include "ivis_common/piedef.h" //ivis matrix code
+#include "framework/fixedpoint.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_common/piestate.h"
+#include "ivis_opengl/piematrix.h"
+#include "ivis_common/piemode.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
+#include "gamelib/gtime.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
 
 #include "display3d.h"
 #include "map.h"

@@ -18,8 +18,8 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/bitimage.h"//bitmap routines
+#include "framework/frame.h"
+#include "ivis_common/bitimage.h"//bitmap routines
 
 #include "hci.h"
 #include "intdisplay.h"

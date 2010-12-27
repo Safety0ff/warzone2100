@@ -17,29 +17,29 @@
 	along with Warzone 2100; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 /* Standard library headers */
 #include <physfs.h>
 #include <string.h>
 
 /* Warzone src and library headers */
-#include "lib/framework/endian_hack.h"
-#include "lib/framework/file.h"
-#include "lib/framework/frameint.h"
-#include "lib/framework/physfs_ext.h"
-#include "lib/framework/strres.h"
-#include "lib/framework/tagfile.h"
+#include "framework/endian_hack.h"
+#include "framework/file.h"
+#include "framework/frameint.h"
+#include "framework/physfs_ext.h"
+#include "framework/strres.h"
+#include "framework/tagfile.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/ivis_common/ivisdef.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/netplay/netplay.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
+#include "gamelib/gtime.h"
+#include "ivis_common/ivisdef.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/piepalette.h"
+#include "netplay/netplay.h"
+#include "script/script.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
 #include "modding.h"
 
 #include "game.h"

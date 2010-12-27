@@ -19,15 +19,15 @@
 */
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/fixedpoint.h"
-#include "lib/ivis_common/pieblitfunc.h"
+#include "framework/frame.h"
+#include "framework/fixedpoint.h"
+#include "ivis_common/pieblitfunc.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/piefunc.h"
-#include "lib/gamelib/gtime.h"
+#include "ivis_opengl/piematrix.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/piefunc.h"
+#include "gamelib/gtime.h"
 #include "advvis.h"
 #include "objects.h"
 #include "display3d.h"

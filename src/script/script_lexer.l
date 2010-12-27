@@ -24,11 +24,11 @@
  * Script file lexer.
  */
 #include <physfs.h>
-#include "lib/framework/frame.h"
-#include "lib/framework/string_ext.h"
-#include "lib/script/interpreter.h"
-#include "lib/script/parse.h"
-#include "lib/script/script.h"
+#include "framework/frame.h"
+#include "framework/string_ext.h"
+#include "script/interpreter.h"
+#include "script/parse.h"
+#include "script/script.h"
 
 /* Get the Yacc definitions */
 #include "script_parser.tab.hpp"

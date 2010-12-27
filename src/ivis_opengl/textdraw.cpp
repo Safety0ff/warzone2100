@@ -18,19 +18,19 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/opengl.h"
+#include "framework/frame.h"
+#include "framework/opengl.h"
 #include <stdlib.h>
 #include <string.h>
-#include "lib/framework/string_ext.h"
-#include "lib/ivis_common/ivisdef.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/pieclip.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_common/textdraw.h"
-#include "lib/ivis_common/bitimage.h"
-#include "src/multiplay.h"
+#include "framework/string_ext.h"
+#include "ivis_common/ivisdef.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/pieclip.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_common/textdraw.h"
+#include "ivis_common/bitimage.h"
+#include "multiplay.h"
 
 #ifdef WZ_OS_MAC
 # include <CoreFoundation/CoreFoundation.h>

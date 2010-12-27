@@ -23,23 +23,23 @@
  * The main game loop
  *
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/input.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/input.h"
+#include "framework/strres.h"
 
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piestate.h" //ivis render code
-#include "lib/ivis_common/piemode.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piestate.h" //ivis render code
+#include "ivis_common/piemode.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_opengl/screen.h"
+#include "ivis_opengl/screen.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/gamelib/animobj.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/cdaudio.h"
-#include "lib/sound/mixer.h"
-#include "lib/netplay/netplay.h"
+#include "gamelib/gtime.h"
+#include "gamelib/animobj.h"
+#include "script/script.h"
+#include "sound/audio.h"
+#include "sound/cdaudio.h"
+#include "sound/mixer.h"
+#include "netplay/netplay.h"
 
 #include "loop.h"
 #include "objects.h"
@@ -69,7 +69,7 @@
 #include "multijoin.h"
 #include "lighting.h"
 #include "intimage.h"
-#include "lib/framework/cursors.h"
+#include "framework/cursors.h"
 #include "seqdisp.h"
 #include "mission.h"
 #include "warcam.h"

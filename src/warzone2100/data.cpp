@@ -26,15 +26,15 @@
 
 #include <physfs.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/strres.h"
-#include "lib/framework/crc.h"
-#include "lib/gamelib/parser.h"
-#include "lib/ivis_common/bitimage.h"
-#include "lib/ivis_common/tex.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "framework/strres.h"
+#include "framework/crc.h"
+#include "gamelib/parser.h"
+#include "ivis_common/bitimage.h"
+#include "ivis_common/tex.h"
+#include "script/script.h"
+#include "sound/audio.h"
 
 #include "data.h"
 #include "droid.h"

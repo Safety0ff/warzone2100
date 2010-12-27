@@ -23,7 +23,7 @@
  * Makes smooth transitions for terrain visibility.
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include "advvis.h"
 #include "map.h"

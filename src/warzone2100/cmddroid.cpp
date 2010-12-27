@@ -24,11 +24,11 @@
  *
  */
 #include <string.h>
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "objects.h"
 #include "cmddroiddef.h"
 #include "cmddroid.h"
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 #include "group.h"
 #include "order.h"
 #include "multiplay.h"

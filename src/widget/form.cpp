@@ -23,14 +23,14 @@
 
 #include <string.h>
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "widget.h"
 #include "widgint.h"
 #include "form.h"
 #include "tip.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piepalette.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piepalette.h"
 
 /* Control whether single tabs are displayed */
 #define NO_DISPLAY_SINGLE_TABS 1

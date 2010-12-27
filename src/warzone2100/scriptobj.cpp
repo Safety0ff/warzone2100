@@ -25,22 +25,22 @@
  */
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/endian_hack.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/endian_hack.h"
+#include "framework/strres.h"
 #include "objects.h"
 
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scripttabs.h"
 #include "scriptobj.h"
 #include "group.h"
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 #include "cluster.h"
 #include "messagedef.h"
 #include "message.h"
 #include "researchdef.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
 
 #include "multiplay.h"
 

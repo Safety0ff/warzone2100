@@ -31,7 +31,7 @@
 #include <time.h>
 #include "string_ext.h"
 
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 
 extern void NotifyUserOfError(char *);		// will throw up a notifier on error
 

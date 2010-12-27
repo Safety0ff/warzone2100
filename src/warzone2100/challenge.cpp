@@ -32,12 +32,12 @@
 #include <sys/types.h>
 #endif
 
-#include "lib/framework/frame.h"
-#include "lib/framework/input.h"
-#include "lib/iniparser/iniparser.h"
-#include "lib/ivis_common/bitimage.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/widget/button.h"
+#include "framework/frame.h"
+#include "framework/input.h"
+#include "iniparser/iniparser.h"
+#include "ivis_common/bitimage.h"
+#include "ivis_common/pieblitfunc.h"
+#include "widget/button.h"
 
 #include "challenge.h"
 #include "frontend.h"

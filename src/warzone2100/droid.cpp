@@ -23,19 +23,19 @@
  * Droid method functions.
  *
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/math_ext.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/math_ext.h"
+#include "framework/strres.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/gamelib/animobj.h"
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/ivis_opengl/screen.h"
-#include "lib/framework/fixedpoint.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
-#include "lib/netplay/netplay.h"
+#include "gamelib/gtime.h"
+#include "gamelib/animobj.h"
+#include "ivis_opengl/piematrix.h"
+#include "ivis_opengl/screen.h"
+#include "framework/fixedpoint.h"
+#include "script/script.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
+#include "netplay/netplay.h"
 
 #include "objects.h"
 #include "loop.h"

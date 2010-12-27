@@ -23,11 +23,11 @@
  *
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/configfile.h"
-#include "lib/netplay/netplay.h"
-#include "lib/sound/mixer.h"
-#include "lib/ivis_opengl/screen.h"
+#include "framework/frame.h"
+#include "framework/configfile.h"
+#include "netplay/netplay.h"
+#include "sound/mixer.h"
+#include "ivis_opengl/screen.h"
 
 #include "advvis.h"
 #include "ai.h"

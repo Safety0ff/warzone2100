@@ -23,29 +23,29 @@
  * Originally by Alex McLean & Jeremy Sallis, Pumpkin Studios, EIDOS INTERACTIVE
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/opengl.h"
-#include "lib/framework/math_ext.h"
-#include "lib/framework/stdio_ext.h"
+#include "framework/frame.h"
+#include "framework/opengl.h"
+#include "framework/math_ext.h"
+#include "framework/stdio_ext.h"
 
 /* Includes direct access to render library */
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/tex.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/framework/fixedpoint.h"
-#include "lib/ivis_common/piefunc.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/tex.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_opengl/piematrix.h"
+#include "ivis_common/piemode.h"
+#include "framework/fixedpoint.h"
+#include "ivis_common/piefunc.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/gamelib/animobj.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
+#include "gamelib/gtime.h"
+#include "gamelib/animobj.h"
+#include "script/script.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
 
-#include "lib/netplay/netplay.h"
+#include "netplay/netplay.h"
 
 #include "e3demo.h"
 #include "loop.h"

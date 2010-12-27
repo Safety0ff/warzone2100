@@ -17,7 +17,7 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include <physfs.h>
 
 #ifndef WZ_NOSOUND

@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_SRC_DATA_H__
 #define __INCLUDED_SRC_DATA_H__
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 // used for multiplayer data integrity check.
 enum {

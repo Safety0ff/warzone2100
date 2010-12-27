@@ -24,8 +24,8 @@
 #ifndef __INCLUDED_SRC_MAP_H__
 #define __INCLUDED_SRC_MAP_H__
 
-#include "lib/framework/frame.h"
-#include "lib/framework/debug.h"
+#include "framework/frame.h"
+#include "framework/debug.h"
 #include "objects.h"
 #include "terrain.h"
 #include "multiplay.h"

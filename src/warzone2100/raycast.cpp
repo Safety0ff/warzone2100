@@ -24,7 +24,7 @@
  *
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include "raycast.h"
 #include "map.h"

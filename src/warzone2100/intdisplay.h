@@ -21,8 +21,8 @@
 #ifndef __INCLUDED_SRC_INTDISPLAY_H__
 #define __INCLUDED_SRC_INTDISPLAY_H__
 
-#include "lib/widget/widget.h"
-#include "lib/widget/form.h"
+#include "widget/widget.h"
+#include "widget/form.h"
 #include "intimage.h"
 #include "droid.h"
 

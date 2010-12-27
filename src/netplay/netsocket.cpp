@@ -23,10 +23,10 @@
  * Basic raw socket handling code.
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "netsocket.h"
 
-#include "lib/framework/wzapp_c.h"
+#include "framework/wzapp_c.h"
 
 #include <vector>
 #include <algorithm>

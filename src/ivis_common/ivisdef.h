@@ -29,7 +29,7 @@
 #ifndef _ivisdef_h
 #define _ivisdef_h
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "pietypes.h"
 
 //*************************************************************************

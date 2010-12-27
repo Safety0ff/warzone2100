@@ -21,17 +21,17 @@
  *  Extended render routines for 3D rendering.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameint.h"
-#include "lib/framework/opengl.h"
+#include "framework/frame.h"
+#include "framework/frameint.h"
+#include "framework/opengl.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/piefunc.h"
-#include "lib/ivis_common/piestate.h"
+#include "gamelib/gtime.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/piefunc.h"
+#include "ivis_common/piestate.h"
 #include "piematrix.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/ivis_common/pieclip.h"
+#include "ivis_common/piemode.h"
+#include "ivis_common/pieclip.h"
 
 /*
  *	Source

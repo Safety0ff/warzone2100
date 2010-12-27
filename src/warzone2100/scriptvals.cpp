@@ -26,13 +26,13 @@
 
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/script/script.h"
+#include "framework/frame.h"
+#include "script/script.h"
 #include "objects.h"
 #include "basedef.h"
 #include "scripttabs.h"
 #include "scriptvals.h"
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 #include "group.h"
 
 // Keep all the loaded script contexts

@@ -24,8 +24,8 @@
 #ifndef __INCLUDED_SRC_DROID_H__
 #define __INCLUDED_SRC_DROID_H__
 
-#include "lib/framework/string_ext.h"
-#include "lib/gamelib/gtime.h"
+#include "framework/string_ext.h"
+#include "gamelib/gtime.h"
 
 #include "objectdef.h"
 #include "stats.h"

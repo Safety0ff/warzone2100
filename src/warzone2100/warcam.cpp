@@ -29,14 +29,14 @@
 	I really hope that no further changes are needed here...:-(
 	Alex M. */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/trig.h"
-#include "lib/framework/input.h"
+#include "framework/frame.h"
+#include "framework/trig.h"
+#include "framework/input.h"
 
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/framework/fixedpoint.h" //ivis matrix code
+#include "ivis_opengl/piematrix.h"
+#include "framework/fixedpoint.h" //ivis matrix code
 
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 
 #include "warcam.h"
 

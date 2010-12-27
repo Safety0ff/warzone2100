@@ -21,13 +21,13 @@
  *  Matrix manipulation functions.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/opengl.h"
+#include "framework/frame.h"
+#include "framework/opengl.h"
 
-#include "lib/framework/fixedpoint.h"
-#include "lib/ivis_common/pieclip.h"
+#include "framework/fixedpoint.h"
+#include "ivis_common/pieclip.h"
 #include "piematrix.h"
-#include "lib/ivis_common/piemode.h"
+#include "ivis_common/piemode.h"
 
 /***************************************************************************/
 /*

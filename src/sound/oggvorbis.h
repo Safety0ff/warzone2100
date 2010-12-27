@@ -20,7 +20,7 @@
 #ifndef _LIBSOUND_OGGVORBIS_H_
 #define _LIBSOUND_OGGVORBIS_H_
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include <physfs.h>
 
 typedef struct

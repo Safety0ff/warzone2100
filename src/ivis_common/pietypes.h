@@ -29,8 +29,8 @@
 #ifndef _pieTypes_h
 #define _pieTypes_h
 
-#include "lib/framework/frame.h"
-#include "lib/framework/vector.h"
+#include "framework/frame.h"
+#include "framework/vector.h"
 
 /***************************************************************************/
 /*

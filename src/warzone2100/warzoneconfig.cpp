@@ -23,9 +23,9 @@
  * Warzone Global configuration functions.
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "warzoneconfig.h"
-#include "lib/ivis_common/piestate.h"
+#include "ivis_common/piestate.h"
 #include "advvis.h"
 #include "component.h"
 

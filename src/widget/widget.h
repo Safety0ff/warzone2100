@@ -18,7 +18,7 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 /** 
- *	@file lib/widget/widget.h
+ *	@file widget/widget.h
  *	Definitions for the Widget library
  *	@defgroup Widget Widget system
  *	Warzone uses a pixel layout, callback based widget code. While it has several
@@ -30,9 +30,9 @@
 #ifndef __INCLUDED_LIB_WIDGET_WIDGET_H__
 #define __INCLUDED_LIB_WIDGET_WIDGET_H__
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_common/textdraw.h"
+#include "framework/frame.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_common/textdraw.h"
 #include "widgbase.h"
 
 /***********************************************************************************

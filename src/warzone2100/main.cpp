@@ -22,7 +22,7 @@
  */
 
 // Get platform defines before checking for them!
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include <SDL.h>
 
@@ -32,24 +32,24 @@
 #  include <errno.h>
 #endif // WZ_OS_WIN
 
-#include "lib/framework/configfile.h"
-#include "lib/framework/input.h"
-#include "lib/framework/physfs_ext.h"
-#include "lib/framework/tagfile.h"
-#include "lib/exceptionhandler/exceptionhandler.h"
-#include "lib/exceptionhandler/dumpinfo.h"
+#include "framework/configfile.h"
+#include "framework/input.h"
+#include "framework/physfs_ext.h"
+#include "framework/tagfile.h"
+#include "exceptionhandler/exceptionhandler.h"
+#include "exceptionhandler/dumpinfo.h"
 
-#include "lib/sound/playlist.h"
-#include "lib/gamelib/gtime.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/ivis_opengl/screen.h"
-#include "lib/netplay/netplay.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/cdaudio.h"
+#include "sound/playlist.h"
+#include "gamelib/gtime.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_common/piemode.h"
+#include "ivis_opengl/screen.h"
+#include "netplay/netplay.h"
+#include "script/script.h"
+#include "sound/audio.h"
+#include "sound/cdaudio.h"
 
 #include "clparse.h"
 #include "challenge.h"

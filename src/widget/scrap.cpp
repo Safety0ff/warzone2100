@@ -21,7 +21,7 @@
  *  Handle clipboard text and data in arbitrary formats
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>

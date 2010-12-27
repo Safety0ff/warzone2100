@@ -21,7 +21,7 @@
 #ifndef _net_socket_h
 #define _net_socket_h
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 typedef struct Socket Socket;
 typedef struct SocketSet SocketSet;

@@ -14,7 +14,7 @@
 #include <ws2tcpip.h>
 #include <io.h>
 // Warzone additions
-#include "lib/framework/types.h"
+#include "framework/types.h"
 typedef SSIZE_T ssize_t;
 // end WZ
 /* Hack */

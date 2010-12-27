@@ -23,8 +23,8 @@
  * Handles atmospherics such as snow and rain.
 */
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_opengl/piematrix.h"
+#include "framework/frame.h"
+#include "ivis_opengl/piematrix.h"
 
 #include "atmos.h"
 #include "display3d.h"

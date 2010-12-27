@@ -25,7 +25,7 @@
 	Will be called from a DEBUG key-mapping.
 */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include "action.h"
 #include "e3demo.h"

@@ -31,8 +31,8 @@
 
 /***************************************************************************/
 
-#include "lib/framework/frame.h"
-#include "lib/framework/vector.h"
+#include "framework/frame.h"
+#include "framework/vector.h"
 #include "ivisdef.h"
 #include "pietypes.h"
 

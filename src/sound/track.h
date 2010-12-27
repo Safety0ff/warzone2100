@@ -21,7 +21,7 @@
 #ifndef __INCLUDED_LIB_SOUND_TRACK_H__
 #define __INCLUDED_LIB_SOUND_TRACK_H__
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include <physfs.h>
 
 #ifndef WZ_NOSOUND

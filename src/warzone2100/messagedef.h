@@ -24,8 +24,8 @@
 #ifndef __INCLUDED_MESSAGEDEF_H__
 #define __INCLUDED_MESSAGEDEF_H__
 
-#include "lib/ivis_common/pietypes.h"
-#include "lib/ivis_common/ivisdef.h"
+#include "ivis_common/pietypes.h"
+#include "ivis_common/ivisdef.h"
 #include "positiondef.h"
 #include "stringdef.h"
 

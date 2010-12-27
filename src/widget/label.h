@@ -26,7 +26,7 @@
 
 #include "widget.h"
 #include "widgbase.h"
-#include "lib/ivis_common/textdraw.h"
+#include "ivis_common/textdraw.h"
 
 struct W_LABEL : public WIDGET
 {

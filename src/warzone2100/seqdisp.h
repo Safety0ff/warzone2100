@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_SRC_SEQDISP_H__
 #define __INCLUDED_SRC_SEQDISP_H__
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 /***************************************************************************/
 /*

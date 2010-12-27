@@ -19,7 +19,7 @@
 */
 
 #include <GLee.h>
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #if defined(WZ_OS_MAC)
 # include <OpenGL/glu.h>
@@ -27,11 +27,11 @@
 # include <GL/glu.h>
 #endif
 
-#include "lib/ivis_common/ivisdef.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/tex.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_common/png_util.h"
+#include "ivis_common/ivisdef.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/tex.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_common/png_util.h"
 
 #include "screen.h"
 

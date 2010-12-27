@@ -24,9 +24,9 @@
 #ifndef __INCLUDED_LIB_WIDGET_WIDGBASE_H__
 #define __INCLUDED_LIB_WIDGET_WIDGBASE_H__
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/textdraw.h"
+#include "framework/frame.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/textdraw.h"
 
 /* Button colours */
 #define WBUTC_TEXT		0			// Colour for button text

@@ -21,11 +21,11 @@
  *  The main interface functions to the widget library
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/string_ext.h"
-#include "lib/framework/frameint.h"
-#include "lib/framework/utf.h"
-#include "lib/ivis_common/textdraw.h"
+#include "framework/frame.h"
+#include "framework/string_ext.h"
+#include "framework/frameint.h"
+#include "framework/utf.h"
+#include "ivis_common/textdraw.h"
 
 #include "widget.h"
 #include "widgint.h"

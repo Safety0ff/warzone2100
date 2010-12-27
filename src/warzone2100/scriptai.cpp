@@ -24,16 +24,16 @@
  *
  */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "objects.h"
 #include "group.h"
-#include "lib/script/script.h"
+#include "script/script.h"
 #include "scripttabs.h"
 #include "scriptai.h"
 #include "order.h"
 #include "map.h"
 #include "cluster.h"
-#include "lib/netplay/netplay.h"
+#include "netplay/netplay.h"
 #include "cmddroid.h"
 #include "projectile.h"
 #include "research.h"
@@ -42,7 +42,7 @@
 #include "action.h"		//because of .action
 #include "power.h"
 #include "geometry.h"
-#include "src/scriptfuncs.h"
+#include "scriptfuncs.h"
 #include "fpath.h"
 #include "multigifts.h"
 

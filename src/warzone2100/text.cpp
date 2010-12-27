@@ -23,8 +23,8 @@
  * String management functions.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/strres.h"
 #include "text.h"
 
 /* The string resource object */

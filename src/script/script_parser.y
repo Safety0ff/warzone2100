@@ -24,12 +24,12 @@
  * The yacc grammar for the scipt files.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/string_ext.h"
-#include "lib/script/interpreter.h"
-#include "lib/script/parse.h"
-#include "lib/script/script.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "framework/string_ext.h"
+#include "script/interpreter.h"
+#include "script/parse.h"
+#include "script/script.h"
 
 #include <physfs.h>
 

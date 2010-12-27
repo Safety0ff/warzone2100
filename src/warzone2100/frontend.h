@@ -21,7 +21,7 @@
 #ifndef __INCLUDED_SRC_FRONTEND_H__
 #define __INCLUDED_SRC_FRONTEND_H__
 
-#include "lib/widget/widgbase.h"
+#include "widget/widgbase.h"
 
 // determines which option screen to use. when in GS_TITLE_SCREEN mode.
 typedef enum _title_mode {

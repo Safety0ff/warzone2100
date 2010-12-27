@@ -27,10 +27,10 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/listmacs.h"
-#include "lib/exceptionhandler/dumpinfo.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "framework/listmacs.h"
+#include "exceptionhandler/dumpinfo.h"
 #include "init.h"
 #include "objects.h"
 #include "hci.h"
@@ -39,13 +39,13 @@
 #include "levelint.h"
 #include "game.h"
 #include "lighting.h"
-#include "lib/ivis_common/piestate.h"
+#include "ivis_common/piestate.h"
 #include "data.h"
-#include "lib/ivis_common/ivi.h"
-#include "lib/script/script.h"
+#include "ivis_common/ivi.h"
+#include "script/script.h"
 #include "scripttabs.h"
 #include "research.h"
-#include "lib/framework/lexer_input.h"
+#include "framework/lexer_input.h"
 #include "effects.h"
 
 extern int lev_get_lineno(void);

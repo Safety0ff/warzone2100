@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_SRC_RAYCAST_H__
 #define __INCLUDED_SRC_RAYCAST_H__
 
-#include "lib/framework/vector.h"
+#include "framework/vector.h"
 
 #define NUM_RAYS 360
 

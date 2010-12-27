@@ -22,11 +22,11 @@
  *
  * interface for setting limits to the game, bots, structlimits etc...
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/strres.h"
-#include "lib/widget/slider.h"
-#include "lib/widget/widget.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "framework/strres.h"
+#include "widget/slider.h"
+#include "widget/widget.h"
 #include "hci.h"
 #include "intimage.h"
 #include "intdisplay.h"
@@ -37,20 +37,20 @@
 #include "component.h"
 #include "loadsave.h"
 #include "wrappers.h"	// for loading screen
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 #include "console.h"
-#include "lib/ivis_common/bitimage.h"	// GFX incs
-#include "lib/ivis_common/textdraw.h"
+#include "ivis_common/bitimage.h"	// GFX incs
+#include "ivis_common/textdraw.h"
 // FIXME Direct iVis implementation include!
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/netplay/netplay.h"
+#include "ivis_opengl/piematrix.h"
+#include "ivis_common/piestate.h"
+#include "netplay/netplay.h"
 #include "multiplay.h"
 #include "multirecv.h"
 #include "multiint.h"
 #include "multilimit.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/script/script.h"
+#include "ivis_common/piemode.h"
+#include "script/script.h"
 #include "challenge.h"
 
 // ////////////////////////////////////////////////////////////////////////////

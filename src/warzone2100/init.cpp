@@ -23,24 +23,24 @@
  * Game initialisation routines.
  *
  */
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 #include <string.h>
 
-#include "lib/framework/frameresource.h"
-#include "lib/framework/input.h"
-#include "lib/framework/file.h"
-#include "lib/framework/physfs_ext.h"
-#include "lib/framework/strres.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_common/tex.h"
-#include "lib/ivis_common/ivi.h"
-#include "lib/netplay/netplay.h"
-#include "lib/script/script.h"
-#include "lib/sound/audio_id.h"
-#include "lib/sound/cdaudio.h"
-#include "lib/sound/mixer.h"
+#include "framework/frameresource.h"
+#include "framework/input.h"
+#include "framework/file.h"
+#include "framework/physfs_ext.h"
+#include "framework/strres.h"
+#include "ivis_common/piemode.h"
+#include "ivis_common/piestate.h"
+#include "ivis_common/tex.h"
+#include "ivis_common/ivi.h"
+#include "netplay/netplay.h"
+#include "script/script.h"
+#include "sound/audio_id.h"
+#include "sound/cdaudio.h"
+#include "sound/mixer.h"
 
 #include "init.h"
 
@@ -79,7 +79,7 @@
 #include "projectile.h"
 #include "radar.h"
 #include "research.h"
-#include "lib/framework/cursors.h"
+#include "framework/cursors.h"
 #include "scriptextern.h"
 #include "scriptfuncs.h"
 #include "scripttabs.h"

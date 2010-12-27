@@ -1,7 +1,7 @@
 #ifndef _NET_QUEUE_H_
 #define _NET_QUEUE_H_
 
-#include "lib/framework/types.h"
+#include "framework/types.h"
 
 #include <vector>
 #include <list>

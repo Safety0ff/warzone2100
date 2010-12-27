@@ -25,7 +25,7 @@
  */
 
 /* Control the execution trace printf's */
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "interpreter.h"
 #include "stack.h"
 #include "codeprint.h"

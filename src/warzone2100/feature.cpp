@@ -22,14 +22,14 @@
  *
  * Load feature stats
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/framework/strres.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "framework/strres.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
-#include "lib/netplay/netplay.h"
+#include "gamelib/gtime.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
+#include "netplay/netplay.h"
 
 #include "feature.h"
 #include "map.h"

@@ -24,8 +24,8 @@
 #ifndef __INCLUDED_SRC_MULTIINT_H__
 #define __INCLUDED_SRC_MULTIINT_H__
 
-#include "lib/netplay/netplay.h"
-#include "lib/widget/widgbase.h"
+#include "netplay/netplay.h"
+#include "widget/widgbase.h"
 
 extern LOBBY_ERROR_TYPES getLobbyError(void);
 extern void setLobbyError(LOBBY_ERROR_TYPES error_type);

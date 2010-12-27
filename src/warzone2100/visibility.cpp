@@ -22,11 +22,11 @@
  * Handles object visibility.
  * Pumpkin Studios, Eidos Interactive 1996.
  */
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
-#include "lib/gamelib/gtime.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/audio_id.h"
+#include "gamelib/gtime.h"
+#include "sound/audio.h"
+#include "sound/audio_id.h"
 
 #include "visibility.h"
 

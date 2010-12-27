@@ -24,14 +24,14 @@
  *  Lexical analyser for message data
  */
 
-#include "lib/framework/frame.h"
-#include "src/messagedef.h"
+#include "framework/frame.h"
+#include "messagedef.h"
 
 /* Get the Yacc definitions */
 #include "message_parser.tab.hpp"
 
-#include "lib/framework/lexer_input.h"
-#include "src/messagely.h"
+#include "framework/lexer_input.h"
+#include "messagely.h"
 
 // fwrite declared with warn_unused_result, resulting in mysterious errors in "%%" on some distros.
 static inline bool no_warn_unused_result(int ignore) { if (ignore) {} return true; }

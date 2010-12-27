@@ -24,11 +24,11 @@
  * yacc grammar for multiplayer chat messages
  *
  */
-#include "lib/framework/frame.h"
-#include "lib/framework/string_ext.h"
+#include "framework/frame.h"
+#include "framework/string_ext.h"
 
-#include "lib/framework/frameresource.h"
-#include "lib/script/chat_processing.h"
+#include "framework/frameresource.h"
+#include "script/chat_processing.h"
 
 #define MAX_CHAT_ARGUMENTS 10
 

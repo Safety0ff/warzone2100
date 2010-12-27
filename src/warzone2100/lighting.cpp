@@ -24,14 +24,14 @@
  * - Alex McLean, Pumpkin Studios, EIDOS Interactive.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/math_ext.h"
+#include "framework/frame.h"
+#include "framework/math_ext.h"
 
-#include "lib/ivis_common/piestate.h"
-#include "lib/ivis_opengl/piematrix.h"
-#include "lib/framework/fixedpoint.h"
+#include "ivis_common/piestate.h"
+#include "ivis_opengl/piematrix.h"
+#include "framework/fixedpoint.h"
 
-#include "lib/gamelib/gtime.h"
+#include "gamelib/gtime.h"
 
 #include "map.h"
 #include "lighting.h"

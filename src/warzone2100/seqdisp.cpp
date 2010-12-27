@@ -24,20 +24,20 @@
  *
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameint.h"
+#include "framework/frame.h"
+#include "framework/frameint.h"
 
 #include <string.h>
 #include <physfs.h>
 
-#include "lib/framework/file.h"
-#include "lib/framework/stdio_ext.h"
-#include "lib/ivis_common/piemode.h"
-#include "lib/ivis_opengl/screen.h"
-#include "lib/sequence/sequence.h"
-#include "lib/sound/audio.h"
-#include "lib/sound/cdaudio.h"
-#include "lib/script/script.h"
+#include "framework/file.h"
+#include "framework/stdio_ext.h"
+#include "ivis_common/piemode.h"
+#include "ivis_opengl/screen.h"
+#include "sequence/sequence.h"
+#include "sound/audio.h"
+#include "sound/cdaudio.h"
+#include "script/script.h"
 
 #include "seqdisp.h"
 

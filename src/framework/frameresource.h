@@ -24,7 +24,7 @@
 #ifndef _frameresource_h
 #define _frameresource_h
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 
 /** Maximum number of characters in a resource type. */
 #define RESTYPE_MAXCHAR		20

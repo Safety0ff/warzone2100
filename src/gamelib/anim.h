@@ -32,8 +32,8 @@
 
 #include <physfs.h>
 
-#include "lib/framework/types.h"
-#include "lib/ivis_common/imd.h"
+#include "framework/types.h"
+#include "ivis_common/imd.h"
 
 #define	ANIM_MAX_STR			256
 #define	ANIM_DELAYED	0xFFFE

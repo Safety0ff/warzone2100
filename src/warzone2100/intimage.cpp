@@ -24,12 +24,12 @@
  *
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/frameresource.h"
-#include "lib/ivis_common/bitimage.h"
-#include "lib/ivis_common/pieblitfunc.h"
-#include "lib/ivis_common/piepalette.h"
-#include "lib/ivis_common/piestate.h"
+#include "framework/frame.h"
+#include "framework/frameresource.h"
+#include "ivis_common/bitimage.h"
+#include "ivis_common/pieblitfunc.h"
+#include "ivis_common/piepalette.h"
+#include "ivis_common/piestate.h"
 
 #include "intimage.h"
 

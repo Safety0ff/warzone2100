@@ -27,7 +27,7 @@
 
 #include <string.h>
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "droid.h"
 #include "droiddef.h"
 #include "basedef.h"
@@ -40,12 +40,12 @@
 #include "action.h"
 #include "order.h"
 #include "projectile.h"
-#include "lib/netplay/netplay.h"								// the netplay library.
+#include "netplay/netplay.h"								// the netplay library.
 #include "multiplay.h"
 #include "multigifts.h"
 #include "multirecv.h"
-#include "lib/sound/audio_id.h"
-#include "lib/sound/audio.h"
+#include "sound/audio_id.h"
+#include "sound/audio.h"
 #include "research.h"
 
 // ////////////////////////////////////////////////////////////////////////////

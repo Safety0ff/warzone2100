@@ -23,18 +23,18 @@
  * low-level primitives and higher-level types.
  */
 
-#include "lib/framework/wzglobal.h"
-#include "lib/framework/string_ext.h"
+#include "framework/wzglobal.h"
+#include "framework/string_ext.h"
 #include <string.h>
 
 #include <SDL_endian.h>
 
-#include "../framework/frame.h"
+#include "framework/frame.h"
 #include "netplay.h"
 #include "nettypes.h"
 #include "netqueue.h"
 #include "netlog.h"
-#include "src/order.h"
+#include "order.h"
 #include <cstring>
 
 /// There is a game queue representing each player. The game queues are synchronised among all players, so that all players process the same game queue

@@ -28,9 +28,9 @@
 	Changed to allow seperate modifiers for enemy and player damage.
 */
 
-#include "lib/framework/frame.h"
+#include "framework/frame.h"
 #include "difficulty.h"
-#include "lib/framework/math_ext.h"
+#include "framework/math_ext.h"
 
 // ------------------------------------------------------------------------------------
 

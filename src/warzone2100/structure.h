@@ -24,7 +24,7 @@
 #ifndef __INCLUDED_SRC_STRUCTURE_H__
 #define __INCLUDED_SRC_STRUCTURE_H__
 
-#include "lib/framework/string_ext.h"
+#include "framework/string_ext.h"
 
 #include "objectdef.h"
 #include "structuredef.h"

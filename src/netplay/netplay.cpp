@@ -23,13 +23,13 @@
  * Basic netcode.
  */
 
-#include "lib/framework/frame.h"
-#include "lib/framework/string_ext.h"
-#include "lib/framework/crc.h"
-#include "lib/framework/file.h"
-#include "lib/gamelib/gtime.h"
-#include "src/component.h"		// FIXME: we need to handle this better
-#include "src/modding.h"		// FIXME: we need to handle this better
+#include "framework/frame.h"
+#include "framework/string_ext.h"
+#include "framework/crc.h"
+#include "framework/file.h"
+#include "gamelib/gtime.h"
+#include "component.h"		// FIXME: we need to handle this better
+#include "modding.h"		// FIXME: we need to handle this better
 #include <time.h>			// for stats
 #include <SDL_timer.h>
 #include <SDL_thread.h>
@@ -44,13 +44,13 @@
 #include "miniupnpc/miniwget.h"
 #include "miniupnpc/miniupnpc.h"
 #include "miniupnpc/upnpcommands.h"
-#include "lib/exceptionhandler/dumpinfo.h"
+#include "exceptionhandler/dumpinfo.h"
 
-#include "src/multistat.h"
-#include "src/multijoin.h"
-#include "src/multiint.h"
-#include "src/multiplay.h"
-#include "src/warzoneconfig.h"
+#include "multistat.h"
+#include "multijoin.h"
+#include "multiint.h"
+#include "multiplay.h"
+#include "warzoneconfig.h"
 
 #ifdef WZ_OS_LINUX
 #include <execinfo.h>  // Nonfatal runtime backtraces.

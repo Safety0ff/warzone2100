@@ -29,9 +29,9 @@
 #ifndef _piefunc_h
 #define _piefunc_h
 
-#include "lib/framework/frame.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/pieclip.h"
+#include "framework/frame.h"
+#include "ivis_common/piedef.h"
+#include "ivis_common/pieclip.h"
 
 extern UBYTE pie_ByteScale(UBYTE a, UBYTE b) WZ_DECL_CONST;
 extern void pie_TransColouredTriangle(Vector3f *vrt, PIELIGHT c);
