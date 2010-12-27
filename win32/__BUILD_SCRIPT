@@ -18,6 +18,7 @@ execute()
 }
 
 # Some default configuration settings
+CMAKE_TOOLCHAIN_FILE=Toolchain-mingw32.cmake
 HOST_TRIPLET=i586-mingw32msvc
 INSTALLER_VERSION="2.2.0.999"
 DEBUGFLAG="--disable-debug"
@@ -49,6 +50,9 @@ for arg in "$@"; do
 		;;
 	-with-* | --with-* | -enable-* | --enable-*)
 		;;
+	-only-deps | --only-deps | -only-libs | --only-libs)
+		_ONLYLIBS=true
+		;;
 	*=*)
 		var=`expr "x$arg" : 'x\([^=]*\)='`
 		# Reject names that are not valid shell variable names.
@@ -59,9 +63,10 @@ for arg in "$@"; do
 		eval $var=\$val
 		export $var
 		;;
-	clean | very-clean | preclean | very-preclean)
-		execute rm -rf build
-		execute make -C libs clean
+	clean | lib-clean | cmake-clean | very-clean | preclean | very-preclean)
+		execute make clean
+		expr "$arg" : 'cmake-' >/dev/null && execute rm -rf cmake* CMake* lib bin src 3rdparty
+		expr "$arg" : 'lib-' >/dev/null && execute rm -rf build
 		expr "$arg" : 'very-' >/dev/null && execute rm -rf downloads
 		expr "$arg" : '.*pre' || exit 0
 		;;
@@ -99,21 +104,21 @@ set -x
 # Make sure that the dependencies have been built
 make $MAKE_FLAGS -C libs "HOST_TRIPLET=$HOST_TRIPLET"
 
-cd build
-
-[ -x ../../configure ] || ../../autogen.sh
-../../configure "$@" \
-	"--host=$HOST_TRIPLET" --enable-static --disable-shared ${DEBUGFLAG:+$DEBUGFLAG} \
-	${INSTALLERFLAG:+$INSTALLERFLAG} \
-	CFLAGS="$CFLAGS" \
-	CXXFLAGS="$CXXFLAGS" \
-	CPPFLAGS="$CPPFLAGS" \
-	LDFLAGS="$LDFLAGS" \
-	CC_FOR_BUILD="$CC_FOR_BUILD" \
-	CXX_FOR_BUILD="$CXX_FOR_BUILD" \
-	CFLAGS_FOR_BUILD="$CFLAGS_FOR_BUILD" \
-	CXXFLAGS_FOR_BUILD="$CXXFLAGS_FOR_BUILD" \
-	CPPFLAGS_FOR_BUILD="$CPPFLAGS_FOR_BUILD" \
-	PKGCONFIG_DEFAULT_PREFIX=${PKGCONFIG_DEFAULT_PREFIX:-$PWD/build/libs} \
-	${PKG_CONFIG_PATH:+PKG_CONFIG_PATH=$PKG_CONFIG_PATH}
-make $MAKE_FLAGS
+if ! ${_ONLYLIBS:=false} ; then
+	cmake -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} \
+		"$@" ..
+#		"--host=$HOST_TRIPLET" --enable-static --disable-shared ${DEBUGFLAG:+$DEBUGFLAG} \
+#		${INSTALLERFLAG:+$INSTALLERFLAG} \
+#		CFLAGS="$CFLAGS" \
+#		CXXFLAGS="$CXXFLAGS" \
+#		CPPFLAGS="$CPPFLAGS" \
+#		LDFLAGS="$LDFLAGS" \
+#		CC_FOR_BUILD="$CC_FOR_BUILD" \
+#		CXX_FOR_BUILD="$CXX_FOR_BUILD" \
+#		CFLAGS_FOR_BUILD="$CFLAGS_FOR_BUILD" \
+#		CXXFLAGS_FOR_BUILD="$CXXFLAGS_FOR_BUILD" \
+#		CPPFLAGS_FOR_BUILD="$CPPFLAGS_FOR_BUILD" \
+#		PKGCONFIG_DEFAULT_PREFIX=${PKGCONFIG_DEFAULT_PREFIX:-$PWD/build/libs} \
+#		${PKG_CONFIG_PATH:+PKG_CONFIG_PATH=$PKG_CONFIG_PATH}
+	make $MAKE_FLAGS
+fi
