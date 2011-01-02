@@ -279,7 +279,8 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 ######################################################################
 # Provide user options to customise the build process
 ######################################################################
-
+set (ENABLE_NLS FALSE CACHE BOOL "Make translations with default target.")
+set (PO_UPDATE OFF CACHE BOOL "Whether to update the po files in the source directory.")
 
 # hide advanced options
 #mark_as_advanced()
@@ -292,6 +293,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 ##################################################################
 add_subdirectory (3rdparty)
 add_subdirectory (src)
+add_subdirectory (po)
 
 ## Other stuff
 set (CONFIGURED ON CACHE INTERNAL "")
