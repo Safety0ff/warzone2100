@@ -45,7 +45,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: None (CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif ()
 
-# Auto version
+# Auto version TODO put autorevision in its own module.
 find_package (Git)
 if (GIT_FOUND)
   execute_process (
@@ -103,10 +103,28 @@ else ()
 endif ()
 configure_file (${CMAKE_SOURCE_DIR}/autorevision.h.in ${CMAKE_BINARY_DIR}/autorevision.h)
 
-# TODO - Finish this
+if (MSVC)
+  if (CMAKE_BUILD_TOOL STREQUAL "nmake")
+    # set variable to state that we are using nmake makefiles
+  set (NMAKE TRUE)
+  endif ()
+endif ()
+
+if (MINGW)
+  add_definitions (-D_WIN32_WINNT=0x0500)
+endif ()
+
+add_definitions (-D_REENTRANT -DYY_STATIC -DYY_NO_INPUT -DSTATICLIB -DVERSION="TRUNK" -DPACKAGE="warzone2100")
+
+if (UNIX AND NOT WIN32)
+  string (REGEX MATCH [fF][rR][eE]{2}[bB][sS][dD] IS_FREEBSD ${CMAKE_SYSTEM_NAME})
+  if (NOT IS_FREEBSD)
+    add_definitions (-D_XOPEN_SOURCE=600)
+  endif ()
+endif ()
+
 # Set compiler specific build flags
 if (CMAKE_COMPILER_IS_GNUCXX)
-#  check_cxx_compiler_flag(-msse WZ_SSE)
   # Set our own default flags at first run.
   if (NOT CONFIGURED)
 
@@ -117,44 +135,32 @@ if (CMAKE_COMPILER_IS_GNUCXX)
       set(STRICT_FLAGS "")
     endif (ENABLE_STRICT_COMPILATION)
 
-    set(CMAKE_C_FLAGS "-Wall $ENV{CFLAGS}"
+    # TODO - Special stack flag checks
+
+    set(CMAKE_C_FLAGS "-Wall $ENV{CFLAGS}" # CMAKE_C_FLAGS gets appended to the other C flags
         CACHE STRING "Flags used by the C compiler during normal builds." FORCE)
-    set(CMAKE_C_FLAGS_DEBUG "-g -DDDEBUG ${CMAKE_C_FLAGS}"
+    set(CMAKE_C_FLAGS_DEBUG "-g -DDDEBUG"
         CACHE STRING "Flags used by the C compiler during debug builds." FORCE)
-    set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG ${CMAKE_C_FLAGS}"
+    set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG"
         CACHE STRING "Flags used by the C compiler during release builds." FORCE)
-    set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG ${CMAKE_C_FLAGS}"
+    set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG"
         CACHE STRING "Flags used by the C compiler during release builds." FORCE)
-    set(CMAKE_C_FLAGS_MINSIZEREL "-Os -DNDEBUG ${CMAKE_C_FLAGS}"
+    set(CMAKE_C_FLAGS_MINSIZEREL "-Os -DNDEBUG"
         CACHE STRING "Flags used by the C compiler during release builds." FORCE)
 
-    set(CMAKE_CXX_FLAGS "-Wall -fno-rtti -fno-exceptions ${STRICT_FLAGS} $ENV{CXXFLAGS}"
+    set(CMAKE_CXX_FLAGS "-Wall -fno-rtti -fno-exceptions ${STRICT_FLAGS} $ENV{CXXFLAGS}" # CMAKE_CXX_FLAGS gets appended to the other CXX flags
         CACHE STRING "Flags used by the CXX compiler during normal builds." FORCE)
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG ${CMAKE_CXX_FLAGS}"
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -DDEBUG"
         CACHE STRING "Flags used by the CXX compiler during debug builds." FORCE)
-    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG ${CMAKE_CXX_FLAGS}"
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG"
         CACHE STRING "Flags used by the CXX compiler during release builds." FORCE)
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG ${CMAKE_CXX_FLAGS}"
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DNDEBUG"
         CACHE STRING "Flags used by the CXX compiler during release builds." FORCE)
-    set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG ${CMAKE_CXX_FLAGS}"
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG"
         CACHE STRING "Flags used by the CXX compiler during release builds." FORCE)
 
   endif (NOT CONFIGURED)
 endif ()
-
-if (MSVC)
-  if (CMAKE_BUILD_TOOL STREQUAL "nmake")
-    # set variable to state that we are using nmake makefiles
-  set (NMAKE TRUE)
-  endif ()
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
-endif ()
-
-if (MINGW)
-  add_definitions (-D_WIN32_WINNT=0x0500)
-endif ()
-
-add_definitions (-D_REENTRANT -DYY_STATIC -DYY_NO_INPUT -DSTATICLIB -DVERSION="TRUNK" -DPACKAGE="warzone2100")
 
 #######################################################################
 # Dependencies
@@ -279,21 +285,27 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 ######################################################################
 # Provide user options to customise the build process
 ######################################################################
-set (ENABLE_NLS FALSE CACHE BOOL "Make translations with default target.")
-set (PO_UPDATE OFF CACHE BOOL "Whether to update the po files in the source directory.")
+option (ENABLE_NLS "Enable translation targets, requires command line utilities: find, sh, sed." TRUE)
+option (BUILD_TRANSLATIONS "Make translations with default target." FALSE)
+option (DISABLE_SOUND "Disables sound" FALSE)
 
 # hide advanced options
 #mark_as_advanced()
 ###################################################################
 # configure global build settings based on selected build options
 ###################################################################
+if (DISABLE_SOUND)
+  add_definitions (-DWZ_NOSOUND)
+endif (DISABLE_SOUND)
 
 ##################################################################
 # Now setup targets
 ##################################################################
 add_subdirectory (3rdparty)
 add_subdirectory (src)
-add_subdirectory (po)
+if (ENABLE_NLS)
+  add_subdirectory (po)
+endif (ENABLE_NLS)
 
 ## Other stuff
-set (CONFIGURED ON CACHE INTERNAL "")
+set (CONFIGURED YES CACHE INTERNAL "")
