@@ -114,18 +114,18 @@ foreach (lang ${LANGUAGES})
       )
       set_source_files_properties (${CMAKE_CURRENT_BINARY_DIR}/${lang}.po PROPERTIES GENERATED TRUE)
     endif ()
+
+    add_custom_command (
+       OUTPUT ${lang}.${MSGFMT_EXTENSION}
+       COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${lang}.${MSGFMT_EXTENSION} ${CMAKE_CURRENT_BINARY_DIR}/${lang}.po
+       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${lang}.po
+    )
+
+    list (APPEND mo_FILES ${lang}.${MSGFMT_EXTENSION})
+    list (APPEND po_FILES ${CMAKE_CURRENT_BINARY_DIR}/${lang}.po)
+    list (APPEND po-update_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${lang}.po-update)
+
   endif ()
-
-  add_custom_command (
-     OUTPUT ${lang}.${MSGFMT_EXTENSION}
-     COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -o ${lang}.${MSGFMT_EXTENSION} ${CMAKE_CURRENT_BINARY_DIR}/${lang}.po
-     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${lang}.po
-  )
-
-  list (APPEND mo_FILES ${lang}.${MSGFMT_EXTENSION})
-  list (APPEND po_FILES ${CMAKE_CURRENT_BINARY_DIR}/${lang}.po)
-  list (APPEND po-update_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${lang}.po-update)
-
 endforeach (lang)
 
 # Make sure we don't remove the original po files with make clean.
