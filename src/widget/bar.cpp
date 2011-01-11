@@ -27,8 +27,8 @@
 #include "form.h"
 #include "bar.h"
 // FIXME Direct iVis implementation include!
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piepalette.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piepalette.h"
 
 W_BARINIT::W_BARINIT()
 	: orientation(WBAR_LEFT)

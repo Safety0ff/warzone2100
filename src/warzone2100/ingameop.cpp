@@ -29,7 +29,7 @@
 #include "framework/strres.h"
 #include "widget/widget.h"
 #include "netplay/netplay.h"
-#include "ivis_common/piestate.h"		// for getrendertype
+#include "ivis_opengl/piestate.h"		// for getrendertype
 #include "sound/audio.h"					// for sound.
 #include "sound/cdaudio.h"
 #include "sound/mixer.h"

@@ -27,7 +27,7 @@
 #include "framework/frame.h"
 #include "framework/math_ext.h"
 
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/piestate.h"
 #include "ivis_opengl/piematrix.h"
 #include "framework/fixedpoint.h"
 

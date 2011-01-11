@@ -20,7 +20,7 @@
 #include "framework/frame.h"
 #include "framework/frameresource.h"
 #include "gamelib/gtime.h"
-#include "ivis_common/pietypes.h"
+#include "ivis_opengl/pietypes.h"
 
 #include "tracklib.h"
 #include "aud.h"
@@ -367,17 +367,14 @@ static AUDIO_SAMPLE *audio_QueueSample( SDWORD iTrack )
 //
 void audio_QueueTrack( SDWORD iTrack )
 {
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	AUDIO_SAMPLE	*psSample = NULL;
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 	// return if audio not enabled
 	if ( g_bAudioEnabled == false || g_bAudioPaused == true)
 	{
 		return;
 	}
 
-	psSample = audio_QueueSample( iTrack );
+	audio_QueueSample( iTrack );
+	return;
 }
 
 //*
@@ -700,7 +697,7 @@ static BOOL audio_Play3DTrack( SDWORD iX, SDWORD iY, SDWORD iZ, int iTrack, SIMP
 	// coordinates
 	float	listenerX = .0f, listenerY = .0f, listenerZ = .0f, dX, dY, dZ;
 	// calculation results
-	float	distance, gain, sfx3d_volume;
+	float	distance, gain;
 #ifndef WZ_NOSOUND
 	ALenum err;
 #endif
@@ -732,7 +729,6 @@ static BOOL audio_Play3DTrack( SDWORD iX, SDWORD iY, SDWORD iZ, int iTrack, SIMP
 	dZ = (float)iZ - listenerZ;
 	distance = sqrtf(dX * dX + dY * dY + dZ * dZ); // Pythagorean theorem
 
-	sfx3d_volume = sound_GetEffectsVolume();
 	// compute gain
 	gain = (1.0 - (distance * ATTENUATION_FACTOR)) ;//* 1.0f * sfx3d_volume
 	if (gain > 1.0f)

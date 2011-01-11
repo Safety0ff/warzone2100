@@ -28,17 +28,17 @@
 #include "framework/math_ext.h"
 
 /* Includes direct access to render library */
-#include "ivis_common/ivisdef.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/piepalette.h"
+#include "ivis_opengl/ivisdef.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/piepalette.h"
 
-#include "ivis_common/piemode.h"			// ffs
-#include "ivis_common/pieclip.h"			// ffs
-#include "ivis_common/pieblitfunc.h"
+#include "ivis_opengl/piemode.h"			// ffs
+#include "ivis_opengl/pieclip.h"			// ffs
+#include "ivis_opengl/pieblitfunc.h"
 
 // FIXME Direct iVis implementation include!
-#include "ivis_common/bitimage.h"
-#include "ivis_common/rendmode.h"
+#include "ivis_opengl/bitimage.h"
+#include "ivis_opengl/rendmode.h"
 #include "ivis_opengl/piematrix.h"
 
 #include "framework/input.h"
@@ -1238,13 +1238,11 @@ void intOpenPlainForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, WZ_DECL_
 void intClosePlainForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, WZ_DECL_UNUSED PIELIGHT *pColours)
 {
 	W_TABFORM *Form = (W_TABFORM*)psWidget;
-	UDWORD Tx0,Ty0,Tx1,Ty1;
+	UDWORD Ty0, Ty1;
 	UDWORD Range;
 	UDWORD Duration;
 	UDWORD APos;
 
-	Tx0 = xOffset+Form->x;
-	Tx1 = Tx0 + Form->width;
 	Ty0 = yOffset+Form->y + (Form->height/2) - 4;
 	Ty1 = yOffset+Form->y + (Form->height/2) + 4;
 
@@ -2126,12 +2124,9 @@ void CreateIMDButton(IMAGEFILE *ImageFile, UWORD ImageID, void *Object, UDWORD P
 	UDWORD Size;
 	Vector3i Rotation, Position, NullVector;
 	UDWORD ox,oy;
-	BUTTON_SURFACE *ButSurf;
 	UDWORD Radius;
 	UDWORD basePlateSize;
 	SDWORD scale;
-
-	ButSurf = Buffer->ButSurf;
 
 	if(Down) {
 		ox = oy = 2;

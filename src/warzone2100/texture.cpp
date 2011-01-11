@@ -34,10 +34,10 @@
 #include "framework/file.h"
 #include "framework/string_ext.h"
 
-#include "ivis_common/pietypes.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/tex.h"
-#include "ivis_common/piepalette.h"
+#include "ivis_opengl/pietypes.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/tex.h"
+#include "ivis_opengl/piepalette.h"
 #include "ivis_opengl/screen.h"
 
 #include "display3ddef.h"

@@ -25,7 +25,7 @@
 
 #include "framework/frame.h"
 #include "warzoneconfig.h"
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/piestate.h"
 #include "advvis.h"
 #include "component.h"
 

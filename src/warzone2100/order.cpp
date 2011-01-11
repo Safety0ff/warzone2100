@@ -151,8 +151,8 @@ static void orderCheckGuardPosition(DROID *psDroid, SDWORD range)
 			((psDroid->action == DACTION_MOVE) ||
 			 (psDroid->action == DACTION_MOVEFIRE)))
 		{
-			xdiff = (SDWORD)psDroid->sMove.DestinationX - (SDWORD)psDroid->orderX;
-			ydiff = (SDWORD)psDroid->sMove.DestinationY - (SDWORD)psDroid->orderY;
+			xdiff = psDroid->sMove.destination.x - psDroid->orderX;
+			ydiff = psDroid->sMove.destination.y - psDroid->orderY;
 			if (xdiff*xdiff + ydiff*ydiff > range*range)
 			{
  				actionDroidLoc(psDroid, DACTION_MOVE, psDroid->orderX, psDroid->orderY);
@@ -1291,6 +1291,8 @@ static void orderCmdGroupBase(DROID_GROUP *psGroup, DROID_ORDER_DATA *psData)
 	ASSERT( psGroup != NULL,
 		"cmdUnitOrderGroupBase: invalid unit group" );
 
+	syncDebug("Commander group order");
+
 	if (psData->order == DORDER_RECOVER)
 	{
 		// picking up an artifact - only need to send one unit
@@ -1304,6 +1306,7 @@ static void orderCmdGroupBase(DROID_GROUP *psGroup, DROID_ORDER_DATA *psData)
 				psChosen = psCurr;
 				mindist = currdist;
 			}
+			syncDebug("command %d,%d", psCurr->id, currdist);
 		}
 		if (psChosen != NULL)
 		{
@@ -1314,6 +1317,7 @@ static void orderCmdGroupBase(DROID_GROUP *psGroup, DROID_ORDER_DATA *psData)
 	{
 		for (psCurr = psGroup->psList; psCurr; psCurr=psCurr->psGrpNext)
 		{
+			syncDebug("command %d", psCurr->id);
 			if (!orderState(psCurr, DORDER_RTR))		// if you change this, youll need to change sendcmdgroup()
 			{
 				orderDroidBase(psCurr, psData);
@@ -1771,6 +1775,9 @@ void orderDroidBase(DROID *psDroid, DROID_ORDER_DATA *psOrder)
 			orderPlayFireSupportAudio( psOrder->psObj );
 		}
 		break;
+	case DORDER_COMMANDERSUPPORT:
+		cmdDroidAddDroid((DROID *)psOrder->psObj, psDroid);
+		break;
 	case DORDER_RETREAT:
 	case DORDER_RUNBURN:
 	case DORDER_RUN:
@@ -2139,7 +2146,7 @@ void orderDroidLoc(DROID *psDroid, DROID_ORDER order, UDWORD x, UDWORD y, QUEUE_
 	ASSERT_OR_RETURN(, psDroid != NULL, "Invalid unit pointer");
 	ASSERT_OR_RETURN(, validOrderForLoc(order), "Invalid order for location");
 
-	if (mode == ModeQueue && bMultiPlayer) //ajl
+	if (mode == ModeQueue) //ajl
 	{
 		sendDroidInfo(psDroid,  order,  x,  y, NULL, NULL, 0, 0, 0,  false);
 		return;  // Wait to receive our order before changing the droid.
@@ -2183,7 +2190,7 @@ BOOL orderStateLoc(DROID *psDroid, DROID_ORDER order, UDWORD *pX, UDWORD *pY)
 BOOL validOrderForObj(DROID_ORDER order)
 {
 	return (order == DORDER_NONE || order == DORDER_HELPBUILD || order == DORDER_DEMOLISH ||
-		order == DORDER_REPAIR || order == DORDER_ATTACK || order == DORDER_FIRESUPPORT ||
+		order == DORDER_REPAIR || order == DORDER_ATTACK || order == DORDER_FIRESUPPORT || order == DORDER_COMMANDERSUPPORT ||
 		order == DORDER_OBSERVE || order == DORDER_ATTACKTARGET || order == DORDER_RTR ||
 		order == DORDER_RTR_SPECIFIED || order == DORDER_EMBARK || order == DORDER_GUARD ||
 		order == DORDER_DROIDREPAIR || order == DORDER_RESTORE || order == DORDER_BUILDMODULE ||
@@ -2199,7 +2206,7 @@ void orderDroidObj(DROID *psDroid, DROID_ORDER order, BASE_OBJECT *psObj, QUEUE_
 	ASSERT(validOrderForObj(order), "Invalid order for object");
 	ASSERT(!isBlueprint(psObj), "Target is a blueprint");
 
-	if (mode == ModeQueue && bMultiPlayer) //ajl
+	if (mode == ModeQueue) //ajl
 	{
 		sendDroidInfo(psDroid, order, 0, 0, psObj, NULL, 0, 0, 0,  false);
 		return;  // Wait for the order to be received before changing the droid.
@@ -2726,15 +2733,6 @@ void orderSelectedLoc(uint32_t player, uint32_t x, uint32_t y, bool add)
 		return;
 	}
 
-	// remove any units from their command group
-	for(psCurr = apsDroidLists[player]; psCurr; psCurr=psCurr->psNext)
-	{
-		if (psCurr->selected && hasCommander(psCurr))
-		{
-			grpLeave(psCurr->psGroup, psCurr);
-		}
-	}
-
 	// note that an order list graphic needs to be displayed
 	bOrderEffectDisplayed = false;
 
@@ -2872,9 +2870,8 @@ DROID_ORDER chooseOrderObj(DROID *psDroid, BASE_OBJECT *psObj, BOOL altOrder)
               psDroid->droidType != DROID_CYBORG_CONSTRUCT)
 	{
 		// get a droid to join a command droids group
-		cmdDroidAddDroid((DROID *) psObj, psDroid);
 		DeSelectDroid(psDroid);
-		order = DORDER_NONE;
+		order = DORDER_COMMANDERSUPPORT;
 	}
 	//repair droid
 	else if (aiCheckAlliances(psObj->player, psDroid->player) &&
@@ -3058,22 +3055,12 @@ static void orderPlayOrderObjAudio( UDWORD player, BASE_OBJECT *psObj )
  */
 void orderSelectedObjAdd(UDWORD player, BASE_OBJECT *psObj, BOOL add)
 {
-	DROID		*psCurr, *psDemolish;
+	DROID		*psCurr;
 	DROID_ORDER	order;
-
-	// remove any units from their command group
-	for(psCurr = apsDroidLists[player]; psCurr; psCurr=psCurr->psNext)
-	{
-		if (psCurr->selected && hasCommander(psCurr))
-		{
-			grpLeave(psCurr->psGroup, psCurr);
-		}
-	}
 
 	// note that an order list graphic needs to be displayed
 	bOrderEffectDisplayed = false;
 
-	psDemolish = NULL;
 	for (psCurr = apsDroidLists[player]; psCurr; psCurr=psCurr->psNext)
 	{
 		if (psCurr->selected)
@@ -3094,10 +3081,6 @@ void orderSelectedObjAdd(UDWORD player, BASE_OBJECT *psObj, BOOL add)
 			}
 
 			order = chooseOrderObj(psCurr, psObj, (keyDown(KEY_LALT) || keyDown(KEY_RALT)));
-			if (order == DORDER_DEMOLISH && player == selectedPlayer)
-			{
-				psDemolish = psCurr;
-			}
 			// see if the order can be added to the list
 			if (!(add && orderDroidObjAdd(psCurr, order, &psObj)))
 			{
@@ -3451,7 +3434,7 @@ void secondaryCheckDamageLevel(DROID *psDroid)
 
 
 // set the state of a secondary order, return false if failed.
-BOOL secondarySetState(DROID *psDroid, SECONDARY_ORDER sec, SECONDARY_STATE State)
+BOOL secondarySetState(DROID *psDroid, SECONDARY_ORDER sec, SECONDARY_STATE State, QUEUE_MODE mode)
 {
 	UDWORD		CurrState, factType, prodType;
 	STRUCTURE	*psStruct;
@@ -3460,9 +3443,7 @@ BOOL secondarySetState(DROID *psDroid, SECONDARY_ORDER sec, SECONDARY_STATE Stat
 	DROID		*psTransport, *psCurr, *psNext;
 	DROID_ORDER     order;
 
-
-
-	if(bMultiMessages)
+	if (bMultiMessages && mode == ModeQueue)
 	{
 		sendDroidSecondary(psDroid,sec,State);
 		return true;  // Wait for our order before changing the droid.
@@ -4263,7 +4244,7 @@ const char* getDroidOrderName(DROID_ORDER order)
 		"DORDER_DISEMBARK",			// get off a transporter
 		"DORDER_ATTACKTARGET",		// 18 - a suggestion to attack something
 									// i.e. the target was chosen because the droid could see it
-		"DORDER_COMMAND",				// a command droid issuing orders to it's group
+		"DORDER_COMMANDERSUPPORT",
 		"DORDER_BUILDMODULE",			// 20 - build a module (power, research or factory)
 		"DORDER_RECYCLE",				// return to factory to be recycled
 		"DORDER_TRANSPORTOUT",		// 22 - offworld transporter order

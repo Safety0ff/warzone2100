@@ -21,7 +21,7 @@
 #ifndef __INCLUDED_SRC_LIGHTNING_H__
 #define __INCLUDED_SRC_LIGHTNING_H__
 
-#include "ivis_common/pietypes.h"
+#include "ivis_opengl/pietypes.h"
 
 #define FOG_FLAGS		7
 #define FOG_BACKGROUND	1

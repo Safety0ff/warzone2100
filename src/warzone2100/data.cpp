@@ -31,8 +31,8 @@
 #include "framework/strres.h"
 #include "framework/crc.h"
 #include "gamelib/parser.h"
-#include "ivis_common/bitimage.h"
-#include "ivis_common/tex.h"
+#include "ivis_opengl/bitimage.h"
+#include "ivis_opengl/tex.h"
 #include "script/script.h"
 #include "sound/audio.h"
 

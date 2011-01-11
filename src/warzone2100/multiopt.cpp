@@ -37,7 +37,7 @@
 #include "hci.h"
 #include "configuration.h"			// lobby cfg.
 #include "clparse.h"
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/piestate.h"
 
 #include "component.h"
 #include "console.h"
@@ -50,7 +50,6 @@
 #include "multiint.h"
 #include "multilimit.h"
 #include "multigifts.h"
-#include "aiexperience.h"	//for beacon messages
 #include "multiint.h"
 #include "multirecv.h"
 #include "scriptfuncs.h"
@@ -284,7 +283,6 @@ BOOL hostCampaign(char *sGame, char *sPlayer)
 	{
 		strcpy(NetPlay.players[0].name,sPlayer);
 	}
-	NetPlay.maxPlayers = game.maxPlayers;
 
 	return true;
 }
@@ -355,14 +353,7 @@ BOOL multiShutdown(void)
 // copy templates from one player to another.
 BOOL addTemplateToList(DROID_TEMPLATE *psNew, DROID_TEMPLATE **ppList)
 {
-	DROID_TEMPLATE *psTempl = (DROID_TEMPLATE *)malloc(sizeof(DROID_TEMPLATE));
-
-	if (psTempl == NULL)
-	{
-		debug(LOG_ERROR, "addTemplate: Out of memory");
-		return false;
-	}
-	memcpy(psTempl, psNew, sizeof(DROID_TEMPLATE));
+	DROID_TEMPLATE *psTempl = new DROID_TEMPLATE(*psNew);
 	psTempl->pName = NULL;
 
 	if (psNew->pName)
@@ -408,9 +399,21 @@ static BOOL cleanMap(UDWORD player)
 	switch(game.base)
 	{
 	case CAMP_CLEAN:									//clean map
-		while(apsStructLists[player])					//strip away structures.
+		psStruct = apsStructLists[player];
+		while (psStruct)						//strip away structures.
 		{
-			removeStruct(apsStructLists[player], true);
+			if ((psStruct->pStructureType->type != REF_WALL && psStruct->pStructureType->type != REF_WALLCORNER
+			     && psStruct->pStructureType->type != REF_DEFENSE && psStruct->pStructureType->type != REF_GATE
+			     && psStruct->pStructureType->type != REF_RESOURCE_EXTRACTOR)
+			    || NetPlay.players[player].difficulty != DIFFICULTY_INSANE || NetPlay.players[player].allocated)
+			{
+				removeStruct(psStruct, true);
+				psStruct = apsStructLists[player];			//restart,(list may have changed).
+			}
+			else
+			{
+				psStruct = psStruct->psNext;
+			}
 		}
 		psD = apsDroidLists[player];					// remove all but construction droids.
 		while(psD)
@@ -428,13 +431,12 @@ static BOOL cleanMap(UDWORD player)
 		psStruct = apsStructLists[player];
 		while(psStruct)
 		{
-			if ( (psStruct->pStructureType->type == REF_WALL)
-			   ||(psStruct->pStructureType->type == REF_WALLCORNER)
-			   ||(psStruct->pStructureType->type == REF_DEFENSE)
-			   ||(psStruct->pStructureType->type == REF_BLASTDOOR)
-			   ||(psStruct->pStructureType->type == REF_GATE)
-			   ||(psStruct->pStructureType->type == REF_CYBORG_FACTORY)
-			   ||(psStruct->pStructureType->type == REF_COMMAND_CONTROL))
+			if (((psStruct->pStructureType->type == REF_WALL || psStruct->pStructureType->type == REF_WALLCORNER
+			      || psStruct->pStructureType->type == REF_DEFENSE || psStruct->pStructureType->type == REF_GATE)
+			     && (NetPlay.players[player].difficulty != DIFFICULTY_INSANE || NetPlay.players[player].allocated))
+			    || psStruct->pStructureType->type == REF_BLASTDOOR
+			    || psStruct->pStructureType->type == REF_CYBORG_FACTORY
+			    || psStruct->pStructureType->type == REF_COMMAND_CONTROL)
 			{
 				removeStruct(psStruct, true);
 				psStruct= apsStructLists[player];			//restart,(list may have changed).
@@ -597,8 +599,6 @@ BOOL multiGameInit(void)
 	}
 
 	gameInit();
-
-	InitializeAIExperience();
 	msgStackReset();	//for multiplayer msgs, reset message stack
 
 	return true;

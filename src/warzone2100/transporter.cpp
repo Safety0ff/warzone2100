@@ -29,7 +29,7 @@
 #include "framework/math_ext.h"
 #include "widget/label.h"
 #include "widget/widget.h"
-#include "ivis_common/textdraw.h"
+#include "ivis_opengl/textdraw.h"
 
 #include "stats.h"
 #include "hci.h"
@@ -47,7 +47,7 @@
 #include "action.h"
 #include "gamelib/gtime.h"
 #include "console.h"
-#include "ivis_common/bitimage.h"
+#include "ivis_opengl/bitimage.h"
 #include "warcam.h"
 #include "selection.h"
 #include "sound/audio.h"
@@ -310,14 +310,12 @@ static BOOL _intAddTransporter(DROID *psSelected, BOOL offWorld)
 BOOL intAddTransporterContents(void)
 {
 	BOOL			Animate = true;
-	BOOL  AlreadyUp = false;
 
     // Is the form already up?
 	if(widgGetFromID(psWScreen,IDTRANS_CONTENTFORM) != NULL)
 	{
 		intRemoveTransContentNoAnim();
 		Animate = false;
-		AlreadyUp = true;
 	}
 
 	if(intIsRefreshing()) {
@@ -659,7 +657,7 @@ BOOL intAddTransButtonForm(void)
 /* Add the Transporter Contents form */
 BOOL intAddTransContentsForm(void)
 {
-	UDWORD			numButtons, i;
+	UDWORD			i;
 	SDWORD			BufferID;
 	DROID			*psDroid, *psNext;
 
@@ -679,8 +677,6 @@ BOOL intAddTransContentsForm(void)
 	sFormInit.majorOffset = OBJ_TABOFFSET;
 	sFormInit.tabVertOffset = (OBJ_TABHEIGHT/2);
 	sFormInit.tabMajorThickness = OBJ_TABHEIGHT;
-
-	numButtons = TRANSPORTER_CAPACITY;
 
 	//set the number of tabs required
 	//sFormInit.numMajor = numForms((OBJ_BUTWIDTH + OBJ_GAP) * numButtons,
@@ -1420,8 +1416,11 @@ void transporterAddDroid(DROID *psTransporter, DROID *psDroidToAdd)
 	/* check for space */
 	if (!checkTransporterSpace(psTransporter, psDroidToAdd))
 	{
-		audio_PlayTrack( ID_SOUND_BUILD_FAIL );
-		addConsoleMessage(_("There is not enough room in the Transport!"), DEFAULT_JUSTIFY, selectedPlayer);
+		if (psTransporter->player == selectedPlayer)
+		{
+			audio_PlayTrack(ID_SOUND_BUILD_FAIL);
+			addConsoleMessage(_("There is not enough room in the Transport!"), DEFAULT_JUSTIFY, selectedPlayer);
+		}
 		return;
 	}
 	if (onMission)

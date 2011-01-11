@@ -26,9 +26,9 @@
 #include "framework/frame.h"
 #include "framework/frameresource.h"
 // FIXME Direct iVis implementation include!
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piemode.h"
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piemode.h"
+#include "ivis_opengl/piestate.h"
 #include "ivis_opengl/screen.h"
 #include "netplay/netplay.h"	// multiplayer
 #include "sound/audio.h"

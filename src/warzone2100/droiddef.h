@@ -94,12 +94,13 @@ typedef std::vector<OrderListEntry> OrderList;
 
 struct DROID_TEMPLATE : public BASE_STATS
 {
+	DROID_TEMPLATE();
+	DROID_TEMPLATE(LineView line);
+
 	// On the PC the pName entry in STATS_BASE is redundant and can be assumed to be NULL,
 
 	/// on the PC this contains the full editable UTF-8 encoded name of the template
 	char            aName[MAX_STR_LENGTH];
-
-	UBYTE           NameVersion;                //< Version number used in name (e.g. Viper Mk "I" would be stored as 1 - Viper Mk "X" as 10)
 
 	/*!
 	 * The droid components.
@@ -127,6 +128,8 @@ struct DROID_TEMPLATE : public BASE_STATS
 };
 
 struct PACKAGED_CHECK;
+struct DROID_GROUP;
+struct STRUCTURE;
 
 struct DROID : public BASE_OBJECT
 {
@@ -152,7 +155,6 @@ struct DROID : public BASE_OBJECT
 	UDWORD          baseSpeed;                      ///< the base speed dependant on propulsion type
 	UDWORD          originalBody;                   ///< the original body points
 	uint32_t        experience;
-	UBYTE           NameVersion;                    ///< Version number used for generating on-the-fly names (e.g. Viper Mk "I" would be stored as 1 - Viper Mk "X" as 10)  - copied from droid template
 
 	int		lastFrustratedTime;		///< Set when eg being stuck; used for eg firing indiscriminately at map features to clear the way (note: signed, so wrap arounds after 24.9 days)
 
@@ -162,9 +164,9 @@ struct DROID : public BASE_OBJECT
 	WEAPON          asWeaps[DROID_MAXWEAPS];
 
 	// The group the droid belongs to
-	struct _droid_group* psGroup;
-	struct DROID*  psGrpNext;
-	struct STRUCTURE *psBaseStruct;                 ///< a structure that this droid might be associated with. For VTOLs this is the rearming pad
+	DROID_GROUP *   psGroup;
+	DROID *         psGrpNext;
+	STRUCTURE *     psBaseStruct;                   ///< a structure that this droid might be associated with. For VTOLs this is the rearming pad
 	// queued orders
 	SDWORD          listSize;                       ///< Gives the number of synchronised orders. Orders from listSize to the real end of the list may not affect game state.
 	OrderList       asOrderList;                    ///< The range [0; listSize - 1] corresponds to synchronised orders, and the range [listPendingBegin; listPendingEnd - 1] corresponds to the orders that will remain, once all orders are synchronised.

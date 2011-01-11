@@ -61,7 +61,7 @@
 #include "sequence.h"
 #include "timer.h"
 #include "framework/math_ext.h"
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/piestate.h"
 #include "sound/audio.h"
 #include "sound/openal_error.h"
 #include "sound/mixer.h"
@@ -474,7 +474,6 @@ bool seq_Play(const char* filename)
 {
 	int pp_level_max = 0;
 	int pp_level = 0;
-	int pp_inc = 0;
 	ogg_packet op;
 
 	debug(LOG_VIDEO, "starting playback of: %s", filename);
@@ -639,7 +638,6 @@ bool seq_Play(const char* filename)
 		theora_control(&videodata.td, TH_DECCTL_GET_PPLEVEL_MAX, &pp_level_max, sizeof(pp_level_max));
 		pp_level = pp_level_max;
 		theora_control(&videodata.td, TH_DECCTL_SET_PPLEVEL, &pp_level, sizeof(pp_level));
-		pp_inc = 0;
 	}
 	else
 	{

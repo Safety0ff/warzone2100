@@ -36,9 +36,9 @@
 #include "widget/button.h"
 #include "widget/editbox.h"
 #include "widget/widget.h"
-#include "ivis_common/piepalette.h"		// for predefined colours.
-#include "ivis_common/bitimage.h"
-#include "ivis_common/pieblitfunc.h"		// for boxfill
+#include "ivis_opengl/piepalette.h"		// for predefined colours.
+#include "ivis_opengl/bitimage.h"
+#include "ivis_opengl/pieblitfunc.h"		// for boxfill
 #include "hci.h"
 #include "loadsave.h"
 #include "multiplay.h"

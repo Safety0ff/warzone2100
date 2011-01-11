@@ -156,7 +156,7 @@ const char* getDroidActionName(DROID_ACTION action)
 /* Check if a target is at correct range to attack */
 static BOOL actionInAttackRange(DROID *psDroid, BASE_OBJECT *psObj, int weapon_slot)
 {
-	SDWORD			dx, dy, dz, radSq, rangeSq, longRange;
+	SDWORD			dx, dy, radSq, rangeSq, longRange;
 	WEAPON_STATS	*psStats;
 	int compIndex;
 
@@ -168,7 +168,6 @@ static BOOL actionInAttackRange(DROID *psDroid, BASE_OBJECT *psObj, int weapon_s
 
 	dx = (SDWORD)psDroid->pos.x - (SDWORD)psObj->pos.x;
 	dy = (SDWORD)psDroid->pos.y - (SDWORD)psObj->pos.y;
-	dz = (SDWORD)psDroid->pos.z - (SDWORD)psObj->pos.z;
 
 	radSq = dx*dx + dy*dy;
 
@@ -231,7 +230,7 @@ static BOOL actionInAttackRange(DROID *psDroid, BASE_OBJECT *psObj, int weapon_s
 // check if a target is within weapon range
 BOOL actionInRange(DROID *psDroid, BASE_OBJECT *psObj, int weapon_slot)
 {
-	SDWORD			dx, dy, dz, radSq, rangeSq, longRange;
+	SDWORD			dx, dy, radSq, rangeSq, longRange;
 	WEAPON_STATS	*psStats;
 	int compIndex;
 
@@ -248,7 +247,6 @@ BOOL actionInRange(DROID *psDroid, BASE_OBJECT *psObj, int weapon_slot)
 
 	dx = (SDWORD)psDroid->pos.x - (SDWORD)psObj->pos.x;
 	dy = (SDWORD)psDroid->pos.y - (SDWORD)psObj->pos.y;
-	dz = (SDWORD)psDroid->pos.z - (SDWORD)psObj->pos.z;
 
 	radSq = dx*dx + dy*dy;
 
@@ -273,7 +271,7 @@ BOOL actionInRange(DROID *psDroid, BASE_OBJECT *psObj, int weapon_slot)
 // check if a target is inside minimum weapon range
 BOOL actionInsideMinRange(DROID *psDroid, BASE_OBJECT *psObj, WEAPON_STATS *psStats)
 {
-	SDWORD	dx, dy, dz, radSq, rangeSq, minRange;
+	SDWORD	dx, dy, radSq, rangeSq, minRange;
 
 	CHECK_DROID(psDroid);
 	CHECK_OBJECT(psObj);
@@ -291,7 +289,6 @@ BOOL actionInsideMinRange(DROID *psDroid, BASE_OBJECT *psObj, WEAPON_STATS *psSt
 
 	dx = (SDWORD)psDroid->pos.x - (SDWORD)psObj->pos.x;
 	dy = (SDWORD)psDroid->pos.y - (SDWORD)psObj->pos.y;
-	dz = (SDWORD)psDroid->pos.z - (SDWORD)psObj->pos.z;
 
 	radSq = dx*dx + dy*dy;
 
@@ -374,16 +371,12 @@ BOOL actionTargetTurret(BASE_OBJECT *psAttacker, BASE_OBJECT *psTarget, WEAPON *
 	bool     onTarget;
 	int32_t  dxy;
 	int32_t  pitchLowerLimit, pitchUpperLimit;
-	bool     bInvert;
 	bool     bRepair;
 
 	if (!psTarget)
 	{
 		return false;
 	}
-
-	/* check whether turret position inverted vertically on body */
-	bInvert = psAttacker->type == OBJ_DROID && !cyborgDroid((DROID *)psAttacker) && isVtolDroid((DROID *)psAttacker);
 
 	bRepair = psAttacker->type == OBJ_DROID && ((DROID *)psAttacker)->droidType == DROID_REPAIR;
 
@@ -1412,15 +1405,13 @@ void actionUpdateDroid(DROID *psDroid)
 		else
 		{
 			// if the vtol is close to the target, go around again
-			const int xdiff = (SDWORD)psDroid->pos.x - (SDWORD)psDroid->psActionTarget[0]->pos.x;
-			const int ydiff = (SDWORD)psDroid->pos.y - (SDWORD)psDroid->psActionTarget[0]->pos.y;
-			const int rangeSq = xdiff * xdiff + ydiff * ydiff;
-			if (rangeSq < (VTOL_ATTACK_TARDIST*VTOL_ATTACK_TARDIST))
+			const Vector2i diff = removeZ(psDroid->pos - psDroid->psActionTarget[0]->pos);
+			const int rangeSq = diff*diff;
+			if (rangeSq < VTOL_ATTACK_TARDIST*VTOL_ATTACK_TARDIST)
 			{
 				// don't do another attack run if already moving away from the target
-				const int xdiff = (SDWORD)psDroid->sMove.DestinationX - (SDWORD)psDroid->psActionTarget[0]->pos.x;
-				const int ydiff = (SDWORD)psDroid->sMove.DestinationY - (SDWORD)psDroid->psActionTarget[0]->pos.y;
-				if ((xdiff*xdiff + ydiff*ydiff) < (VTOL_ATTACK_TARDIST*VTOL_ATTACK_TARDIST))
+				const Vector2i diff = psDroid->sMove.destination - removeZ(psDroid->psActionTarget[0]->pos);
+				if (diff*diff < VTOL_ATTACK_TARDIST*VTOL_ATTACK_TARDIST)
 				{
 					actionAddVtolAttackRun( psDroid );
 				}
@@ -1431,9 +1422,8 @@ void actionUpdateDroid(DROID *psDroid)
 				if (rangeSq > (SDWORD)(psWeapStats->longRange * psWeapStats->longRange))
 				{
 					// don't do another attack run if already heading for the target
-					const int xdiff = (SDWORD)psDroid->sMove.DestinationX - (SDWORD)psDroid->psActionTarget[0]->pos.x;
-					const int ydiff = (SDWORD)psDroid->sMove.DestinationY - (SDWORD)psDroid->psActionTarget[0]->pos.y;
-					if ((xdiff*xdiff + ydiff*ydiff) > (VTOL_ATTACK_TARDIST*VTOL_ATTACK_TARDIST))
+					const Vector2i diff = psDroid->sMove.destination - removeZ(psDroid->psActionTarget[0]->pos);
+					if (diff*diff > VTOL_ATTACK_TARDIST*VTOL_ATTACK_TARDIST)
 					{
 						moveDroidToDirect(psDroid, psDroid->psActionTarget[0]->pos.x,psDroid->psActionTarget[0]->pos.y);
 					}
@@ -2112,11 +2102,10 @@ void actionUpdateDroid(DROID *psDroid)
 				(psDroid->psTarget->type != OBJ_STRUCTURE))
 			{
 				//move droids to within short range of the sensor now!!!!
-				int xdiff = (SDWORD)psDroid->pos.x - (SDWORD)psDroid->psTarget->pos.x;
-				int ydiff = (SDWORD)psDroid->pos.y - (SDWORD)psDroid->psTarget->pos.y;
+				Vector2i diff = removeZ(psDroid->pos - psDroid->psTarget->pos);
 				int rangeSq = asWeaponStats[psDroid->asWeaps[0].nStat].shortRange;
 				rangeSq = rangeSq * rangeSq;
-				if (xdiff*xdiff + ydiff*ydiff < rangeSq)
+				if (diff*diff < rangeSq)
 				{
 					if (!DROID_STOPPED(psDroid))
 					{
@@ -2127,12 +2116,10 @@ void actionUpdateDroid(DROID *psDroid)
 				{
 					if (!DROID_STOPPED(psDroid))
 					{
-						xdiff = (SDWORD)psDroid->psTarget->pos.x - (SDWORD)psDroid->sMove.DestinationX;
-						ydiff = (SDWORD)psDroid->psTarget->pos.y - (SDWORD)psDroid->sMove.DestinationY;
+						diff = removeZ(psDroid->psTarget->pos) - psDroid->sMove.destination;
 					}
 
-					if (DROID_STOPPED(psDroid) ||
-						(xdiff*xdiff + ydiff*ydiff > rangeSq))
+					if (DROID_STOPPED(psDroid) || diff*diff > rangeSq)
 					{
 						if (secondaryGetState(psDroid, DSO_HALTTYPE) == DSS_HALT_HOLD)
 						{
@@ -2797,7 +2784,6 @@ return to base*/
 void moveToRearm(DROID *psDroid)
 {
 	STRUCTURE	*psStruct;
-	UBYTE		chosen=0;
 
 	CHECK_DROID(psDroid);
 
@@ -2829,19 +2815,16 @@ void moveToRearm(DROID *psDroid)
 			// no order set - use the rearm order to ensure the unit goes back
 			// to the landing pad
 			orderDroidObj(psDroid, DORDER_REARM, (BASE_OBJECT *)psStruct, ModeImmediate);
-			chosen=1;
 		}
 		else
 		{
 			actionDroidObj(psDroid, DACTION_MOVETOREARM, (BASE_OBJECT *)psStruct);
-			chosen=2;
 		}
 	}
 	else
 	{
 		//return to base un-armed
 		orderDroid(psDroid, DORDER_RTB, ModeImmediate);
-		chosen =3;
 	}
 }
 
@@ -2961,7 +2944,7 @@ static bool vtolLandingTileSearchFunction(int x, int y, void* matchState)
 // choose a landing position for a VTOL when it goes to rearm
 bool actionVTOLLandingPos(const DROID* psDroid, UDWORD* px, UDWORD* py)
 {
-	int startX, startY, tx, ty;
+	int startX, startY;
 	DROID* psCurr;
 	bool   foundTile;
 	Vector2i xyCoords;
@@ -2975,21 +2958,20 @@ bool actionVTOLLandingPos(const DROID* psDroid, UDWORD* px, UDWORD* py)
 	// set blocking flags for all the other droids
 	for(psCurr=apsDroidLists[psDroid->player]; psCurr; psCurr = psCurr->psNext)
 	{
+		Vector2i t;
 		if (DROID_STOPPED(psCurr))
 		{
-			tx = map_coord(psCurr->pos.x);
-			ty = map_coord(psCurr->pos.y);
+			t = map_coord(removeZ(psCurr->pos));
 		}
 		else
 		{
-			tx = map_coord(psCurr->sMove.DestinationX);
-			ty = map_coord(psCurr->sMove.DestinationY);
+			t = map_coord(psCurr->sMove.destination);
 		}
 		if (psCurr != psDroid)
 		{
-			if (tileOnMap(tx, ty))
+			if (tileOnMap(t))
 			{
-				mapTile(tx,ty)->tileInfoBits |= BITS_FPATHBLOCK;
+				mapTile(t)->tileInfoBits |= BITS_FPATHBLOCK;
 			}
 		}
 	}
@@ -3008,19 +2990,18 @@ bool actionVTOLLandingPos(const DROID* psDroid, UDWORD* px, UDWORD* py)
 	// clear blocking flags for all the other droids
 	for(psCurr=apsDroidLists[psDroid->player]; psCurr; psCurr = psCurr->psNext)
 	{
+		Vector2i t;
 		if (DROID_STOPPED(psCurr))
 		{
-			tx = map_coord(psCurr->pos.x);
-			ty = map_coord(psCurr->pos.y);
+			t = map_coord(removeZ(psCurr->pos));
 		}
 		else
 		{
-			tx = map_coord(psCurr->sMove.DestinationX);
-			ty = map_coord(psCurr->sMove.DestinationY);
+			t = map_coord(psCurr->sMove.destination);
 		}
-		if (tileOnMap(tx, ty))
+		if (tileOnMap(t))
 		{
-			mapTile(tx,ty)->tileInfoBits &= ~BITS_FPATHBLOCK;
+			mapTile(t)->tileInfoBits &= ~BITS_FPATHBLOCK;
 		}
 	}
 

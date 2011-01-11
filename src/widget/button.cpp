@@ -28,7 +28,7 @@
 #include "button.h"
 #include "form.h"
 #include "tip.h"
-#include "ivis_common/pieblitfunc.h"
+#include "ivis_opengl/pieblitfunc.h"
 #include "gamelib/gtime.h"
 
 
@@ -270,7 +270,6 @@ void buttonDisplay(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, PIELIGHT *p
 {
 	W_BUTTON	*psButton;
 	SDWORD		x0,y0,x1,y1, fx,fy,fw;
-	int			CurrFontID;
 
 	ASSERT(psWidget != NULL && pColours != NULL, "Invalid pointers");
 	if (!psWidget || !pColours)
@@ -279,7 +278,6 @@ void buttonDisplay(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, PIELIGHT *p
 	}
 
 	psButton = (W_BUTTON *)psWidget;
-	CurrFontID = psButton->FontID;
 
 	x0=psButton->x + xOffset;
 	y0=psButton->y + yOffset;

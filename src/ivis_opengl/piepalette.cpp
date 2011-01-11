@@ -19,8 +19,8 @@
 */
 #include "framework/frame.h"
 #include "framework/file.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/piepalette.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/piepalette.h"
 #include "screen.h"
 
 PIELIGHT psPalette[WZCOL_MAX];

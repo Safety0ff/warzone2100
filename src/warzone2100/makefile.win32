@@ -1,8 +1,3 @@
-top_srcdir=..
-top_builddir=$(top_srcdir)
-
-include $(top_srcdir)/makerules/common.mk
-
 CPPFLAGS := $(CPPFLAGS) -I$(top_srcdir)/lib/ivis_opengl
 
 # Due to the lexer's dependencies on the parser's header we need to compile the
@@ -19,7 +14,6 @@ SRC= \
 	action.cpp \
 	advvis.cpp \
 	ai.cpp \
-	aiexperience.cpp \
 	astar.cpp \
 	atmos.cpp \
 	aud.cpp \

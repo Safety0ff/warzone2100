@@ -27,11 +27,11 @@
 # include <GL/glu.h>
 #endif
 
-#include "ivis_common/ivisdef.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/tex.h"
-#include "ivis_common/piepalette.h"
-#include "ivis_common/png_util.h"
+#include "ivis_opengl/ivisdef.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/tex.h"
+#include "ivis_opengl/piepalette.h"
+#include "ivis_opengl/png_util.h"
 
 #include "screen.h"
 

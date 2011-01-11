@@ -22,7 +22,7 @@
 
 #include "framework/frame.h"
 
-#include "ivis_common/ivisdef.h"
+#include "ivis_opengl/ivisdef.h"
 #include "ivis_opengl/piematrix.h"
 #include "gamelib/gtime.h"
 

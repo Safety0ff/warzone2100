@@ -25,9 +25,9 @@
 #include "framework/frame.h"
 #include "framework/input.h"
 #include "gamelib/gtime.h"
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/textdraw.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/textdraw.h"
 #include "sound/audio.h"
 #include "sound/audio_id.h"
 

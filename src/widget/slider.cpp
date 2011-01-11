@@ -25,7 +25,7 @@
 #include "widgint.h"
 #include "slider.h"
 // FIXME Direct iVis implementation include!
-#include "ivis_common/pieblitfunc.h"
+#include "ivis_opengl/pieblitfunc.h"
 
 static BOOL DragEnabled = true;
 

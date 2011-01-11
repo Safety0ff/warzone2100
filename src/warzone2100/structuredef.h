@@ -39,7 +39,7 @@
 #define	REF_ANY	255	// Used to indicate any kind of building when calling intGotoNextStructureType()
 
 /* Defines for indexing an appropriate IMD object given a buildings purpose. */
-typedef enum _structure_type
+enum STRUCTURE_TYPE
 {
 REF_HQ,
 REF_FACTORY,
@@ -65,24 +65,20 @@ REF_MISSILE_SILO,
 REF_SAT_UPLINK,         //added for updates - AB 8/6/99
 REF_GATE,
 NUM_DIFF_BUILDINGS,		//need to keep a count of how many types for IMD loading
-} STRUCTURE_TYPE;
+};
 
 struct FLAG_POSITION : public OBJECT_POSITION
 {
 	Vector3i		coords;							//the world coords of the Position
 	UBYTE		factoryInc;						//indicates whether the first, second etc factory
 	UBYTE		factoryType;					//indicates whether standard, cyborg or vtol factory
-//	UBYTE		factorySub;						//sub value. needed to order production points.
-//	UBYTE		primary;
 	FLAG_POSITION * psNext;
 };
 
 
-//only allowed one weapon per structure (more memory for Tim)
-//Watermelon:only allowed 4 weapons per structure(sorry Tim...)
 #define STRUCT_MAXWEAPS		4
 
-typedef enum _struct_strength
+enum STRUCT_STRENGTH
 {
 	STRENGTH_SOFT,
 	STRENGTH_MEDIUM,
@@ -90,24 +86,27 @@ typedef enum _struct_strength
 	STRENGTH_BUNKER,
 
 	NUM_STRUCT_STRENGTH,
-} STRUCT_STRENGTH;
+};
 
 typedef UWORD STRUCTSTRENGTH_MODIFIER;
 
 #define SAS_OPEN_SPEED		(GAME_TICKS_PER_SEC * 2)
 #define SAS_STAY_OPEN_TIME	(GAME_TICKS_PER_SEC * 6)
 
-typedef enum _anim_states
+enum STRUCT_ANIM_STATES
 {
 	SAS_NORMAL,
 	SAS_OPEN,
 	SAS_OPENING,
 	SAS_CLOSING,
-} STRUCT_ANIM_STATES;
+};
 
 //this structure is used to hold the permenant stats for each type of building
 struct STRUCTURE_STATS : public BASE_STATS
 {
+	STRUCTURE_STATS() {}
+	STRUCTURE_STATS(LineView line);
+
 	STRUCTURE_TYPE	type;				/* the type of structure */
 	STRUCT_STRENGTH	strength;		/* strength against the weapon effects */
 	UDWORD		baseWidth;			/*The width of the base in tiles*/
@@ -136,9 +135,8 @@ struct STRUCTURE_STATS : public BASE_STATS
 
 	struct WEAPON_STATS    *psWeapStat[STRUCT_MAXWEAPS];
 
-	UDWORD		numFuncs;			/*Number of functions for default*/
 	SDWORD		defaultFunc;		/*The default function*/
-	struct FUNCTION **asFuncList;           ///< List of pointers to allowable functions - unalterable
+	std::vector<struct FUNCTION *> asFuncList;               ///< List of pointers to allowable functions - unalterable
 };
 
 enum STRUCT_STATES
@@ -151,7 +149,7 @@ enum STRUCT_STATES
 	SS_BLUEPRINT_PLANNED,
 };
 
-typedef struct _research_facility
+struct RESEARCH_FACILITY
 {
 	struct BASE_STATS *     psSubject;              // The subject the structure is working on.
 	struct BASE_STATS *     psSubjectPending;       // The subject the structure is going to work on when the GAME_RESEARCHSTATUS message is received.
@@ -165,7 +163,7 @@ typedef struct _research_facility
 										   researching a topic*/
 	UDWORD		timeStartHold;		    /* The time the research facility was put on hold*/
 
-} RESEARCH_FACILITY;
+};
 
 enum FACTORY_STATUS_PENDING
 {
@@ -200,46 +198,44 @@ struct FACTORY
                                             // added AB 22/04/99
 };
 
-typedef struct _res_extractor
+struct RES_EXTRACTOR
 {
 	BOOL				active;				/*indicates when the extractor is on ie digging up oil*/
 	struct STRUCTURE *      psPowerGen;                             ///< owning power generator
-} RES_EXTRACTOR;
+};
 
-typedef struct _power_gen
+struct POWER_GEN
 {
 	UDWORD			multiplier;				///< Factor to multiply output by - percentage
 	UDWORD			capacity;				///< Number of upgrade modules added
 	struct STRUCTURE *      apResExtractors[NUM_POWER_MODULES];     ///< Pointers to associated oil derricks
-} POWER_GEN;
+};
 
-typedef struct REPAIR_FACILITY
+struct DROID_GROUP;
+
+struct REPAIR_FACILITY
 {
-	UDWORD				power;				/* Power used in repairing */
-	UDWORD				timeStarted;		/* Time repair started on current object */
-	BASE_OBJECT			*psObj;				/* Object being repaired */
-	UDWORD				powerAccrued;		/* used to keep track of power before
-											   repairing a droid */
-	FLAG_POSITION		*psDeliveryPoint;	/* Place for the repaired droids to assemble
-                                               at */
-    UDWORD              currentPtsAdded;    /* stores the amount of body points added to the unit
-                                               that is being worked on */
+	UDWORD                          power;                  /* Power used in repairing */
+	UDWORD                          timeStarted;            /* Time repair started on current object */
+	BASE_OBJECT                     *psObj;                 /* Object being repaired */
+	UDWORD                          powerAccrued;           /* Used to keep track of power before repairing a droid */
+	FLAG_POSITION                   *psDeliveryPoint;       /* Place for the repaired droids to assemble at */
+	UDWORD                          currentPtsAdded;        /* stores the amount of body points added to the unit that is being worked on */
 
 	// The group the droids to be repaired by this facility belong to
-	struct _droid_group		*psGroup;
-	struct DROID			*psGrpNext;
-	int				droidQueue;		///< Last count of droid queue for this facility
-} REPAIR_FACILITY;
+	DROID_GROUP *                   psGroup;
+	int                             droidQueue;              ///< Last count of droid queue for this facility
+};
 
-typedef struct _rearm_pad
+struct REARM_PAD
 {
-	UDWORD				reArmPoints;		/* rearm points per cycle				 */
-	UDWORD				timeStarted;		/* Time reArm started on current object	 */
-	BASE_OBJECT			*psObj;				/* Object being rearmed		             */
-    UDWORD              timeLastUpdated;    /* Time rearm was last updated */
-} REARM_PAD;
+	UDWORD                          reArmPoints;            /* rearm points per cycle */
+	UDWORD                          timeStarted;            /* Time reArm started on current object */
+	BASE_OBJECT                     *psObj;                 /* Object being rearmed */
+	UDWORD                          timeLastUpdated;        /* Time rearm was last updated */
+};
 
-typedef union
+union FUNCTIONALITY
 {
 	RESEARCH_FACILITY researchFacility;
 	FACTORY           factory;
@@ -247,7 +243,7 @@ typedef union
 	POWER_GEN         powerGenerator;
 	REPAIR_FACILITY   repairFacility;
 	REARM_PAD         rearmPad;
-} FUNCTIONALITY;
+};
 
 //this structure is used whenever an instance of a building is required in game
 struct STRUCTURE : public BASE_OBJECT
@@ -290,7 +286,7 @@ struct STRUCTURE : public BASE_OBJECT
 };
 
 #define LOTS_OF	255						/*highest number the limit can be set to */
-typedef struct _structure_limits
+struct STRUCTURE_LIMITS
 {
 	UBYTE		limit;				/* the number allowed to be built */
 	UBYTE		currentQuantity;	/* the number of the type currently
@@ -298,7 +294,7 @@ typedef struct _structure_limits
 
 	UBYTE		globalLimit;		// multiplayer only. sets the max value selectable (limits changed by player)
 
-} STRUCTURE_LIMITS;
+};
 
 
 //the three different types of factory (currently) - FACTORY, CYBORG_FACTORY, VTOL_FACTORY
@@ -334,24 +330,24 @@ struct ProductionRunEntry
 typedef std::vector<ProductionRunEntry> ProductionRun;
 
 /* structure stats which can be upgraded by research*/
-typedef struct _structure_upgrade
+struct STRUCTURE_UPGRADE
 {
 	UWORD			armour;
 	UWORD			body;
 	UWORD			resistance;
-} STRUCTURE_UPGRADE;
+};
 
 /* wall/Defence structure stats which can be upgraded by research*/
-typedef struct _wallDefence_upgrade
+struct WALLDEFENCE_UPGRADE
 {
 	UWORD			armour;
 	UWORD			body;
-} WALLDEFENCE_UPGRADE;
+};
 
-typedef struct _upgrade
+struct UPGRADE
 {
 	UWORD		modifier;		//% to increase the stat by
-} UPGRADE;
+};
 
 typedef UPGRADE		RESEARCH_UPGRADE;
 typedef UPGRADE		PRODUCTION_UPGRADE;

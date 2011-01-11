@@ -26,7 +26,7 @@
 
 #include "widget.h"
 #include "widgbase.h"
-#include "ivis_common/textdraw.h"
+#include "ivis_opengl/textdraw.h"
 #include "framework/utf.h"
 
 /* Edit Box states */

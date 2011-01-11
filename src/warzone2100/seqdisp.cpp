@@ -32,7 +32,7 @@
 
 #include "framework/file.h"
 #include "framework/stdio_ext.h"
-#include "ivis_common/piemode.h"
+#include "ivis_opengl/piemode.h"
 #include "ivis_opengl/screen.h"
 #include "sequence/sequence.h"
 #include "sound/audio.h"

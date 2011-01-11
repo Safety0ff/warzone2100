@@ -30,9 +30,9 @@
 #include "display3d.h"
 #include "intdisplay.h"
 // FIXME Direct iVis implementation include!
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piedef.h"
-#include "ivis_common/piepalette.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piedef.h"
+#include "ivis_opengl/piepalette.h"
 #include "gamelib/gtime.h"
 #include "ivis_opengl/piematrix.h"
 #include "levels.h"

@@ -23,14 +23,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "framework/string_ext.h"
-#include "ivis_common/ivisdef.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/pieclip.h"
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piepalette.h"
-#include "ivis_common/textdraw.h"
-#include "ivis_common/bitimage.h"
-#include "multiplay.h"
+#include "ivis_opengl/ivisdef.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/pieclip.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piepalette.h"
+#include "ivis_opengl/textdraw.h"
+#include "ivis_opengl/bitimage.h"
+#include "warzone2100/multiplay.h"
 
 #ifdef WZ_OS_MAC
 # include <CoreFoundation/CoreFoundation.h>

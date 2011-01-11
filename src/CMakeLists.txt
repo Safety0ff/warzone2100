@@ -3,7 +3,6 @@ set (warzone2100_SUBDIRS
   exceptionhandler
   gamelib
   iniparser
-  ivis_common
   ivis_opengl
   netplay
   script

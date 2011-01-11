@@ -28,7 +28,7 @@
 #ifndef _pieMatrix_h
 #define _pieMatrix_h
 
-#include "ivis_common/piedef.h"
+#include "ivis_opengl/piedef.h"
 
 //*************************************************************************
 

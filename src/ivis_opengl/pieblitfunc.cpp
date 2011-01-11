@@ -30,14 +30,14 @@
 #include "framework/opengl.h"
 #include <time.h>
 
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piedef.h"
-#include "ivis_common/piemode.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/pieclip.h"
-#include "ivis_common/piefunc.h"
-#include "ivis_common/piepalette.h"
-#include "ivis_common/tex.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piedef.h"
+#include "ivis_opengl/piemode.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/pieclip.h"
+#include "ivis_opengl/piefunc.h"
+#include "ivis_opengl/piepalette.h"
+#include "ivis_opengl/tex.h"
 #include "piematrix.h"
 #include "screen.h"
 

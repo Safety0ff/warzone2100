@@ -31,8 +31,8 @@
 #include "editbox.h"
 #include "form.h"
 // FIXME Direct iVis implementation include!
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/textdraw.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/textdraw.h"
 #include "scrap.h"
 
 

@@ -801,31 +801,31 @@ BOOL recvMessage(void)
 		case GAME_ALLIANCE:
 			recvAlliance(queue, true);
 			break;
-		case NET_KICK:
+		case NET_KICK:	// in-game kick message
 		{
-			// FIX ME: in game kick ?  Is this even possible with current code?
 			uint32_t player_id;
 			char reason[MAX_KICK_REASON];
+			LOBBY_ERROR_TYPES KICK_TYPE = ERROR_NOERROR;
+
+			NETbeginDecode(queue, NET_KICK);
+				NETuint32_t(&player_id);
+				NETstring(reason, MAX_KICK_REASON);
+				NETenum(&KICK_TYPE);
+			NETend();
 
 			if (player_id == NET_HOST_ONLY)
 			{
 				debug(LOG_ERROR, "someone tried to kick the host--check your netplay logs!");
-				NETend();
 				break;
 			}
-
-			NETbeginDecode(queue, NET_KICK);
-				NETuint32_t(&player_id);
-				NETstring( reason, MAX_KICK_REASON);
-			NETend();
-
-			if (selectedPlayer == player_id)  // we've been told to leave.
+			else if (selectedPlayer == player_id)  // we've been told to leave.
 			{
 				debug(LOG_ERROR, "You were kicked because %s", reason);
 				setPlayerHasLost(true);
 			}
 			else
 			{
+				debug(LOG_NET, "Player %d was kicked: %s", player_id, reason);
 				NETplayerKicked(player_id);
 			}
 			break;
@@ -1450,7 +1450,6 @@ BOOL sendTemplate(DROID_TEMPLATE *pTempl)
 		NETuint8_t(&player);
 		NETuint32_t(&pTempl->ref);
 		NETstring(pTempl->aName, sizeof(pTempl->aName));
-		NETuint8_t(&pTempl->NameVersion);
 
 		for (i = 0; i < ARRAY_SIZE(pTempl->asParts); ++i)
 		{
@@ -1488,7 +1487,6 @@ BOOL recvTemplate(NETQUEUE queue)
 
 		NETuint32_t(&pT->ref);
 		NETstring(pT->aName, sizeof(pT->aName));
-		NETuint8_t(&pT->NameVersion);
 
 		for (i = 0; i < ARRAY_SIZE(pT->asParts); ++i)
 		{
@@ -1520,7 +1518,7 @@ BOOL recvTemplate(NETQUEUE queue)
 	if (psTempl)
 	{
 		t.psNext = psTempl->psNext;
-		memcpy(psTempl, &t, sizeof(DROID_TEMPLATE));
+		*psTempl = t;
 		debug(LOG_SYNC, "Updating MP template %d", (int)t.multiPlayerID);
 	}
 	else
@@ -1588,14 +1586,15 @@ static BOOL recvDestroyTemplate(NETQUEUE queue)
 		// Delete the template.
 		//before deleting the template, need to make sure not being used in production
 		deleteTemplateFromProduction(psTempl, player, ModeImmediate);
-		free(psTempl);
+		delete psTempl;
 	}
 	else
 	{
 		DROID_TEMPLATE aaargh;
 		aaargh.multiPlayerID = templateID;
 		deleteTemplateFromProduction(&aaargh, player, ModeImmediate);
-		debug(LOG_ERROR, "TODO: Rewrite the whole interface, so it's possible to change the code without spaghetti dependencies causing problems everywhere, and without resorting to ugly hacks.");
+		// TODO Memory leak, need to actually delete the template somehow.
+		//debug(LOG_ERROR, "TODO: Rewrite the whole interface, so it's possible to change the code without spaghetti dependencies causing problems everywhere, and without resorting to ugly hacks.");
 	}
 
 	return true;

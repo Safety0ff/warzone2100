@@ -26,10 +26,10 @@
 
 #include "framework/frame.h"
 #include "framework/frameresource.h"
-#include "ivis_common/bitimage.h"
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piepalette.h"
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/bitimage.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piepalette.h"
+#include "ivis_opengl/piestate.h"
 
 #include "intimage.h"
 

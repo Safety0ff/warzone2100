@@ -32,10 +32,10 @@
 #include "framework/tagfile.h"
 
 #include "gamelib/gtime.h"
-#include "ivis_common/ivisdef.h"
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/piepalette.h"
+#include "ivis_opengl/ivisdef.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/piepalette.h"
 #include "netplay/netplay.h"
 #include "script/script.h"
 #include "sound/audio.h"
@@ -78,6 +78,7 @@
 #include "scripttabs.h"
 #include "scriptextern.h"
 #include "multistat.h"
+#include "multiint.h"
 #include "wrappers.h"
 #include "scriptfuncs.h"
 #include "challenge.h"
@@ -540,24 +541,42 @@ static bool deserializeGameStruct(PHYSFS_file* fileHandle, GAMESTRUCT* serialize
 	     && deserializeSessionDesc(fileHandle, &serializeGame->desc));
 }
 
-static bool serializePlayer(PHYSFS_file* fileHandle, const PLAYER* serializePlayer)
+static bool serializePlayer(PHYSFS_file* fileHandle, const PLAYER* serializePlayer, int player)
 {
 	return (PHYSFS_writeUBE32(fileHandle, serializePlayer->position)
 	     && PHYSFS_write(fileHandle, serializePlayer->name, StringSize, 1) == 1
+	     && PHYSFS_write(fileHandle, getAIName(player), MAX_LEN_AI_NAME, 1) == 1
+	     && PHYSFS_writeSBE8(fileHandle, serializePlayer->difficulty)
+	     && PHYSFS_writeUBE8(fileHandle, (uint8_t)serializePlayer->allocated)
 	     && PHYSFS_writeUBE32(fileHandle, serializePlayer->colour)
 	     && PHYSFS_writeUBE32(fileHandle, serializePlayer->team));
 }
 
-static bool deserializePlayer(PHYSFS_file* fileHandle, PLAYER* serializePlayer)
+static bool deserializePlayer(PHYSFS_file* fileHandle, PLAYER* serializePlayer, int player)
 {
+	char aiName[MAX_LEN_AI_NAME];
 	uint32_t position, colour, team;
 	bool retval;
+	uint8_t allocated;
 
 	retval = (PHYSFS_readUBE32(fileHandle, &position)
 	          && PHYSFS_read(fileHandle, serializePlayer->name, StringSize, 1) == 1
+	          && PHYSFS_read(fileHandle, aiName, MAX_LEN_AI_NAME, 1) == 1
+	          && PHYSFS_readSBE8(fileHandle, &serializePlayer->difficulty)
+	          && PHYSFS_readUBE8(fileHandle, &allocated)
 	          && PHYSFS_readUBE32(fileHandle, &colour)
 	          && PHYSFS_readUBE32(fileHandle, &team));
 
+	serializePlayer->allocated = allocated;
+	if (player < game.maxPlayers)
+	{
+		serializePlayer->ai = matchAIbyName(aiName);
+debug(LOG_ERROR, "Matched AI: %s == %d for player %d", aiName, serializePlayer->ai, player);
+		if (serializePlayer->ai == AI_NOT_FOUND)
+		{
+			debug(LOG_ERROR, "AI %s not found -- script loading will fail (player %d / %d)", aiName, player, game.maxPlayers);
+		}
+	}
 	serializePlayer->position = position;
 	serializePlayer->colour = colour;
 	serializePlayer->team = team;
@@ -576,7 +595,7 @@ static bool serializeNetPlay(PHYSFS_file* fileHandle, const NETPLAY* serializeNe
 
 	for (i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if (!serializePlayer(fileHandle, &serializeNetPlay->players[i]))
+		if (!serializePlayer(fileHandle, &serializeNetPlay->players[i], i))
 			return false;
 	}
 
@@ -584,7 +603,7 @@ static bool serializeNetPlay(PHYSFS_file* fileHandle, const NETPLAY* serializeNe
 	     && PHYSFS_writeUBE32(fileHandle, serializeNetPlay->playercount)
 	     && PHYSFS_writeUBE32(fileHandle, serializeNetPlay->hostPlayer)
 	     && PHYSFS_writeUBE32(fileHandle, selectedPlayer)
-	     && PHYSFS_writeUBE32(fileHandle, 0)
+	     && PHYSFS_writeUBE32(fileHandle, (uint32_t)game.scavengers)
 	     && PHYSFS_writeUBE32(fileHandle, 0)
 	     && PHYSFS_writeUBE32(fileHandle, 0));
 }
@@ -592,7 +611,8 @@ static bool serializeNetPlay(PHYSFS_file* fileHandle, const NETPLAY* serializeNe
 static bool deserializeNetPlay(PHYSFS_file* fileHandle, NETPLAY* serializeNetPlay)
 {
 	unsigned int i;
-	uint32_t dummy;
+	uint32_t dummy, scavs = game.scavengers;
+	bool retv;
 
 	for (i = 0; i < MaxGames; ++i)
 	{
@@ -602,18 +622,20 @@ static bool deserializeNetPlay(PHYSFS_file* fileHandle, NETPLAY* serializeNetPla
 
 	for (i = 0; i < MAX_PLAYERS; ++i)
 	{
-		if (!deserializePlayer(fileHandle, &serializeNetPlay->players[i]))
+		if (!deserializePlayer(fileHandle, &serializeNetPlay->players[i], i))
 			return false;
 	}
 
 	serializeNetPlay->isHost = true;	// only host can load
-	return (PHYSFS_readUBE32(fileHandle, &serializeNetPlay->bComms)
+	retv = (PHYSFS_readUBE32(fileHandle, &serializeNetPlay->bComms)
 	        && PHYSFS_readUBE32(fileHandle, &serializeNetPlay->playercount)
 	        && PHYSFS_readUBE32(fileHandle, &serializeNetPlay->hostPlayer)
 	        && PHYSFS_readUBE32(fileHandle, &selectedPlayer)
-	        && PHYSFS_readUBE32(fileHandle, &dummy)
+	        && PHYSFS_readUBE32(fileHandle, &scavs)
 	        && PHYSFS_readUBE32(fileHandle, &dummy)
 	        && PHYSFS_readUBE32(fileHandle, &dummy));
+	game.scavengers = scavs;
+	return retv;
 }
 
 #define GAME_SAVE_V7	\
@@ -2580,9 +2602,6 @@ BOOL loadGame(const char *pGameToLoad, BOOL keepObjects, BOOL freeMem, BOOL User
 			{
 				setPlayerHasLost(saveGameData.bPlayerHasLost);
 			}
-/*			setPlayCountDown(saveGameData.bPlayCountDown);
-			setPlayerHasWon(saveGameData.bPlayerHasWon);
-			setPlayerHasLost(saveGameData.bPlayerHasLost);*/
 		}
 
 		if (saveGameVersion >= VERSION_27)//V27
@@ -2634,14 +2653,16 @@ BOOL loadGame(const char *pGameToLoad, BOOL keepObjects, BOOL freeMem, BOOL User
 			NetPlay.bComms = (saveGameData.sNetPlay).bComms;
 			for (i = 0; i < MAX_PLAYERS; i++)
 			{
-				strcpy((NetPlay.players[i]).name, ((saveGameData.sNetPlay).players[i]).name);
-				if ((saveGameData.sGame).skDiff[i] == UBYTE_MAX || (game.type == CAMPAIGN && i == 0))
+				NetPlay.players[i].ai = saveGameData.sNetPlay.players[i].ai;
+				NetPlay.players[i].difficulty = saveGameData.sNetPlay.players[i].difficulty;
+				strcpy(NetPlay.players[i].name, saveGameData.sNetPlay.players[i].name);
+				if (saveGameData.sGame.skDiff[i] == UBYTE_MAX || (game.type == CAMPAIGN && i == 0))
 				{
-					(NetPlay.players[i]).allocated = true;
+					NetPlay.players[i].allocated = true;
 				}
 				else
 				{
-					(NetPlay.players[i]).allocated = false;
+					NetPlay.players[i].allocated = false;
 				}
 			}
 			
@@ -2652,8 +2673,6 @@ BOOL loadGame(const char *pGameToLoad, BOOL keepObjects, BOOL freeMem, BOOL User
 				setMultiStats(selectedPlayer, playerStats, true);
 			}
 		}
-
-
 	}
 
 	/* Get human and AI players names */
@@ -2730,7 +2749,7 @@ BOOL loadGame(const char *pGameToLoad, BOOL keepObjects, BOOL freeMem, BOOL User
 				pTemplate = pNext)
 			{
 				pNext = pTemplate->psNext;
-				free(pTemplate);
+				delete pTemplate;
 			}
 			apsDroidTemplates[0] = NULL;
 		}
@@ -2745,7 +2764,7 @@ BOOL loadGame(const char *pGameToLoad, BOOL keepObjects, BOOL freeMem, BOOL User
 				{
 					DROID_TEMPLATE	*psTempl;
 					psTempl = apsDroidTemplates[inc]->psNext;
-					free(apsDroidTemplates[inc]);
+					delete apsDroidTemplates[inc];
 					apsDroidTemplates[inc] = psTempl;
 				}
 			}
@@ -3720,8 +3739,8 @@ BOOL saveGame(char *aFileName, GAME_TYPE saveType)
 	// save the script state if necessary
 	if (saveType == GTYPE_SAVE_MIDMISSION)
 	{
-		CurrentFileName[fileExtension-1] = '\0';
-		strcat(CurrentFileName, ".es");
+		CurrentFileName[fileExtension] = '\0';
+		strcat(CurrentFileName, "scriptstate.es");
 		/*Write the data to the file*/
 		if (!writeScriptState(CurrentFileName))
 		{
@@ -3731,8 +3750,8 @@ BOOL saveGame(char *aFileName, GAME_TYPE saveType)
 	}
 
 	//create the droids filename
-	CurrentFileName[fileExtension-1] = '\0';
-	strcat(CurrentFileName, "/munit.bjo");
+	CurrentFileName[fileExtension] = '\0';
+	strcat(CurrentFileName, "munit.bjo");
 	/*Write the swapped droid lists to the file*/
 	if (!writeDroidFile(CurrentFileName, mission.apsDroidLists))
 	{
@@ -3740,7 +3759,6 @@ BOOL saveGame(char *aFileName, GAME_TYPE saveType)
 		goto error;
 	}
 
-	//21feb now done always
 	//create the limbo filename
 	//clear the list
 	if (saveGameVersion < VERSION_25)
@@ -4112,8 +4130,6 @@ static UDWORD getCampaignV(PHYSFS_file* fileHandle, unsigned int version)
 		debug(LOG_ERROR, "Bad savegame version %u", version);
 		return 0;
 	}
-
-//	savedGameTime = saveGame.gameTime;
 
 	return saveGame.saveKey & (SAVEKEY_ONMISSION - 1);
 }
@@ -4622,7 +4638,6 @@ bool gameLoadV(PHYSFS_file* fileHandle, unsigned int version)
 		ASSERT( strlen(date)<MAX_STR_LENGTH,"BuildDate; String error" );
 		if (strcmp(saveGameData.buildDate,date) != 0)
 		{
-//			ASSERT( gameType != GTYPE_SAVE_MIDMISSION,"Mid-game save out of date. Continue with caution." );
 			debug( LOG_NEVER, "saveGame build date differs;\nsavegame %s\n build    %s\n", saveGameData.buildDate, date );
 			validityKey = validityKey|VALIDITYKEY_DATE;
 			if (gameType == GTYPE_SAVE_MIDMISSION)
@@ -4736,8 +4751,18 @@ bool gameLoadV(PHYSFS_file* fileHandle, unsigned int version)
 			{
 				aDroidExperience[player][i] = 0;//clear experience before building saved units
 			}
+			NetPlay.players[player].ai = saveGameData.sNetPlay.players[player].ai;
+			NetPlay.players[player].difficulty = saveGameData.sNetPlay.players[player].difficulty;
+			strcpy(NetPlay.players[player].name, saveGameData.sNetPlay.players[player].name);
+			if ((saveGameData.sGame.skDiff[player] == UBYTE_MAX || game.type == CAMPAIGN) && player == 0)
+			{
+				NetPlay.players[player].allocated = true;
+			}
+			else
+			{
+				NetPlay.players[player].allocated = false;
+			}
 		}
-
 
 		IsScenario = false;
 		//copy the level name across
@@ -4757,21 +4782,7 @@ bool gameLoadV(PHYSFS_file* fileHandle, unsigned int version)
 			productionPlayer = selectedPlayer;
 			game			= saveGameData.sGame;
 			cmdDroidMultiExpBoost(true);
-
 			NetPlay.bComms = (saveGameData.sNetPlay).bComms;
-			for (i = 0; i < MAX_PLAYERS; i++)
-			{
-				strcpy((NetPlay.players[i]).name, ((saveGameData.sNetPlay).players[i]).name);
-				if ((saveGameData.sGame).skDiff[i] == UBYTE_MAX || (game.type == CAMPAIGN && i == 0))
-				{
-					(NetPlay.players[i]).allocated = true;
-				}
-				else
-				{
-					(NetPlay.players[i]).allocated = false;
-				}
-			}
-			
 			if(bMultiPlayer)
 			{
 				loadMultiStats(saveGameData.sPName,&playerStats);				// stats stuff
@@ -4779,7 +4790,6 @@ bool gameLoadV(PHYSFS_file* fileHandle, unsigned int version)
 				setMultiStats(selectedPlayer, playerStats, true);
 			}
 		}
-
 	}
 	else
 	{
@@ -4891,7 +4901,6 @@ static bool writeGameFile(const char* fileName, SDWORD saveType)
 	disp3d_getView(&(saveGame.currentPlayerPos));
 
 	//mission data
-//	saveGame.missionStartTime =		mission.startTime;
 	saveGame.missionOffTime =		mission.time;
 	saveGame.missionETA =			mission.ETA;
     saveGame.missionCheatTime =		mission.cheatTime;
@@ -5233,10 +5242,8 @@ static DROID* buildDroidFromSaveDroidV11(SAVE_DROID_V11* psSaveDroid)
 
 	psTemplate = &sTemplate;
 
-
 	//set up the template
 	//copy the values across
-
 	sstrcpy(psTemplate->aName, psSaveDroid->name);
 	//ignore the first comp - COMP_UNKNOWN
 	found = true;
@@ -5290,9 +5297,6 @@ static DROID* buildDroidFromSaveDroidV11(SAVE_DROID_V11* psSaveDroid)
 	}
 	//copy the values across
 	psDroid->id = psSaveDroid->id;
-	//are these going to ever change from the values set up with?
-//			psDroid->pos.z = psSaveDroid->pos.z;		// use the correct map height value
-
 	psDroid->rot.direction = DEG(psSaveDroid->direction);
 	psDroid->body = psSaveDroid->body;
 	if (psDroid->body > psDroid->originalBody)
@@ -5381,11 +5385,6 @@ static DROID* buildDroidFromSaveDroidV19(SAVE_DROID_V18* psSaveDroid, UDWORD ver
 
 	/*create the Droid */
 
-
-	// ignore brains for now
-	// not any *$&!!! more - JOHN
-//	psTemplate->asParts[COMP_BRAIN] = 0;
-
 	if(psSaveDroid->x == INVALID_XY)
 	{
 		psDroid = reallyBuildDroid(psTemplate, psSaveDroid->x, psSaveDroid->y, psSaveDroid->player, true);
@@ -5412,11 +5411,8 @@ static DROID* buildDroidFromSaveDroidV19(SAVE_DROID_V18* psSaveDroid, UDWORD ver
 	}
 	//copy the values across
 	psDroid->id = psSaveDroid->id;
-	//are these going to ever change from the values set up with?
-//			psDroid->pos.z = psSaveDroid->pos.z;		// use the correct map height value
-
 	psDroid->rot.direction = DEG(psSaveDroid->direction);
-    psDroid->body = psSaveDroid->body;
+	 psDroid->body = psSaveDroid->body;
 	if (psDroid->body > psDroid->originalBody)
 	{
 		psDroid->body = psDroid->originalBody;
@@ -5561,12 +5557,12 @@ static void SaveDroidMoveControl(SAVE_DROID * const psSaveDroid, DROID const * c
 	}
 
 	// Little endian SDWORDs
-	psSaveDroid->sMove.DestinationX = PHYSFS_swapSLE32(psDroid->sMove.DestinationX);
-	psSaveDroid->sMove.DestinationY = PHYSFS_swapSLE32(psDroid->sMove.DestinationY);
-	psSaveDroid->sMove.srcX         = PHYSFS_swapSLE32(psDroid->sMove.srcX);
-	psSaveDroid->sMove.srcY         = PHYSFS_swapSLE32(psDroid->sMove.srcY);
-	psSaveDroid->sMove.targetX      = PHYSFS_swapSLE32(psDroid->sMove.targetX);
-	psSaveDroid->sMove.targetY      = PHYSFS_swapSLE32(psDroid->sMove.targetY);
+	psSaveDroid->sMove.DestinationX = PHYSFS_swapSLE32(psDroid->sMove.destination.x);
+	psSaveDroid->sMove.DestinationY = PHYSFS_swapSLE32(psDroid->sMove.destination.y);
+	psSaveDroid->sMove.srcX         = PHYSFS_swapSLE32(psDroid->sMove.src.x);
+	psSaveDroid->sMove.srcY         = PHYSFS_swapSLE32(psDroid->sMove.src.y);
+	psSaveDroid->sMove.targetX      = PHYSFS_swapSLE32(psDroid->sMove.target.x);
+	psSaveDroid->sMove.targetY      = PHYSFS_swapSLE32(psDroid->sMove.target.y);
 
 	// Little endian floats
 	psSaveDroid->sMove.fx           = 0;
@@ -5619,12 +5615,12 @@ static void LoadDroidMoveControl(DROID * const psDroid, SAVE_DROID const * const
 	}
 
 	// Little endian SDWORDs
-	psDroid->sMove.DestinationX = PHYSFS_swapSLE32(psSaveDroid->sMove.DestinationX);
-	psDroid->sMove.DestinationY = PHYSFS_swapSLE32(psSaveDroid->sMove.DestinationY);
-	psDroid->sMove.srcX         = PHYSFS_swapSLE32(psSaveDroid->sMove.srcX);
-	psDroid->sMove.srcY         = PHYSFS_swapSLE32(psSaveDroid->sMove.srcY);
-	psDroid->sMove.targetX      = PHYSFS_swapSLE32(psSaveDroid->sMove.targetX);
-	psDroid->sMove.targetY      = PHYSFS_swapSLE32(psSaveDroid->sMove.targetY);
+	psDroid->sMove.destination.x = PHYSFS_swapSLE32(psSaveDroid->sMove.DestinationX);
+	psDroid->sMove.destination.y = PHYSFS_swapSLE32(psSaveDroid->sMove.DestinationY);
+	psDroid->sMove.src.x         = PHYSFS_swapSLE32(psSaveDroid->sMove.srcX);
+	psDroid->sMove.src.y         = PHYSFS_swapSLE32(psSaveDroid->sMove.srcY);
+	psDroid->sMove.target.x      = PHYSFS_swapSLE32(psSaveDroid->sMove.targetX);
+	psDroid->sMove.target.y      = PHYSFS_swapSLE32(psSaveDroid->sMove.targetY);
 
 	// Little endian floats
 	psDroid->sMove.speed        = PHYSFS_swapSLE32(psSaveDroid->sMove.speed);
@@ -5654,7 +5650,7 @@ static void LoadDroidMoveControl(DROID * const psDroid, SAVE_DROID const * const
 	if (psDroid->sMove.Status == MOVEWAITROUTE)
 	{
 		psDroid->sMove.Status = MOVEINACTIVE;
-		fpathDroidRoute(psDroid, psDroid->sMove.DestinationX, psDroid->sMove.DestinationY, FMT_MOVE);
+		fpathDroidRoute(psDroid, psDroid->sMove.destination.x, psDroid->sMove.destination.y, FMT_MOVE);
 		psDroid->sMove.Status = MOVEWAITROUTE;
 	}
 }
@@ -5747,7 +5743,6 @@ static DROID* buildDroidFromSaveDroid(SAVE_DROID* psSaveDroid, UDWORD version)
 
 	turnOffMultiMsg(false);
 
-
 	//copy the droid's weapon stats
 	for (i=0; i < psDroid->numWeaps; i++)
 	{
@@ -5759,9 +5754,6 @@ static DROID* buildDroidFromSaveDroid(SAVE_DROID* psSaveDroid, UDWORD version)
 	}
 	//copy the values across
 	psDroid->id = psSaveDroid->id;
-	//are these going to ever change from the values set up with?
-//			psDroid->pos.z = psSaveDroid->pos.z;		// use the correct map height value
-
 	psDroid->rot.direction = DEG(psSaveDroid->direction);
 	psDroid->body = psSaveDroid->body;
 	if (psDroid->body > psDroid->originalBody)
@@ -5811,7 +5803,6 @@ static DROID* buildDroidFromSaveDroid(SAVE_DROID* psSaveDroid, UDWORD version)
 	psDroid->actionStarted		= psSaveDroid->actionStarted;
 	psDroid->actionPoints		= psSaveDroid->actionPoints;
 	//added for V14
-
 
 	//version 18
 	if (psSaveDroid->tarStatName[0] == 0)
@@ -6007,7 +5998,6 @@ static BOOL loadDroidSetPointers(void)
 BOOL loadSaveDroidV11(char *pFileData, UDWORD filesize, UDWORD numDroids, UDWORD version, DROID **ppsCurrentDroidLists)
 {
 	SAVE_DROID_V11				*psSaveDroid, sSaveDroid;
-//	DROID_TEMPLATE			*psTemplate, sTemplate;
 	DROID					*psDroid;
 	DROID_GROUP				*psCurrentTransGroup;
 	UDWORD					count;
@@ -6132,7 +6122,6 @@ BOOL loadSaveDroidV11(char *pFileData, UDWORD filesize, UDWORD numDroids, UDWORD
 BOOL loadSaveDroidV19(char *pFileData, UDWORD filesize, UDWORD numDroids, UDWORD version, DROID **ppsCurrentDroidLists)
 {
 	SAVE_DROID_V18				*psSaveDroid, sSaveDroid;
-//	DROID_TEMPLATE			*psTemplate, sTemplate;
 	DROID					*psDroid;
 	DROID_GROUP				*psCurrentTransGroup;
 	UDWORD					count;
@@ -6288,13 +6277,11 @@ BOOL loadSaveDroidV19(char *pFileData, UDWORD filesize, UDWORD numDroids, UDWORD
 BOOL loadSaveDroidV(char *pFileData, UDWORD filesize, UDWORD numDroids, UDWORD version, DROID **ppsCurrentDroidLists)
 {
 	SAVE_DROID				sSaveDroid, *psSaveDroid = &sSaveDroid;
-//	DROID_TEMPLATE			*psTemplate, sTemplate;
 	DROID					*psDroid;
 	DROID_GROUP				*psCurrentTransGroup = NULL;
 	UDWORD					count;
 	UDWORD					NumberOfSkippedDroids=0;
 	UDWORD					sizeOfSaveDroid = 0;
-//	DROID_GROUP				*psGrp;
 	UBYTE	i;
 
 	debug(LOG_SAVE, "fileversion is %u ", version);
@@ -8459,8 +8446,6 @@ BOOL loadSaveFeatureV(char *pFileData, UDWORD filesize, UDWORD numFeatures, UDWO
 	BOOL					found;
 	UDWORD					sizeOfSaveFeature;
 
-//	version;
-
 	sizeOfSaveFeature = sizeof(SAVE_FEATURE);
 
 	if ((sizeOfSaveFeature * numFeatures + FEATURE_HEADER_SIZE) >
@@ -8729,7 +8714,7 @@ BOOL loadSaveTemplateV7(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		}
 
 		//create the Template
-		psTemplate = (DROID_TEMPLATE *)malloc(sizeof(DROID_TEMPLATE));
+		psTemplate = new DROID_TEMPLATE;
 		if (psTemplate == NULL)
 		{
 			debug(LOG_FATAL, "loadSaveTemplateV7: Out of memory");
@@ -8769,7 +8754,7 @@ BOOL loadSaveTemplateV7(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		if (!found)
 		{
 			//ignore this record
-			free(psTemplate);
+			delete psTemplate;
 			continue;
 		}
 		psTemplate->numWeaps = psSaveTemplate->numWeaps;
@@ -8793,7 +8778,7 @@ BOOL loadSaveTemplateV7(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		if (!found)
 		{
 			//ignore this record
-			free(psTemplate);
+			delete psTemplate;
 			continue;
 		}
 
@@ -8856,7 +8841,7 @@ BOOL loadSaveTemplateV14(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		}
 
 		//create the Template
-		psTemplate = (DROID_TEMPLATE *)malloc(sizeof(DROID_TEMPLATE));
+		psTemplate = new DROID_TEMPLATE;
 		if (psTemplate == NULL)
 		{
 			debug(LOG_ERROR, "loadSaveTemplateV14: Out of memory");
@@ -8897,7 +8882,7 @@ BOOL loadSaveTemplateV14(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		if (!found)
 		{
 			//ignore this record
-			free(psTemplate);
+			delete psTemplate;
 			continue;
 		}
 		psTemplate->numWeaps = psSaveTemplate->numWeaps;
@@ -8920,7 +8905,7 @@ BOOL loadSaveTemplateV14(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		if (!found)
 		{
 			//ignore this record
-			free(psTemplate);
+			delete psTemplate;
 			continue;
 		}
 
@@ -8949,7 +8934,7 @@ BOOL loadSaveTemplateV14(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		if (psDestTemplate != NULL)
 		{
 			psTemplate->psNext = psDestTemplate->psNext;//preserve the list
-			memcpy(psDestTemplate,psTemplate,sizeof(DROID_TEMPLATE));
+			*psDestTemplate = *psTemplate;
 		}
 		else
 		{
@@ -9010,7 +8995,7 @@ BOOL loadSaveTemplateV(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		}
 
 		//create the Template
-		psTemplate = (DROID_TEMPLATE *)malloc(sizeof(DROID_TEMPLATE));
+		psTemplate = new DROID_TEMPLATE;
 		if (psTemplate == NULL)
 		{
 			debug(LOG_FATAL, "loadSaveTemplateV: Out of memory");
@@ -9068,7 +9053,7 @@ BOOL loadSaveTemplateV(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		if (!found)
 		{
 			//ignore this record
-			free(psTemplate);
+			delete psTemplate;
 			continue;
 		}
 		psTemplate->numWeaps = psSaveTemplate->numWeaps;
@@ -9092,7 +9077,7 @@ BOOL loadSaveTemplateV(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		if (!found)
 		{
 			//ignore this record
-			free(psTemplate);
+			delete psTemplate;
 			continue;
 		}
 
@@ -9121,7 +9106,7 @@ BOOL loadSaveTemplateV(char *pFileData, UDWORD filesize, UDWORD numTemplates)
 		if (psDestTemplate != NULL)
 		{
 			psTemplate->psNext = psDestTemplate->psNext;//preserve the list
-			memcpy(psDestTemplate,psTemplate,sizeof(DROID_TEMPLATE));
+			*psDestTemplate = *psTemplate;
 		}
 		else
 		{
@@ -11347,11 +11332,12 @@ BOOL loadScriptState(char *pFileName)
 {
 	char	*pFileData;
 	UDWORD	fileSize;
-	BOOL bHashed = false;
+
+	loadAIs();
 
 	// change the file extension
-	pFileName[strlen(pFileName)-4] = (char)0;
-	strcat(pFileName, ".es");
+	pFileName[strlen(pFileName) - 4] = '\0';
+	strcat(pFileName, "/scriptstate.es");
 
 	pFileData = fileLoadBuffer;
 	if (!loadFileToBuffer(pFileName, pFileData, FILE_LOAD_BUFFER_SIZE, &fileSize))
@@ -11361,12 +11347,7 @@ BOOL loadScriptState(char *pFileName)
 		return false;
 	}
 
-	if (saveGameVersion > VERSION_12)
-	{
-		bHashed = true;
-	}
-
-	if (!eventLoadState(pFileData, fileSize, bHashed))
+	if (!eventLoadState(pFileData, fileSize))
 	{
 		return false;
 	}

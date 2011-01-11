@@ -72,9 +72,10 @@
 #include "multiplay.h"
 #include "multigifts.h"
 #include "multilimit.h"
+#include "multiint.h"
 #include "advvis.h"
 #include "mapgrid.h"
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/piestate.h"
 #include "wrappers.h"
 #include "order.h"
 #include "orderdef.h"
@@ -89,7 +90,6 @@
 #include "projectile.h"
 #include "cluster.h"
 #include "multigifts.h"			//because of giftRadar()
-#include "aiexperience.h"
 #include "display3d.h"			//for showRangeAtPos()
 #include "multimenu.h"
 #include "script/chat_processing.h"
@@ -111,7 +111,6 @@ static BOOL	structHasModule(STRUCTURE *psStruct);
 static DROID_TEMPLATE* scrCheckTemplateExists(SDWORD player, DROID_TEMPLATE *psTempl);
 
 /// Hold the previously assigned player
-static int nextPlayer = 0;
 static Vector2i positions[MAX_PLAYERS];
 
 void scriptSetStartPos(int position, int x, int y)
@@ -129,7 +128,6 @@ BOOL scriptInit()
 	{
 		scriptSetStartPos(i, 0, 0);
 	}
-	nextPlayer = 0;
 	return true;
 }
 
@@ -143,14 +141,32 @@ BOOL scrScavengersActive()
 	return true;
 }
 
+BOOL scrGetDifficulty()
+{
+	int player;
+	if (!stackPopParams(1, VAL_INT, &player))
+	{
+		return false;
+	}
+	ASSERT_OR_RETURN(false, player < MAX_PLAYERS, "Bad player index");
+	scrFunctionResult.v.ival = NetPlay.players[player].difficulty;
+	if (!stackPushResult(VAL_INT, &scrFunctionResult))
+	{
+		ASSERT(false, "Failed to initialize player");
+		return false;
+	}
+	return true;
+}
+
 BOOL scrGetPlayer()
 {
-	ASSERT_OR_RETURN(false, nextPlayer < MAX_PLAYERS, "Invalid player");
-
-	scrFunctionResult.v.ival = nextPlayer;
-	debug(LOG_SCRIPT, "Initialized player %d, starts at position (%d, %d), max %d players", nextPlayer, 
-	      positions[nextPlayer].x, positions[nextPlayer].y, NetPlay.maxPlayers);
-	nextPlayer++;
+	if (!stackPopParams(1, VAL_STRING, &strParam1))
+	{
+		debug(LOG_ERROR, "stack failed");
+		return false;
+	}
+	int i = scrFunctionResult.v.ival = getNextAIAssignment(strParam1);
+	debug(LOG_SCRIPT, "Initialized player %d, starts at position (%d, %d), max %d players", i, positions[i].x, positions[i].y, game.maxPlayers);
 	if (!stackPushResult(VAL_INT, &scrFunctionResult))
 	{
 		ASSERT(false, "Failed to initialize player");
@@ -166,16 +182,12 @@ Vector2i getPlayerStartPosition(int player)
 
 BOOL scrSetSunPosition(void)
 {
-	float x, y, z, pos[4];
+	float x, y, z;
 
 	if (!stackPopParams(3, VAL_FLOAT, &x, VAL_FLOAT, &y, VAL_FLOAT, &z))
 	{
 		return false;
 	}
-	pos[0] = x;
-	pos[1] = y;
-	pos[2] = z;
-	pos[3] = 0.0;
 	setTheSun(Vector3f(x, y, z));
 	return true;
 }
@@ -210,7 +222,7 @@ BOOL scrSafeDest(void)
 	{
 		return false;
 	}
-	ASSERT_OR_RETURN(false, player < NetPlay.maxPlayers, "Out of bounds player index");
+	ASSERT_OR_RETURN(false, player < game.maxPlayers, "Out of bounds player index");
 	ASSERT_OR_RETURN(false, worldOnMap(x, y), "Out of bounds coordinates(%d, %d)", x, y);
 	scrFunctionResult.v.bval = !(auxTile(map_coord(x), map_coord(y), player) & AUXBITS_DANGER);
 	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
@@ -228,7 +240,7 @@ BOOL scrThreatAt(void)
 	{
 		return false;
 	}
-	ASSERT_OR_RETURN(false, player < NetPlay.maxPlayers, "Out of bounds player index");
+	ASSERT_OR_RETURN(false, player < game.maxPlayers, "Out of bounds player index");
 	ASSERT_OR_RETURN(false, worldOnMap(x, y), "Out of bounds coordinates(%d, %d)", x, y);
 	scrFunctionResult.v.bval = auxTile(map_coord(x), map_coord(y), player) & AUXBITS_THREAT;
 	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
@@ -246,7 +258,7 @@ BOOL scrGetPlayerStartPosition(void)
 	{
 		return false;
 	}
-	if (player < NetPlay.maxPlayers)
+	if (player < game.maxPlayers)
 	{
 		*x = positions[player].x;
 		*y = positions[player].y;
@@ -3265,10 +3277,10 @@ BOOL scrGameOverMessage(void)
 
 	if (challengeActive)
 	{
-		char sPath[64], key[64], timestr[32], *fStr;
+		char sPath[64], timestr[32], *fStr;
 		int seconds = 0, newtime = (gameTime - mission.startTime) / GAME_TICKS_PER_SEC;
 		bool victory = false;
-		dictionary *dict = iniparser_load(CHALLENGE_SCORES);
+		inifile *inif = inifile_load(CHALLENGE_SCORES);
 
 		fStr = strrchr(sRequestResult, '/');
 		fStr++;	// skip slash
@@ -3279,16 +3291,15 @@ BOOL scrGameOverMessage(void)
 		}
 		sstrcpy(sPath, fStr);
 		sPath[strlen(sPath) - 4] = '\0';	// remove .ini
-		if (dict)
+		if (inif)
 		{
-			ssprintf(key, "%s:Victory", sPath);
-			victory = iniparser_getboolean(dict, key, false);
-			ssprintf(key, "%s:seconds", sPath);
-			seconds = iniparser_getint(dict, key, 0);
+			inifile_set_current_section(inif, sPath);
+			victory = inifile_get_as_bool(inif, "Victory", false);
+			seconds = inifile_get_as_int(inif, "seconds", 0);
 		}
 		else
 		{
-			dict = dictionary_new(3);
+			inif = inifile_new();
 		}
 
 		// Update score if we have a victory and best recorded was a loss,
@@ -3298,17 +3309,14 @@ BOOL scrGameOverMessage(void)
 		    || (!gameWon && !victory && newtime > seconds)
 		    || (gameWon && victory && newtime < seconds))
 		{
-			dictionary_set(dict, sPath, NULL);
-			ssprintf(key, "%s:Seconds", sPath);
+			inifile_set_current_section(inif, sPath);
 			ssprintf(timestr, "%d", newtime);
-			iniparser_setstring(dict, key, timestr);
-			ssprintf(key, "%s:Player", sPath);
-			iniparser_setstring(dict, key, NetPlay.players[selectedPlayer].name);
-			ssprintf(key, "%s:Victory", sPath);
-			iniparser_setstring(dict, key, gameWon ? "true": "false");
+			inifile_set(inif, "Seconds", timestr);
+			inifile_set(inif, "Player", NetPlay.players[selectedPlayer].name);
+			inifile_set(inif, "Victory", gameWon ? "true": "false");
 		}
-		iniparser_dump_ini(dict, CHALLENGE_SCORES);
-		iniparser_freedict(dict);
+		inifile_save_as(inif, CHALLENGE_SCORES);
+		inifile_delete(inif);
 	}
 
 	return true;
@@ -6574,16 +6582,13 @@ BOOL scrIsVtol(void)
 
 
 // do the setting up of the template list for the tutorial.
+// This function looks like it searches for a template called "ViperLtMGWheels", and deletes it. Why?
 BOOL scrTutorialTemplates(void)
 {
 	DROID_TEMPLATE	*psCurr, *psPrev;
-	char			pName[MAX_STR_LENGTH];
 
 	// find ViperLtMGWheels
-	sstrcpy(pName, "ViperLtMGWheels");
-
-	getDroidResourceName(pName);
-
+	char const *pName = getDroidResourceName("ViperLtMGWheels");
 
 	for (psCurr = apsDroidTemplates[selectedPlayer],psPrev = NULL;
 			psCurr != NULL;
@@ -6608,7 +6613,7 @@ BOOL scrTutorialTemplates(void)
 	// Delete the template.
 	if(psCurr)
 	{
-		free(psCurr);
+		delete psCurr;
 	}
 	else
 	{
@@ -6782,7 +6787,6 @@ BOOL scrEnumDroid(void)
 {
 	UDWORD			count;
 	DROID		 *psDroid;
-	BOOL			found;
 
 	count = 0;
 	for(psDroid=apsDroidLists[playerToEnumDroid];psDroid && count<enumDroidCount;count++)
@@ -6790,9 +6794,7 @@ BOOL scrEnumDroid(void)
 		psDroid = psDroid->psNext;
 	}
 
-
 	//search the players' list of droid to see if one exists and is visible
-	found = false;
 	while(psDroid)
 	{
 		if(psDroid->visible[playerVisibleDroid])
@@ -7525,7 +7527,6 @@ BOOL scrNumResearchLeft(void)
 
 	UWORD				Stack[400];
 
-	BOOL				found;
 	PLAYER_RESEARCH		*pPlayerRes;
 
 
@@ -7549,8 +7550,6 @@ BOOL scrNumResearchLeft(void)
 		ASSERT( false, "scrNumResearchLeft(): invalid research index" );
 		return false;
 	}
-
-	found = false;
 
 	if(beingResearchedByAlly(index, player))
 	{
@@ -9594,514 +9593,6 @@ BOOL scrPlayerLoaded(void)
 	return true;
 }
 
-
-		/********************************/
-		/*		AI Experience Stuff		*/
-		/********************************/
-
-//Returns enemy base x and y for a certain player
-BOOL scrLearnPlayerBaseLoc(void)
-{
-	SDWORD				playerStoring,enemyPlayer, x, y;
-
-	if (!stackPopParams(4, VAL_INT, &playerStoring, VAL_INT, &enemyPlayer,
-						VAL_INT, &x, VAL_INT, &y))
-	{
-		debug(LOG_ERROR, "scrLearnPlayerBaseLoc(): stack failed");
-		return false;
-	}
-
-	if((playerStoring >= MAX_PLAYERS) || (enemyPlayer >= MAX_PLAYERS))
-	{
-		debug(LOG_ERROR, "scrLearnPlayerBaseLoc: player index too high.");
-		return false;
-	}
-
-	if((playerStoring < 0) || (enemyPlayer < 0))
-	{
-		debug(LOG_ERROR, "scrLearnPlayerBaseLoc: player index too low.");
-		return false;
-	}
-
-	if (x < 0
-	 || x >= world_coord(mapWidth)
-	 || y < 0
-	 || y >= world_coord(mapHeight))
-	{
-		debug(LOG_ERROR, "scrLearnPlayerBaseLoc: coords off map");
-		return false;
-	}
-
-	baseLocation[playerStoring][enemyPlayer][0] = x;
-	baseLocation[playerStoring][enemyPlayer][1] = y;
-
-	debug_console("Learned player base.");
-
-	scrFunctionResult.v.bval = true;
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-//Saves enemy base x and y for a certain player
-BOOL scrRecallPlayerBaseLoc(void)
-{
-	SDWORD				playerStoring,enemyPlayer, *x, *y;
-
-	if (!stackPopParams(4, VAL_INT, &playerStoring, VAL_INT, &enemyPlayer,
-						VAL_REF|VAL_INT, &x, VAL_REF|VAL_INT, &y))
-	{
-		debug(LOG_ERROR, "scrRecallPlayerBaseLoc(): stack failed");
-		return false;
-	}
-
-	if((playerStoring >= MAX_PLAYERS) || (enemyPlayer >= MAX_PLAYERS))
-	{
-		debug(LOG_ERROR, "scrRecallPlayerBaseLoc: player index too high.");
-		return false;
-	}
-
-	if((playerStoring < 0) || (enemyPlayer < 0))
-	{
-		debug(LOG_ERROR, "scrRecallPlayerBaseLoc: player index too low.");
-		return false;
-	}
-
-	if(!CanRememberPlayerBaseLoc(playerStoring, enemyPlayer))		//return false if this one not set yet
-	{
-		scrFunctionResult.v.bval = false;
-		if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	*x = baseLocation[playerStoring][enemyPlayer][0];
-	*y = baseLocation[playerStoring][enemyPlayer][1];
-
-	scrFunctionResult.v.bval = true;
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/* Checks if player base loc is stored */
-BOOL scrCanRememberPlayerBaseLoc(void)
-{
-	SDWORD				playerStoring,enemyPlayer;
-
-	if (!stackPopParams(2, VAL_INT, &playerStoring, VAL_INT, &enemyPlayer))
-	{
-		debug(LOG_ERROR, "scrCanRememberPlayerBaseLoc(): stack failed");
-		return false;
-	}
-
-	if((playerStoring >= MAX_PLAYERS) || (enemyPlayer >= MAX_PLAYERS))
-	{
-		debug(LOG_ERROR,"scrCanRememberPlayerBaseLoc: player index too high.");
-		return false;
-	}
-
-	if((playerStoring < 0) || (enemyPlayer < 0))
-	{
-		debug(LOG_ERROR,"scrCanRememberPlayerBaseLoc: player index too low.");
-		return false;
-	}
-
-	scrFunctionResult.v.bval = CanRememberPlayerBaseLoc(playerStoring, enemyPlayer);
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/* Stores the place where we were attacked at */
-BOOL scrLearnBaseDefendLoc(void)
-{
-	SDWORD				playerStoring,enemyPlayer, x, y;
-
-	if (!stackPopParams(4, VAL_INT, &playerStoring, VAL_INT, &enemyPlayer,
-						VAL_INT, &x, VAL_INT, &y))
-	{
-		debug(LOG_ERROR, "scrLearnBaseDefendLoc(): stack failed");
-		return false;
-	}
-
-	if((playerStoring >= MAX_PLAYERS) || (enemyPlayer >= MAX_PLAYERS))
-	{
-		debug(LOG_ERROR,"scrLearnBaseDefendLoc: player index too high.");
-		return false;
-	}
-
-	if((playerStoring < 0) || (enemyPlayer < 0))
-	{
-		debug(LOG_ERROR,"scrLearnBaseDefendLoc: player index too low.");
-		return false;
-	}
-
-	if (x < 0
-	 || x >= world_coord(mapWidth)
-	 || y < 0
-	 || y >= world_coord(mapHeight))
-	{
-		debug(LOG_ERROR,"scrLearnBaseDefendLoc: coords off map");
-		return false;
-	}
-
-	StoreBaseDefendLoc(x, y, playerStoring);
-
-	scrFunctionResult.v.bval = true;
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/* Stores the place where we were attacked at */
-BOOL scrLearnOilDefendLoc(void)
-{
-	SDWORD				playerStoring,enemyPlayer, x, y;
-
-	if (!stackPopParams(4, VAL_INT, &playerStoring, VAL_INT, &enemyPlayer,
-						VAL_INT, &x, VAL_INT, &y))
-	{
-		debug(LOG_ERROR, "scrLearnOilDefendLoc(): stack failed");
-		return false;
-	}
-
-	if((playerStoring >= MAX_PLAYERS) || (enemyPlayer >= MAX_PLAYERS))
-	{
-		debug(LOG_ERROR,"scrLearnOilDefendLoc: player index too high.");
-		return false;
-	}
-
-	if((playerStoring < 0) || (enemyPlayer < 0))
-	{
-		debug(LOG_ERROR,"scrLearnOilDefendLoc: player index too low.");
-		return false;
-	}
-
-	if (x < 0
-	 || x >= world_coord(mapWidth)
-	 || y < 0
-	 || y >= world_coord(mapHeight))
-	{
-		debug(LOG_ERROR,"scrLearnOilDefendLoc: coords off map");
-		return false;
-	}
-
-	StoreOilDefendLoc(x, y, playerStoring);
-
-	scrFunctionResult.v.bval = true;
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/* Returns -1 if this location is not stored yet, otherwise returns index */
-BOOL scrGetBaseDefendLocIndex(void)
-{
-	SDWORD				playerStoring, x, y;
-
-	if (!stackPopParams(3, VAL_INT, &playerStoring, VAL_INT, &x, VAL_INT, &y))
-	{
-		debug(LOG_ERROR, "scrGetBaseDefendLocIndex(): stack failed");
-		return false;
-	}
-
-	if(playerStoring >= MAX_PLAYERS)
-	{
-		debug(LOG_ERROR, "scrGetBaseDefendLocIndex: player index too high.");
-		return false;
-	}
-
-	if(playerStoring < 0)
-	{
-		debug(LOG_ERROR, "scrGetBaseDefendLocIndex: player index too low.");
-		return false;
-	}
-
-	if (x < 0
-	 || x >= world_coord(mapWidth)
-	 || y < 0
-	 || y >= world_coord(mapHeight))
-	{
-		debug(LOG_ERROR, "scrGetBaseDefendLocIndex: coords off map");
-		return false;
-	}
-
-	scrFunctionResult.v.ival = GetBaseDefendLocIndex(x,y,playerStoring);
-	if (!stackPushResult(VAL_INT, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/* Returns -1 if this location is not stored yet, otherwise returns index */
-BOOL scrGetOilDefendLocIndex(void)
-{
-	SDWORD				playerStoring, x, y;
-
-	if (!stackPopParams(3, VAL_INT, &playerStoring, VAL_INT, &x, VAL_INT, &y))
-	{
-		debug(LOG_ERROR, "scrGetOilDefendLocIndex(): stack failed");
-		return false;
-	}
-
-	if(playerStoring >= MAX_PLAYERS)
-	{
-		debug(LOG_ERROR, "scrGetOilDefendLocIndex: player index too high.");
-
-		return false;
-	}
-
-	if(playerStoring < 0)
-	{
-		debug(LOG_ERROR, "scrGetOilDefendLocIndex: player index too low.");
-		return false;
-	}
-
-	if (x < 0
-	 || x >= world_coord(mapWidth)
-	 || y < 0
-	 || y >= world_coord(mapHeight))
-	{
-		debug(LOG_ERROR, "scrGetOilDefendLocIndex: coords off map");
-		return false;
-	}
-
-	scrFunctionResult.v.ival = GetOilDefendLocIndex(x,y,playerStoring);
-	if (!stackPushResult(VAL_INT, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/* Returns number of available locations */
-BOOL scrGetBaseDefendLocCount(void)
-{
-	scrFunctionResult.v.ival = MAX_BASE_DEFEND_LOCATIONS;
-	if (!stackPushResult(VAL_INT, &scrFunctionResult))
-	{
-		debug(LOG_ERROR, "scrGetBaseDefendLocCount: push failed");
-		return false;
-	}
-
-	return true;
-}
-
-/* Returns number of available locations*/
-BOOL scrGetOilDefendLocCount(void)
-{
-	scrFunctionResult.v.ival = MAX_OIL_DEFEND_LOCATIONS;
-	if (!stackPushResult(VAL_INT, &scrFunctionResult))
-	{
-		debug(LOG_ERROR, "scrGetOilDefendLocCount: push failed");
-		return false;
-	}
-
-	return true;
-}
-
-/* Returns a locations and its priority */
-BOOL scrRecallBaseDefendLoc(void)
-{
-	SDWORD				player, *x, *y, *prior,index;
-
-	if (!stackPopParams(5, VAL_INT, &player, VAL_INT, &index,
-						VAL_REF|VAL_INT, &x, VAL_REF|VAL_INT, &y, VAL_REF|VAL_INT, &prior))
-	{
-		debug(LOG_ERROR, "scrRecallBaseDefendLoc(): stack failed");
-		return false;
-	}
-
-	if(player >= MAX_PLAYERS)
-	{
-		debug(LOG_ERROR,"scrRecallBaseDefendLoc: player index too high.");
-		return false;
-	}
-
-	if(index < 0 || index >= MAX_BASE_DEFEND_LOCATIONS)
-	{
-		debug(LOG_ERROR,"scrRecallBaseDefendLoc: wrong index.");
-		return false;
-	}
-
-	if(player < 0)
-	{
-		debug(LOG_ERROR,"scrRecallBaseDefendLoc: player index too low.");
-		return false;
-	}
-
-	//check if can recall at this location
-	if(!CanRememberPlayerBaseDefenseLoc(player, index))
-	{
-		scrFunctionResult.v.bval = false;
-		if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	*x = baseDefendLocation[player][index][0];
-	*y = baseDefendLocation[player][index][1];
-
-	*prior = baseDefendLocPrior[player][index];
-
-	scrFunctionResult.v.bval = true;
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/* Returns number of available locations */
-BOOL scrRecallOilDefendLoc(void)
-{
-	SDWORD				player, *x, *y, *prior,index;
-
-	if (!stackPopParams(5, VAL_INT, &player, VAL_INT, &index,
-						VAL_REF|VAL_INT, &x, VAL_REF|VAL_INT, &y, VAL_REF|VAL_INT, &prior))
-	{
-		debug(LOG_ERROR, "scrRecallOilDefendLoc(): stack failed");
-		return false;
-	}
-
-	if(player >= MAX_PLAYERS)
-	{
-		debug(LOG_ERROR,"scrRecallOilDefendLoc: player index too high.");
-		return false;
-	}
-
-	if(index < 0 || index >= MAX_OIL_DEFEND_LOCATIONS)
-	{
-		debug(LOG_ERROR,"scrRecallOilDefendLoc: wrong index: %d.", index);
-		return false;
-	}
-
-	if(player < 0)
-	{
-		debug(LOG_ERROR,"scrRecallOilDefendLoc: player index too low.");
-		return false;
-	}
-
-	//check if can recall at this location
-	if(!CanRememberPlayerOilDefenseLoc(player, index))
-	{
-		scrFunctionResult.v.bval= false;
-		if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	*x = oilDefendLocation[player][index][0];
-	*y = oilDefendLocation[player][index][1];
-
-	*prior = oilDefendLocPrior[player][index];
-
-	scrFunctionResult.v.bval = true;
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-/* Restores vilibility (fog of war) */
-BOOL scrRecallPlayerVisibility(void)
-{
-	SDWORD				player;
-
-	if (!stackPopParams(1, VAL_INT, &player))
-	{
-		debug(LOG_ERROR, "scrRecallPlayerVisibility(): stack failed");
-		return false;
-	}
-
-	if(player >= MAX_PLAYERS)
-	{
-		debug(LOG_ERROR,"scrRecallPlayerVisibility: player index too high.");
-		return false;
-	}
-
-
-
-	scrFunctionResult.v.bval = true;
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-BOOL scrSavePlayerAIExperience(void)
-{
-	SDWORD				player;
-	BOOL				bNotify;
-
-	if (!stackPopParams(2, VAL_INT, &player, VAL_BOOL, &bNotify))
-	{
-		debug(LOG_ERROR, "scrSavePlayerAIExperience(): stack failed");
-		return false;
-	}
-
-	scrFunctionResult.v.bval = SavePlayerAIExperience(player, bNotify);
-	if (!stackPushResult(VAL_BOOL, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-BOOL scrLoadPlayerAIExperience(void)
-{
-	SDWORD				player;
-
-	if (!stackPopParams(1, VAL_INT, &player))
-	{
-		debug(LOG_ERROR, "scrLoadPlayerAIExperience(): stack failed");
-		return false;
-	}
-
-	scrFunctionResult.v.ival = LoadPlayerAIExperience(player);
-	if (!stackPushResult(VAL_INT, &scrFunctionResult))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-
 /* Add a beacon (blip) */
 BOOL addBeaconBlip(SDWORD locX, SDWORD locY, SDWORD forPlayer, SDWORD sender, char * textMsg)
 {
@@ -11361,14 +10852,12 @@ BOOL scrAssembleWeaponTemplate(void)
 		return false;
 	}
 
-	pNewTemplate = (DROID_TEMPLATE *)malloc(sizeof(DROID_TEMPLATE));
+	pNewTemplate = new DROID_TEMPLATE;
 	if (pNewTemplate == NULL)
 	{
 		debug(LOG_ERROR, "pNewTemplate: Out of memory");
 		return false;
 	}
-
-	memset(pNewTemplate, 0, sizeof(DROID_TEMPLATE));
 
 	// set template body
 	pNewTemplate->asParts[COMP_BODY] = bodyIndex;
@@ -11424,7 +10913,7 @@ BOOL scrAssembleWeaponTemplate(void)
 		else
 		{
 			// free resources
-			free(pNewTemplate);
+			delete pNewTemplate;
 
 			// already exists, so return it
 			pNewTemplate = tempTemplate;

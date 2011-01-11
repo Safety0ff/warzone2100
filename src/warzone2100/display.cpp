@@ -28,7 +28,7 @@
 #include "framework/frame.h"
 #include "framework/input.h"
 #include "framework/strres.h"
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/piestate.h"
 #include "framework/fixedpoint.h"
 #include "framework/wzapp_c.h"
 
@@ -476,8 +476,6 @@ void processInput(void)
 	BOOL mOverRadar = false;
 	BOOL mOverConstruction = false;
 
-	int WheelZoomIterator;
-
 	if (InGameOpUp || isInGamePopupUp)
 	{
 		dragBox3D.status = DRAG_RELEASED;	// disengage the dragging since it stops menu input
@@ -521,8 +519,7 @@ void processInput(void)
 		}
 		else
 		{
-			for (WheelZoomIterator = 0; WheelZoomIterator < 10; WheelZoomIterator++)
-				kf_ZoomIn();
+			kf_ZoomInStep();
 		}
 	}
 
@@ -544,8 +541,7 @@ void processInput(void)
 		}
 		else
 		{
-			for (WheelZoomIterator = 0; WheelZoomIterator < 10; WheelZoomIterator++)
-				kf_ZoomOut();
+			kf_ZoomOutStep();
 		}
 	}
 
@@ -1596,7 +1592,6 @@ void dealWithDroidSelect(DROID *psDroid, BOOL bDragBox)
 {
 	DROID	*psD;
 	BOOL	bGotGroup;
-	SDWORD	groupNumber = 0;
 
 	/*	Toggle selection on and off - allows you drag around a big
 		area of droids and then exclude certain individuals */
@@ -1611,7 +1606,6 @@ void dealWithDroidSelect(DROID *psDroid, BOOL bDragBox)
 			if(psD->selected && (psD->group!=UBYTE_MAX))
 			{
 				bGotGroup = true;
-				groupNumber = psD->group;
 			}
 		}
 		if (keyDown(KEY_LALT) || keyDown(KEY_RALT))

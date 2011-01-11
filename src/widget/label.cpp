@@ -28,7 +28,7 @@
 #include "form.h"
 #include "tip.h"
 // FIXME Direct iVis implementation include!
-#include "ivis_common/textdraw.h"
+#include "ivis_opengl/textdraw.h"
 
 W_LABINIT::W_LABINIT()
 	: pText(NULL)

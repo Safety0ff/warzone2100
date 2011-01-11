@@ -25,9 +25,9 @@
 #include "framework/opengl.h"
 
 #include "framework/fixedpoint.h"
-#include "ivis_common/pieclip.h"
+#include "ivis_opengl/pieclip.h"
 #include "piematrix.h"
-#include "ivis_common/piemode.h"
+#include "ivis_opengl/piemode.h"
 
 /***************************************************************************/
 /*

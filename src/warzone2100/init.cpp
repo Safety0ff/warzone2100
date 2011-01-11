@@ -32,10 +32,10 @@
 #include "framework/file.h"
 #include "framework/physfs_ext.h"
 #include "framework/strres.h"
-#include "ivis_common/piemode.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/tex.h"
-#include "ivis_common/ivi.h"
+#include "ivis_opengl/piemode.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/tex.h"
+#include "ivis_opengl/ivi.h"
 #include "netplay/netplay.h"
 #include "script/script.h"
 #include "sound/audio_id.h"
@@ -74,6 +74,7 @@
 #include "miscimd.h"
 #include "mission.h"
 #include "modding.h"
+#include "multiint.h"
 #include "multigifts.h"
 #include "multiplay.h"
 #include "projectile.h"
@@ -493,6 +494,8 @@ BOOL systemInitialise(void)
 	iV_Reset();								// Reset the IV library.
 	initLoadingScreen(true);
 
+	readAIs();
+
 	return true;
 }
 
@@ -806,12 +809,11 @@ BOOL stageOneInitialise(void)
 	initTransporters();
 	scriptInit();
 
-    //do this here so that the very first mission has it initialised
-    initRunData();
+	// do this here so that the very first mission has it initialised
+	initRunData();
 
 	gameTimeInit();
-    //need to reset the event timer too - AB 14/01/99
-    eventTimeReset(gameTime/SCR_TICKRATE);
+	eventTimeReset(gameTime / SCR_TICKRATE);
 
 	return true;
 }
@@ -1112,6 +1114,8 @@ BOOL stageThreeInitialise(void)
 			}
 		}
 	}
+
+	loadAIs();
 
 	// ffs JS   (and its a global!)
 	if (getLevelLoadType() != GTYPE_SAVE_MIDMISSION)

@@ -30,12 +30,12 @@
 #include "widget/widget.h"
 #include "widget/button.h"
 /* Includes direct access to render library */
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piedef.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/piepalette.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piedef.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/piepalette.h"
 #include "ivis_opengl/screen.h"
-#include "ivis_common/piemode.h"
+#include "ivis_opengl/piemode.h"
 
 #include "display3d.h"
 #include "framework/cursors.h"
@@ -1268,7 +1268,6 @@ void intDisplayPIEView(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, WZ_DECL
 	W_TABFORM		*Form = (W_TABFORM*)psWidget;
 	MESSAGE			*psMessage = (MESSAGE *)Form->pUserData;
 	UDWORD			x0,y0,x1,y1;
-	VIEW_RESEARCH	*psViewResearch;
 	SWORD			image = -1;
     RESEARCH        *psResearch;
 
@@ -1300,8 +1299,6 @@ void intDisplayPIEView(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, WZ_DECL
 		}
 
 		//render an object
-		psViewResearch = (VIEW_RESEARCH *)((VIEWDATA *)psCurrentMsg->pViewData)->pData;
-
 		psResearch = getResearchForMsg((VIEWDATA *)psCurrentMsg->pViewData);
 		renderResearchToBuffer(psResearch, x0+(x1-x0)/2, y0+(y1-y0)/2);
 

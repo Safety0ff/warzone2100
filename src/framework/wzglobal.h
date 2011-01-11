@@ -532,6 +532,8 @@
 #      include <stdlib.h>
 #      include <crtdbg.h>
 #    endif /* _DEBUG */
+// Required for alloca
+#    include <malloc.h>
 #  endif /* WZ_CC_* */
 
 #  define WIN32_LEAN_AND_MEAN
@@ -542,7 +544,7 @@
 
 #  if defined(WZ_CC_MSVC)
 //   notify people we are disabling these warning messages.
-#    pragma message (" *** Warnings 4018,4100,4127,4204,4244,4267,4389,4800 have been squelched. ***")
+#    pragma message (" *** Warnings 4018,4100,4127,4204,4244,4267,4389,4512,4800 have been squelched. ***")
 #    pragma warning (disable : 4018) // Shut up: '>' : signed/unsigned mismatch
 #    pragma warning (disable : 4100) // Shut up: unreferenced formal parameter (FIXME)
 #    pragma warning (disable : 4127) // Shut up: conditional expression is constant (eg. "while(0)")
@@ -551,6 +553,7 @@
 #    pragma warning (disable : 4267) // Shut up: conversion from 'size_t' to 'type', possible loss of data
 #    pragma warning (disable : 4389) // Shut up: '==' : signed/unsigned mismatch
 #    pragma warning (disable : 4800) // Shut up: 'BOOL' : forcing value to bool 'true' or 'false' (performance warning)
+#    pragma warning (disable : 4512) // Shut up: 'class' : assignment operator could not be generated
 
 #    define strcasecmp _stricmp
 #    define strncasecmp _strnicmp
@@ -601,8 +604,11 @@
  * Asserts that the given string is statically allocated.
  */
 #if defined(__cplusplus)
-#  include <typeinfo>
-#  define WZ_ASSERT_STATIC_STRING(_var) assert(typeid(_var) == typeid(char[sizeof(_var)]))
+   template <int N>
+   static inline char _WZ_ASSERT_STATIC_STRING_FUNCTION(char const (&)[N]) { return '\0'; }  // Regular array.
+   static inline char *_WZ_ASSERT_STATIC_STRING_FUNCTION(char const *&) { return NULL; }     // Eeek, it's a pointer!
+   static inline char *_WZ_ASSERT_STATIC_STRING_FUNCTION(char *&) { return NULL; }           // Eeek, it's a pointer!
+#  define WZ_ASSERT_STATIC_STRING(_var) STATIC_ASSERT(sizeof(_WZ_ASSERT_STATIC_STRING_FUNCTION(_var)) == sizeof(char))
 #elif defined(WZ_CC_GNU) || defined(WZ_CC_INTEL)
 #  define WZ_ASSERT_STATIC_STRING(_var) STATIC_ASSERT(__builtin_types_compatible_p(typeof(_var), char[]))
 #else
@@ -613,7 +619,12 @@
  * Asserts that the given variable is a (statically sized) array, not just a pointer.
  */
 #if defined(__cplusplus)
-#  define WZ_ASSERT_ARRAY_EXPR(a) 0
+   template <typename T, int N>
+   static inline char _WZ_ASSERT_ARRAY_EXPR_FUNCTION(T (&)[N]) { return '\0'; }      // Regular array.
+   static inline char _WZ_ASSERT_ARRAY_EXPR_FUNCTION(void const *) { return '\0'; }  // Catch static arrays of unnamed structs.
+   template <typename T>
+   static inline char *_WZ_ASSERT_ARRAY_EXPR_FUNCTION(T *&) { return NULL; }         // Eeek, it's a pointer!
+#  define WZ_ASSERT_ARRAY_EXPR(_var) STATIC_ASSERT_EXPR(sizeof(_WZ_ASSERT_ARRAY_EXPR_FUNCTION(_var)) == sizeof(char))
 #elif defined(WZ_CC_GNU) || defined(WZ_CC_INTEL)
 /* &a[0] degrades to a pointer: a different type from an array */
 #  define WZ_ASSERT_ARRAY_EXPR(a) STATIC_ASSERT_EXPR(!__builtin_types_compatible_p(typeof(a), typeof(&(a)[0])))

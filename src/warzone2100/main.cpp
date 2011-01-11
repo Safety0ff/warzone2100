@@ -41,10 +41,10 @@
 
 #include "sound/playlist.h"
 #include "gamelib/gtime.h"
-#include "ivis_common/pieblitfunc.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/piepalette.h"
-#include "ivis_common/piemode.h"
+#include "ivis_opengl/pieblitfunc.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/piepalette.h"
+#include "ivis_opengl/piemode.h"
 #include "ivis_opengl/screen.h"
 #include "netplay/netplay.h"
 #include "script/script.h"
@@ -1231,8 +1231,6 @@ int main(int argc, char *argv[])
 	debug(LOG_MAIN, "initializing");
 
 	loadConfig();
-
-	loadRenderMode(); //get the registry entry for clRendMode
 
 	NETinit(true);
 

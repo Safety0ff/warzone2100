@@ -25,14 +25,14 @@
 #include <string.h>
 
 #include "framework/frame.h"
-#include "ivis_common/ivisdef.h"
-#include "ivis_common/imd.h"
-#include "ivis_common/piefunc.h"
-#include "ivis_common/tex.h"
-#include "ivis_common/piedef.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/piepalette.h"
-#include "ivis_common/pieclip.h"
+#include "ivis_opengl/ivisdef.h"
+#include "ivis_opengl/imd.h"
+#include "ivis_opengl/piefunc.h"
+#include "ivis_opengl/tex.h"
+#include "ivis_opengl/piedef.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/piepalette.h"
+#include "ivis_opengl/pieclip.h"
 #include "piematrix.h"
 #include "screen.h"
 
@@ -118,7 +118,6 @@ typedef struct {
 	iIMDShape*	shape;
 	int		frame;
 	PIELIGHT	colour;
-	PIELIGHT	specular;
 	int		flag;
 	int		flag_data;
 } transluscent_shape_t;
@@ -130,7 +129,7 @@ static transluscent_shape_t* tshapes = NULL;
 static unsigned int tshapes_size = 0;
 static unsigned int nb_tshapes = 0;
 
-static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELIGHT teamcolour, WZ_DECL_UNUSED PIELIGHT specular, int pieFlag, int pieFlagData)
+static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELIGHT teamcolour, int pieFlag, int pieFlagData)
 {
 	iIMDPoly *pPolys;
 	bool light = true;
@@ -166,6 +165,8 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 		if (pieFlag & pie_BUTTON)
 		{
 			pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
+			light = false;
+			pie_ActivateShader(SHADER_BUTTON, teamcolour, shape->tcmaskpage);
 		}
 		pie_SetRendMode(REND_OPAQUE);
 	}
@@ -177,7 +178,7 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 		glMaterialfv(GL_FRONT, GL_SPECULAR, shape->material[LIGHT_SPECULAR]);
 		glMaterialf(GL_FRONT, GL_SHININESS, shape->shininess);
 		glMaterialfv(GL_FRONT, GL_EMISSION, shape->material[LIGHT_EMISSIVE]);
-		pie_ActivateShader_TCMask(teamcolour, shape->tcmaskpage);
+		pie_ActivateShader(SHADER_COMPONENT, teamcolour, shape->tcmaskpage);
 	}
 
 	if (pieFlag & pie_HEIGHT_SCALED)	// construct
@@ -194,15 +195,16 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 
 	frame %= MAX(1, shape->numFrames);
 
+	glBegin(GL_TRIANGLES);
 	for (pPolys = shape->polys; pPolys < shape->polys + shape->npolys; pPolys++)
 	{
-		Vector3f	vertexCoords[pie_MAX_VERTICES_PER_POLYGON];
-		unsigned int	n, fidx = frame;
-		VERTEXID	*index;
+		Vector3f	vertexCoords[3];
+		unsigned int	n, frameidx = frame;
+		int	*index;
 
 		if (!(pPolys->flags & iV_IMD_TEXANIM))
 		{
-			fidx = 0;
+			frameidx = 0;
 		}
 
 		for (n = 0, index = pPolys->pindex;
@@ -216,19 +218,16 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 
 		polyCount++;
 
-		glBegin(GL_TRIANGLE_FAN);
-
 		glNormal3fv((GLfloat*)&pPolys->normal);
 		for (n = 0; n < pPolys->npnts; n++)
 		{
-			glTexCoord2fv((GLfloat*)&pPolys->texCoord[fidx * pPolys->npnts + n]);
+			glTexCoord2fv((GLfloat*)&pPolys->texCoord[frameidx * pPolys->npnts + n]);
 			glVertex3fv((GLfloat*)&vertexCoords[n]);
 		}
-
-		glEnd();
 	}
+	glEnd();
 
-	if (light)
+	if (light || (pieFlag & pie_BUTTON))
 	{
 		pie_DeactivateShader();
 	}
@@ -333,7 +332,7 @@ static void pie_DrawShadow(iIMDShape *shape, int flag, int flag_data, Vector3f* 
 
 		for (i = 0, pPolys = shape->polys; i < shape->npolys; ++i, ++pPolys) {
 			Vector3f p[3];
-			VERTEXID current, first;
+			int current, first;
 			for(j = 0; j < 3; j++)
 			{
 				current = pPolys->pindex[j];
@@ -463,7 +462,7 @@ void pie_CleanUp( void )
 	scshapes = NULL;
 }
 
-void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, PIELIGHT specular, int pieFlag, int pieFlagData)
+void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int pieFlag, int pieFlagData)
 {
 	PIELIGHT teamcolour;
 
@@ -480,7 +479,7 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, PIE
 
 	if (drawing_interface || !shadows)
 	{
-		pie_Draw3DShape2(shape, frame, colour, teamcolour, specular, pieFlag, pieFlagData);
+		pie_Draw3DShape2(shape, frame, colour, teamcolour, pieFlag, pieFlagData);
 	}
 	else
 	{
@@ -506,7 +505,6 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, PIE
 			tshapes[nb_tshapes].shape = shape;
 			tshapes[nb_tshapes].frame = frame;
 			tshapes[nb_tshapes].colour = colour;
-			tshapes[nb_tshapes].specular = specular;
 			tshapes[nb_tshapes].flag = pieFlag;
 			tshapes[nb_tshapes].flag_data = pieFlagData;
 			nb_tshapes++;
@@ -561,7 +559,7 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, PIE
 				}
 			}
 
-			pie_Draw3DShape2(shape, frame, colour, teamcolour, specular, pieFlag, pieFlagData);
+			pie_Draw3DShape2(shape, frame, colour, teamcolour, pieFlag, pieFlagData);
 		}
 	}
 }
@@ -686,7 +684,7 @@ static void pie_DrawRemainingTransShapes(void)
 	{
 		glLoadMatrixf(tshapes[i].matrix);
 		pie_Draw3DShape2(tshapes[i].shape, tshapes[i].frame, tshapes[i].colour, tshapes[i].colour,
-				 tshapes[i].specular, tshapes[i].flag, tshapes[i].flag_data);
+				 tshapes[i].flag, tshapes[i].flag_data);
 	}
 	glPopMatrix();
 

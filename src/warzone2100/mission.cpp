@@ -26,10 +26,10 @@
 
 #include "framework/frame.h"
 #include "framework/math_ext.h"
-#include "ivis_common/bitimage.h"
-#include "ivis_common/textdraw.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/pieblitfunc.h"
+#include "ivis_opengl/bitimage.h"
+#include "ivis_opengl/textdraw.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/pieblitfunc.h"
 #include "gamelib/gtime.h"
 #include "script/script.h"
 #include "sound/audio.h"
@@ -638,7 +638,7 @@ void missionFlyTransportersIn( SDWORD iPlayer, BOOL bTrackTransporter )
 	UWORD	iX, iY, iZ;
 	SDWORD	iLandX, iLandY, iDx, iDy;
 
-	ASSERT_OR_RETURN(, iPlayer < 8, "Flying nonexistent player %d's transporters in", iPlayer);
+	ASSERT_OR_RETURN(, iPlayer < MAX_PLAYERS, "Flying nonexistent player %d's transporters in", iPlayer);
 
 	bTrackingTransporter = bTrackTransporter;
 
@@ -1828,7 +1828,7 @@ goingHome = true when returning from an off World mission*/
 void unloadTransporter(DROID *psTransporter, UDWORD x, UDWORD y, BOOL goingHome)
 {
 	DROID		*psDroid, *psNext;
-	DROID		**ppCurrentList, **ppStoredList;
+	DROID		**ppCurrentList;
 	UDWORD		droidX, droidY;
 	UDWORD		iX, iY;
 	DROID_GROUP	*psGroup;
@@ -1836,12 +1836,10 @@ void unloadTransporter(DROID *psTransporter, UDWORD x, UDWORD y, BOOL goingHome)
 	if (goingHome)
 	{
 		ppCurrentList = mission.apsDroidLists;
-		ppStoredList = apsDroidLists;
 	}
 	else
 	{
 		ppCurrentList = apsDroidLists;
-		ppStoredList = mission.apsDroidLists;
 	}
 
 	//unload all the droids from within the current Transporter

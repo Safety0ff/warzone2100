@@ -21,12 +21,12 @@
 
 #include "framework/frame.h"
 #include "framework/fixedpoint.h"
-#include "ivis_common/pieblitfunc.h"
+#include "ivis_opengl/pieblitfunc.h"
 // FIXME Direct iVis implementation include!
 #include "ivis_opengl/piematrix.h"
-#include "ivis_common/piepalette.h"
-#include "ivis_common/piestate.h"
-#include "ivis_common/piefunc.h"
+#include "ivis_opengl/piepalette.h"
+#include "ivis_opengl/piestate.h"
+#include "ivis_opengl/piefunc.h"
 #include "gamelib/gtime.h"
 #include "advvis.h"
 #include "objects.h"
@@ -286,7 +286,7 @@ void drawRadar(void)
 		frameSkip = RADAR_FRAME_SKIP;
 	}
 	frameSkip--;
-	pie_SetTranslucencyMode(TRANS_ALPHA);
+	pie_SetRendMode(REND_ALPHA);
 	pie_MatBegin();
 		pie_TRANSLATE(radarCenterX, radarCenterY, 0);
 		if (rotateRadar)

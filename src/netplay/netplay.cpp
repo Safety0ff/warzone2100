@@ -253,6 +253,7 @@ static size_t NET_fillBuffer(Socket **pSocket, SocketSet* socket_set, uint8_t *b
 			debug(LOG_NET, "Host connection was lost!");
 			NETlogEntry("Host connection was lost!", SYNC_FLAG, selectedPlayer);
 			tcp_socket = NULL;
+			bsocket = NULL;  // Because tcp_socket == bsocket...
 			//Game is pretty much over --should just end everything when HOST dies.
 			NetPlay.isHostAlive = false;
 			setLobbyError(ERROR_HOSTDROPPED);
@@ -285,6 +286,8 @@ void NET_InitPlayer(int i, bool initPosition)
 	}
 	NetPlay.players[i].ready = false;
 	NetPlay.players[i].needFile = false;
+	NetPlay.players[i].ai = 0;			// default
+	NetPlay.players[i].difficulty = 1;		// normal
 	NetPlay.players[i].wzFile.isCancelled = false;
 	NetPlay.players[i].wzFile.isSending = false;
 }
@@ -326,6 +329,8 @@ static void NETSendNPlayerInfoTo(uint32_t *index, uint32_t indexLen, unsigned to
 			NETint32_t(&NetPlay.players[index[n]].position);
 			NETint32_t(&NetPlay.players[index[n]].team);
 			NETbool(&NetPlay.players[index[n]].ready);
+			NETint8_t(&NetPlay.players[index[n]].ai);
+			NETint8_t(&NetPlay.players[index[n]].difficulty);
 		}
 		NETuint32_t(&NetPlay.hostPlayer);
 	NETend();
@@ -1281,6 +1286,7 @@ bool NETsend(uint8_t player, NetMessage const *message)
 				SocketSet_DelSocket(socket_set, tcp_socket);            // mark it invalid
 				socketClose(tcp_socket);
 				tcp_socket = NULL;
+				bsocket = NULL;  // Because tcp_socket == bsocket...
 				NetPlay.players[NetPlay.hostPlayer].heartbeat = false;	// mark host as dead
 				//Game is pretty much over --should just end everything when HOST dies.
 				NetPlay.isHostAlive = false;
@@ -1426,6 +1432,8 @@ static BOOL NETprocessSystemMessage(NETQUEUE playerQueue, uint8_t type)
 			int32_t position = 0;
 			int32_t team = 0;
 			uint32_t hostPlayer = 0;
+			int8_t ai = 0;
+			int8_t difficulty = 0;
 			bool error = false;
 
 			NETbeginDecode(playerQueue, NET_PLAYER_INFO);
@@ -1466,6 +1474,8 @@ static BOOL NETprocessSystemMessage(NETQUEUE playerQueue, uint8_t type)
 					NETint32_t(&position);
 					NETint32_t(&team);
 					NETbool(&NetPlay.players[index].ready);
+					NETint8_t(&ai);
+					NETint8_t(&difficulty);
 
 					// Don't let anyone except the host change these, otherwise it will end up inconsistent at some point, and the game gets really messed up.
 					if (playerQueue.index == NetPlay.hostPlayer)
@@ -1473,7 +1483,8 @@ static BOOL NETprocessSystemMessage(NETQUEUE playerQueue, uint8_t type)
 						NetPlay.players[index].colour = colour;
 						NetPlay.players[index].position = position;
 						NetPlay.players[index].team = team;
-						//NetPlay.hostPlayer = hostPlayer;  // Huh?
+						NetPlay.players[index].ai = ai;
+						NetPlay.players[index].difficulty = difficulty;
 					}
 
 					debug(LOG_NET, "%s for player %u (%s)", n == 0? "Receiving MSG_PLAYER_INFO" : "                      and", (unsigned int)index, NetPlay.players[index].allocated ? "human" : "AI");
@@ -2425,7 +2436,6 @@ BOOL NEThostGame(const char* SessionName, const char* PlayerName,
 		NETaddRedirects();
 	}
 	NET_InitPlayers();
-	NetPlay.maxPlayers = MAX_PLAYERS;
 	if(!NetPlay.bComms)
 	{
 		selectedPlayer			= 0;
@@ -2785,14 +2795,16 @@ BOOL NETjoinGame(UDWORD gameNumber, const char* playername)
 
 	// Send a join message to the host
 	NETbeginEncode(NETnetQueue(NET_HOST_ONLY), NET_JOIN);
-		// Casting constness away, because NETstring is const-incorrect
-		// when sending/encoding a packet.
-		NETstring((char*)playername, 64);
+		NETstring(playername, 64);
 		NETint32_t(&NETCODE_VERSION_MAJOR);
 		NETint32_t(&NETCODE_VERSION_MINOR);
 		NETstring(getModList(), modlist_string_size);
 		NETstring(NetPlay.gamePassword, sizeof(NetPlay.gamePassword));
 	NETend();
+	if (bsocket == NULL)
+	{
+		return false;  // Connection dropped while sending NET_JOIN.
+	}
 	socketFlush(bsocket);  // Make sure the message was completely sent.
 
 	i = SDL_GetTicks();
@@ -2983,6 +2995,10 @@ static uint32_t syncDebugCrcs[MAX_SYNC_HISTORY + 1];
 
 void _syncDebug(const char *function, const char *str, ...)
 {
+#ifdef WZ_CC_MSVC
+	char const *f = function; while (*f != '\0') if (*f++ == ':') function = f;  // Strip "Class::" from "Class::myFunction".
+#endif
+
 	va_list ap;
 	char outputBuffer[MAX_LEN_LOG_LINE];
 
@@ -3002,6 +3018,10 @@ void _syncDebug(const char *function, const char *str, ...)
 
 void _syncDebugBacktrace(const char *function)
 {
+#ifdef WZ_CC_MSVC
+	char const *f = function; while (*f != '\0') if (*f++ == ':') function = f;  // Strip "Class::" from "Class::myFunction".
+#endif
+
 	uint32_t backupCrc = syncDebugCrcs[syncDebugNext];  // Ignore CRC changes from _syncDebug(), since identical backtraces can be printed differently.
 
 #ifdef WZ_OS_LINUX

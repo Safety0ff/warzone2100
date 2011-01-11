@@ -39,17 +39,17 @@
 #include "wrappers.h"	// for loading screen
 #include "gamelib/gtime.h"
 #include "console.h"
-#include "ivis_common/bitimage.h"	// GFX incs
-#include "ivis_common/textdraw.h"
+#include "ivis_opengl/bitimage.h"	// GFX incs
+#include "ivis_opengl/textdraw.h"
 // FIXME Direct iVis implementation include!
 #include "ivis_opengl/piematrix.h"
-#include "ivis_common/piestate.h"
+#include "ivis_opengl/piestate.h"
 #include "netplay/netplay.h"
 #include "multiplay.h"
 #include "multirecv.h"
 #include "multiint.h"
 #include "multilimit.h"
-#include "ivis_common/piemode.h"
+#include "ivis_opengl/piemode.h"
 #include "script/script.h"
 #include "challenge.h"
 
@@ -424,7 +424,7 @@ static void displayStructureBar(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset
 	STRUCTURE_STATS	*stat = asStructureStats + psWidget->UserData;
 	Position position;
 	Vector3i rotation;
-	char	str[3];
+	char str[20];
 
 	UDWORD scale,Radius;
 
@@ -458,7 +458,7 @@ static void displayStructureBar(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset
 	iV_DrawText(_(getName(stat->pName)), x + 80, y + (psWidget->height / 2) + 3);
 
 	// draw limit
-	sprintf(str,"%d",((W_SLIDER*)(widgGetFromID(psWScreen,psWidget->id+1)))->pos);
+	ssprintf(str, "%d", ((W_SLIDER *)widgGetFromID(psWScreen, psWidget->id + 1))->pos);
 	iV_DrawText(str, x+270, y+(psWidget->height/2)+3);
 
 	return;

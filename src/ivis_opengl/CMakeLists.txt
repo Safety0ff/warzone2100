@@ -1,23 +1,46 @@
 #AM_CFLAGS = $(WZ_CFLAGS) -Wno-missing-declarations
 
 set (ivis_opengl_HEADERS
+  bitimage.h
+  imd.h
+  ivisdef.h
+  pieblitfunc.h
+  piedef.h
   piematrix.h
+  piepalette.h
+  pietypes.h
+  rendmode.h
+  tex.h
+  ivi.h
+  jpeg_encoder.h
+  pieclip.h
+  piefunc.h
+  piemode.h
+  piestate.h
+  png_util.h
   screen.h
+  textdraw.h
   CACHE INTERNAL ""
 )
 
 set (ivis_opengl_SOURCES
+  bitimage.cpp
+  imdload.cpp
+  jpeg_encoder.cpp
+  pieclip.cpp
+  piefunc.cpp
+  piemode.cpp
+  piestate.cpp
+  rendmode.cpp
+  tex.cpp
+  imd.cpp
   ivi.cpp
   pieblitfunc.cpp
   piedraw.cpp
-  piefunc.cpp
   piematrix.cpp
-  piemode.cpp
   piepalette.cpp
-  piestate.cpp
-  rendmode.cpp
+  png_util.cpp
   screen.cpp
-  tex.cpp
   textdraw.cpp
   CACHE INTERNAL ""
 )
