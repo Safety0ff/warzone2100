@@ -7,6 +7,7 @@ EXTRA_DIST = __BUILD_SCRIPT \
 	     download.pl \
 	     rules.mk \
 	     libs/Makefile \
+	     libs/boost/Makefile \
 	     libs/dejavu/Makefile \
 	     libs/devpkg/Makefile \
 	     libs/expat/Makefile \
