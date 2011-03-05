@@ -241,11 +241,9 @@ BOOL missionLimboExpand(void)
 // mission initialisation game code
 void initMission(void)
 {
-	UDWORD inc;
-
 	debug(LOG_SAVE, "*** Init Mission ***");
 	mission.type = LDS_NONE;
-	for (inc = 0; inc < MAX_PLAYERS; inc++)
+	for (int inc = 0; inc < MAX_PLAYERS; inc++)
 	{
 		mission.apsStructLists[inc] = NULL;
 		mission.apsDroidLists[inc] = NULL;
@@ -265,9 +263,17 @@ void initMission(void)
 	mission.psGateways = NULL;
 	mission.mapHeight = 0;
 	mission.mapWidth = 0;
+	for (int i = 0; i < ARRAY_SIZE(mission.psBlockMap); ++i)
+	{
+		mission.psBlockMap[i] = NULL;
+	}
+	for (int i = 0; i < ARRAY_SIZE(mission.psAuxMap); ++i)
+	{
+		mission.psAuxMap[i] = NULL;
+	}
 
 	//init all the landing zones
-	for (inc = 0; inc < MAX_NOGO_AREAS; inc++)
+	for (int inc = 0; inc < MAX_NOGO_AREAS; inc++)
 	{
 		sLandingZone[inc].x1 = sLandingZone[inc].y1 = sLandingZone[inc].x2 = sLandingZone[inc].y2 = 0;
 	}
@@ -336,6 +342,18 @@ BOOL missionShutDown(void)
 		psMapTiles = mission.psMapTiles;
 		mapWidth = mission.mapWidth;
 		mapHeight = mission.mapHeight;
+		for (int i = 0; i < ARRAY_SIZE(mission.psBlockMap); ++i)
+		{
+			free(psBlockMap[i]);
+			psBlockMap[i] = mission.psBlockMap[i];
+			mission.psBlockMap[i] = NULL;
+		}
+		for (int i = 0; i < ARRAY_SIZE(mission.psAuxMap); ++i)
+		{
+			free(psAuxMap[i]);
+			psAuxMap[i] = mission.psAuxMap[i];
+			mission.psAuxMap[i] = NULL;
+		}
 		gwSetGateways(mission.psGateways);
 	}
 
@@ -731,6 +749,14 @@ static void saveMissionData(void)
 	mission.psMapTiles = psMapTiles;
 	mission.mapWidth = mapWidth;
 	mission.mapHeight = mapHeight;
+	for (int i = 0; i < ARRAY_SIZE(mission.psBlockMap); ++i)
+	{
+		mission.psBlockMap[i] = psBlockMap[i];
+	}
+	for (int i = 0; i < ARRAY_SIZE(mission.psAuxMap); ++i)
+	{
+		mission.psAuxMap[i] = psAuxMap[i];
+	}
 	mission.scrollMinX = scrollMinX;
 	mission.scrollMinY = scrollMinY;
 	mission.scrollMaxX = scrollMaxX;
@@ -888,6 +914,16 @@ void restoreMissionData(void)
 
 	mapWidth = mission.mapWidth;
 	mapHeight = mission.mapHeight;
+	for (int i = 0; i < ARRAY_SIZE(mission.psBlockMap); ++i)
+	{
+		psBlockMap[i] = mission.psBlockMap[i];
+		mission.psBlockMap[i] = NULL;
+	}
+	for (int i = 0; i < ARRAY_SIZE(mission.psAuxMap); ++i)
+	{
+		psAuxMap[i] = mission.psAuxMap[i];
+		mission.psAuxMap[i] = NULL;
+	}
 	scrollMinX = mission.scrollMinX;
 	scrollMinY = mission.scrollMinY;
 	scrollMaxX = mission.scrollMaxX;
@@ -1420,63 +1456,37 @@ void processMissionLimbo(void)
 // Pay special attention on what is getting swapped!
 void swapMissionPointers(void)
 {
-	void		*pVoid;
-	UDWORD		udwTemp, inc;
-
 	debug(LOG_SAVE, "called");
 
-	// Swap psMapTiles
-	pVoid = (void*)psMapTiles;
-	psMapTiles = mission.psMapTiles;
-	mission.psMapTiles = (MAPTILE *)pVoid;
-	// Swap map sizes
-	udwTemp = mapWidth;
-	mapWidth = mission.mapWidth;
-	mission.mapWidth = udwTemp;
-	udwTemp = mapHeight;
-	mapHeight = mission.mapHeight;
-	mission.mapHeight = udwTemp;
-	//swap gateway zones
-	pVoid = (void*)gwGetGateways();
-	gwSetGateways(mission.psGateways);
-	mission.psGateways = (struct _gateway *)pVoid;
-	// Swap scroll limits
-	udwTemp = scrollMinX;
-	scrollMinX = mission.scrollMinX;
-	mission.scrollMinX = udwTemp;
-	udwTemp = scrollMinY;
-	scrollMinY = mission.scrollMinY;
-	mission.scrollMinY = udwTemp;
-	udwTemp = scrollMaxX;
-	scrollMaxX = mission.scrollMaxX;
-	mission.scrollMaxX = udwTemp;
-	udwTemp = scrollMaxY;
-	scrollMaxY = mission.scrollMaxY;
-	mission.scrollMaxY = udwTemp;
-	for (inc = 0; inc < MAX_PLAYERS; inc++)
+	std::swap(psMapTiles, mission.psMapTiles);
+	std::swap(mapWidth,   mission.mapWidth);
+	std::swap(mapHeight,  mission.mapHeight);
+	for (int i = 0; i < ARRAY_SIZE(mission.psBlockMap); ++i)
 	{
-		pVoid = (void*)apsDroidLists[inc];
-		apsDroidLists[inc] = mission.apsDroidLists[inc];
-		mission.apsDroidLists[inc] = (DROID *)pVoid;
-		pVoid = (void*)apsStructLists[inc];
-		apsStructLists[inc] = mission.apsStructLists[inc];
-		mission.apsStructLists[inc] = (STRUCTURE *)pVoid;
-		pVoid = (void*)apsFeatureLists[inc];
-		apsFeatureLists[inc] = mission.apsFeatureLists[inc];
-		mission.apsFeatureLists[inc] = (FEATURE *)pVoid;
-		pVoid = (void*)apsFlagPosLists[inc];
-		apsFlagPosLists[inc] = mission.apsFlagPosLists[inc];
-		mission.apsFlagPosLists[inc] = (FLAG_POSITION *)pVoid;
-		pVoid = (void*)apsExtractorLists[inc];
-		apsExtractorLists[inc] = mission.apsExtractorLists[inc];
-		mission.apsExtractorLists[inc] = (STRUCTURE *)pVoid;
+		std::swap(psBlockMap[i], mission.psBlockMap[i]);
 	}
-	pVoid = (void*)apsSensorList[0];
-	apsSensorList[0] = mission.apsSensorList[0];
-	mission.apsSensorList[0] = (BASE_OBJECT *)pVoid;
-	pVoid = (void*)apsOilList[0];
-	apsOilList[0] = mission.apsOilList[0];
-	mission.apsOilList[0] = (FEATURE *)pVoid;
+	for (int i = 0; i < ARRAY_SIZE(mission.psAuxMap); ++i)
+	{
+		std::swap(psAuxMap[i],   mission.psAuxMap[i]);
+	}
+	//swap gateway zones
+	GATEWAY *gateway = gwGetGateways();
+	gwSetGateways(mission.psGateways);
+	mission.psGateways = gateway;
+	std::swap(scrollMinX, mission.scrollMinX);
+	std::swap(scrollMinY, mission.scrollMinY);
+	std::swap(scrollMaxX, mission.scrollMaxX);
+	std::swap(scrollMaxY, mission.scrollMaxY);
+	for (unsigned inc = 0; inc < MAX_PLAYERS; inc++)
+	{
+		std::swap(apsDroidLists[inc],     mission.apsDroidLists[inc]);
+		std::swap(apsStructLists[inc],    mission.apsStructLists[inc]);
+		std::swap(apsFeatureLists[inc],   mission.apsFeatureLists[inc]);
+		std::swap(apsFlagPosLists[inc],   mission.apsFlagPosLists[inc]);
+		std::swap(apsExtractorLists[inc], mission.apsExtractorLists[inc]);
+	}
+	std::swap(apsSensorList[0], mission.apsSensorList[0]);
+	std::swap(apsOilList[0],    mission.apsOilList[0]);
 }
 
 void endMission(void)

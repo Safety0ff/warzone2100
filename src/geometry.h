@@ -24,13 +24,14 @@
 #include "map.h"
 #include "hci.h"
 
-typedef struct _t_quad
+struct QUAD
 {
 	Vector2i coords[4];
-} QUAD;
+};
 
 extern uint16_t calcDirection(int32_t x0, int32_t y0, int32_t x1, int32_t y1);
-extern int inQuad( const Vector2i *pt, const QUAD *quad );
+bool inQuad(const Vector2i *pt, const QUAD *quad);
+Vector2i positionInQuad(Vector2i const &pt, QUAD const &quad);
 extern DROID *getNearestDroid( UDWORD x, UDWORD y, BOOL bSelected );
 extern BOOL droidOnScreen( DROID *psDroid, SDWORD tolerance );
 

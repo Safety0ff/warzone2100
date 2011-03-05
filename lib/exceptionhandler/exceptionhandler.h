@@ -25,7 +25,7 @@ extern "C"
 {
 #endif //__cplusplus
 
-extern void setupExceptionHandler(int argc, char * argv[]);
+extern void setupExceptionHandler(int argc, const char ** argv);
 
 extern bool OverrideRPTDirectory(char *newPath);
 

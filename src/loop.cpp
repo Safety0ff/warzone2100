@@ -108,15 +108,15 @@ static BOOL paused=false;
 static BOOL video=false;
 
 //holds which pause is valid at any one time
-typedef struct _pause_state
+struct PAUSE_STATE
 {
-	unsigned gameUpdatePause	: 1;
-	unsigned audioPause			: 1;
-	unsigned scriptPause		: 1;
-	unsigned scrollPause		: 1;
-	unsigned consolePause		: 1;
-	unsigned editPause		: 1;
-} PAUSE_STATE;
+	bool gameUpdatePause;
+	bool audioPause;
+	bool scriptPause;
+	bool scrollPause;
+	bool consolePause;
+	bool editPause;
+};
 
 static PAUSE_STATE	pauseState;
 static	UDWORD	numDroids[MAX_PLAYERS];
@@ -158,7 +158,10 @@ GAMECODE gameLoop(void)
 
 	if (gameTicked)
 	{
-		syncDebug("map = \"%s\", humanPlayers = %d %d %d %d %d %d %d %d", game.map, isHumanPlayer(0), isHumanPlayer(1), isHumanPlayer(2), isHumanPlayer(3), isHumanPlayer(4), isHumanPlayer(5), isHumanPlayer(6), isHumanPlayer(7));
+		// Can't dump isHumanPlayer, since it causes spurious desynch dumps when players leave.
+		// TODO isHumanPlayer should probably be synchronised, since the game state seems to depend on it, so there might also be a risk of real desynchs when players leave.
+		//syncDebug("map = \"%s\", humanPlayers = %d %d %d %d %d %d %d %d", game.map, isHumanPlayer(0), isHumanPlayer(1), isHumanPlayer(2), isHumanPlayer(3), isHumanPlayer(4), isHumanPlayer(5), isHumanPlayer(6), isHumanPlayer(7));
+		syncDebug("map = \"%s\"", game.map);
 
 		// Actually send pending droid orders.
 		sendQueuedDroidInfo();

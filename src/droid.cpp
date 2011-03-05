@@ -720,7 +720,7 @@ void _syncDebugDroid(const char *function, DROID const *psDroid, char ch)
 	          psDroid->body,
 	          psDroid->sMove.Status,
 	          psDroid->sMove.speed, psDroid->sMove.moveDir,
-	          psDroid->sMove.Position, psDroid->sMove.numPoints,
+	          psDroid->sMove.pathIndex, psDroid->sMove.numPoints,
 	          psDroid->sMove.src.x, psDroid->sMove.src.y, psDroid->sMove.target.x, psDroid->sMove.target.y, psDroid->sMove.destination.x, psDroid->sMove.destination.y,
 	          psDroid->sMove.bumpDir, psDroid->sMove.bumpTime, psDroid->sMove.lastBump, psDroid->sMove.pauseTime, psDroid->sMove.bumpX, psDroid->sMove.bumpY, psDroid->sMove.shuffleStart,
 	          psDroid->experience,
@@ -1691,29 +1691,31 @@ BOOL loadDroidTemplates(const char *pDroidData, UDWORD bufferSize)
 	return true;
 }
 
+static void initTemplatePoints(DROID_TEMPLATE *pDroidDesign)
+{
+	//calculate the total build points
+	pDroidDesign->buildPoints = calcTemplateBuild(pDroidDesign);
+	//calc the total power points
+	pDroidDesign->powerPoints = calcTemplatePower(pDroidDesign);
+}
+
 /*initialise the template build and power points */
 void initTemplatePoints(void)
 {
-	UDWORD			player;
-	DROID_TEMPLATE	*pDroidDesign;
-
-	for (player=0; player < MAX_PLAYERS; player++)
+	for (int player = 0; player < MAX_PLAYERS; ++player)
 	{
-		for(pDroidDesign = apsDroidTemplates[player]; pDroidDesign != NULL;
-			pDroidDesign = pDroidDesign->psNext)
+		for (DROID_TEMPLATE *pDroidDesign = apsDroidTemplates[player]; pDroidDesign != NULL; pDroidDesign = pDroidDesign->psNext)
 		{
-			//calculate the total build points
-			pDroidDesign->buildPoints = calcTemplateBuild(pDroidDesign);
-			//calc the total power points
-			pDroidDesign->powerPoints = calcTemplatePower(pDroidDesign);
+			initTemplatePoints(pDroidDesign);
 		}
 	}
-	for (pDroidDesign = apsStaticTemplates; pDroidDesign != NULL; pDroidDesign = pDroidDesign->psNext)
+	for (DROID_TEMPLATE *pDroidDesign = apsStaticTemplates; pDroidDesign != NULL; pDroidDesign = pDroidDesign->psNext)
 	{
-		//calculate the total build points
-		pDroidDesign->buildPoints = calcTemplateBuild(pDroidDesign);
-		//calc the total power points
-		pDroidDesign->powerPoints = calcTemplatePower(pDroidDesign);
+		initTemplatePoints(pDroidDesign);
+	}
+	for (std::list<DROID_TEMPLATE>::iterator pDroidDesign = localTemplates.begin(); pDroidDesign != localTemplates.end(); ++pDroidDesign)
+	{
+		initTemplatePoints(&*pDroidDesign);
 	}
 }
 
@@ -4544,6 +4546,7 @@ void checkDroid(const DROID *droid, const char *const location, const char *func
 
 	ASSERT_HELPER(droid != NULL, location, function, "CHECK_DROID: NULL pointer");
 	ASSERT_HELPER(droid->id != 0, location, function, "CHECK_DROID: Droid with ID 0");
+	if (droid->id == 0) const_cast<uint32_t &>(droid->id) = 0xFEDBCA98;  // HACK Don't spam assertions in maps with a droid with droid ID 0.
 	ASSERT_HELPER(droid->type == OBJ_DROID, location, function, "CHECK_DROID: Not droid (type %d)", (int)droid->type);
 	ASSERT_HELPER(droid->numWeaps <= DROID_MAXWEAPS, location, function, "CHECK_DROID: Bad number of droid weapons %d", (int)droid->numWeaps);
 	ASSERT_HELPER((unsigned)droid->listSize <= droid->asOrderList.size() && (unsigned)droid->listPendingBegin <= droid->asOrderList.size(), location, function, "CHECK_DROID: Bad number of droid orders %d %d %d", (int)droid->listSize, (int)droid->listPendingBegin, (int)droid->asOrderList.size());

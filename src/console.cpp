@@ -48,17 +48,17 @@
 #define CON_BORDER_WIDTH				4
 #define CON_BORDER_HEIGHT				4
 
-typedef struct _console
+struct CONSOLE
 {
 	UDWORD	topX;
 	UDWORD	topY;
 	UDWORD	width;
 	UDWORD	textDepth;
 	BOOL	permanent;
-} CONSOLE;
+};
 
 /* Definition of a message */
-typedef struct	_console_message
+typedef struct _console_message
 {
 	QPixmap				*cache;						// Text of the message
 	QString				text;						// Text of the message

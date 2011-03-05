@@ -211,7 +211,7 @@ static void auxStructureNonblocking(STRUCTURE *psStructure)
 	{
 		for (int j = 0; j < size.y; j++)
 		{
-			auxClearAll(map.x + i, map.y + j, AUXBITS_ANY_BUILDING | AUXBITS_OUR_BUILDING);
+			auxClearAll(map.x + i, map.y + j, AUXBITS_BLOCKING | AUXBITS_OUR_BUILDING | AUXBITS_NONPASSABLE);
 		}
 	}
 }
@@ -226,7 +226,36 @@ static void auxStructureBlocking(STRUCTURE *psStructure)
 		for (int j = 0; j < size.y; j++)
 		{
 			auxSetAllied(map.x + i, map.y + j, psStructure->player, AUXBITS_OUR_BUILDING);
-			auxSetAll(map.x + i, map.y + j, AUXBITS_ANY_BUILDING);
+			auxSetAll(map.x + i, map.y + j, AUXBITS_BLOCKING | AUXBITS_NONPASSABLE);
+		}
+	}
+}
+
+static void auxStructureOpenGate(STRUCTURE *psStructure)
+{
+	Vector2i size = getStructureSize(psStructure);
+	Vector2i map = map_coord(removeZ(psStructure->pos)) - size/2;
+
+	for (int i = 0; i < size.x; i++)
+	{
+		for (int j = 0; j < size.y; j++)
+		{
+			auxClearAll(map.x + i, map.y + j, AUXBITS_BLOCKING);
+		}
+	}
+}
+
+static void auxStructureClosedGate(STRUCTURE *psStructure)
+{
+	Vector2i size = getStructureSize(psStructure);
+	Vector2i map = map_coord(removeZ(psStructure->pos)) - size/2;
+
+	for (int i = 0; i < size.x; i++)
+	{
+		for (int j = 0; j < size.y; j++)
+		{
+			auxSetEnemy(map.x + i, map.y + j, psStructure->player, AUXBITS_NONPASSABLE);
+			auxSetAll(map.x + i, map.y + j, AUXBITS_BLOCKING);
 		}
 	}
 }
@@ -904,7 +933,7 @@ void structureBuild(STRUCTURE *psStruct, DROID *psDroid, int buildPoints)
 	before = (9 * psStruct->currentBuildPts * structureBody(psStruct) ) / (10 * psStruct->pStructureType->buildPoints);
 	psStruct->currentBuildPts = newBuildPoints;
 	after =  (9 * psStruct->currentBuildPts * structureBody(psStruct) ) / (10 * psStruct->pStructureType->buildPoints);
-	psStruct->body += after - before;
+	psStruct->body = std::max<int>(psStruct->body + after - before, 1);
 
 	//check if structure is built
 	if (buildPoints > 0 && psStruct->currentBuildPts >= (SDWORD)psStruct->pStructureType->buildPoints)
@@ -918,7 +947,7 @@ void structureBuild(STRUCTURE *psStruct, DROID *psDroid, int buildPoints)
 			intBuildFinished(psDroid);
 		}
 
-		if((bMultiMessages) && myResponsibility(psStruct->player))
+		if (!isInSync() && bMultiMessages && myResponsibility(psStruct->player))
 		{
 			SendBuildFinished(psStruct);
 		}
@@ -1505,9 +1534,16 @@ STRUCTURE* buildStructureDir(STRUCTURE_STATS *pStructureType, UDWORD x, UDWORD y
 			}
 		}
 
-		if (pStructureType->type != REF_REARM_PAD && pStructureType->type != REF_GATE)
+		switch (pStructureType->type)
 		{
-			auxStructureBlocking(psBuilding);
+			case REF_REARM_PAD:
+				break;  // Not blocking.
+			case REF_GATE:
+				auxStructureClosedGate(psBuilding);  // Don't block for the sake of allied pathfinding.
+				break;
+			default:
+				auxStructureBlocking(psBuilding);
+				break;
 		}
 
 		//set up the rest of the data
@@ -3150,7 +3186,9 @@ static void aiUpdateStructure(STRUCTURE *psStructure, bool isMission)
 				}
 			}
 
-			PLAYER_RESEARCH *pPlayerRes = &asPlayerResList[psStructure->player][pSubject->ref - REF_RESEARCH_START];
+			int researchIndex = pSubject->ref - REF_RESEARCH_START;
+
+			PLAYER_RESEARCH *pPlayerRes = &asPlayerResList[psStructure->player][researchIndex];
 			//check research has not already been completed by another structure
 			if (!IsResearchCompleted(pPlayerRes))
 			{
@@ -3184,7 +3222,7 @@ static void aiUpdateStructure(STRUCTURE *psStructure, bool isMission)
 						if (myResponsibility(psStructure->player) && !isInSync())
 						{
 							// This message should have no effect if in synch.
-							SendResearch(psStructure->player, pSubject->ref - REF_RESEARCH_START, true);
+							SendResearch(psStructure->player, researchIndex, true);
 						}
 					}
 
@@ -3202,9 +3240,25 @@ static void aiUpdateStructure(STRUCTURE *psStructure, bool isMission)
 					}
 					psResFacility->psSubject = NULL;
 					intResearchFinished(psStructure);
-					researchResult(pSubject->ref - REF_RESEARCH_START, psStructure->player, true, psStructure, true);
+					researchResult(researchIndex, psStructure->player, true, psStructure, true);
 					//check if this result has enabled another topic
 					intCheckResearchButton();
+
+					// Update allies research accordingly
+					if (game.type == SKIRMISH)
+					{
+						for (i = 0; i < MAX_PLAYERS; i++)
+						{
+							if (alliances[i][psStructure->player] == ALLIANCE_FORMED)
+							{
+								if (!IsResearchCompleted(&asPlayerResList[i][researchIndex]))
+								{
+									// Do the research for that player
+									researchResult(researchIndex, i, false, NULL, true);
+								}
+							}
+						}
+					}
 				}
 			}
 			else
@@ -3536,7 +3590,7 @@ static void aiUpdateStructure(STRUCTURE *psStructure, bool isMission)
 					//clear the rearm pad
 					psDroid->action = DACTION_NONE;
 					psReArmPad->psObj = NULL;
-					auxClearAll(map_coord(psStructure->pos.x), map_coord(psStructure->pos.y), AUXBITS_ANY_BUILDING | AUXBITS_OUR_BUILDING);
+					auxStructureNonblocking(psStructure);
 				}
 			}
 		}
@@ -3605,6 +3659,34 @@ void _syncDebugStructure(const char *function, STRUCTURE const *psStruct, char c
 	          getPrecisePower(psStruct->player));
 }
 
+int requestOpenGate(STRUCTURE *psStructure)
+{
+	if (psStructure->status != SS_BUILT || psStructure->pStructureType->type != REF_GATE)
+	{
+		return 0;  // Can't open.
+	}
+
+	switch (psStructure->state)
+	{
+		case SAS_NORMAL:
+			psStructure->lastStateTime = gameTime;
+			psStructure->state = SAS_OPENING;
+			break;
+		case SAS_OPEN:
+			psStructure->lastStateTime = gameTime;
+			return 0;  // Already open.
+		case SAS_OPENING:
+			break;
+		case SAS_CLOSING:
+			psStructure->lastStateTime = 2*gameTime - psStructure->lastStateTime - SAS_OPEN_SPEED;
+			psStructure->state = SAS_OPENING;
+		default:
+			return 0;  // Unknown state...
+	}
+
+	return psStructure->lastStateTime + SAS_OPEN_SPEED - gameTime;
+}
+
 /* The main update routine for all Structures */
 void structureUpdate(STRUCTURE *psBuilding, bool mission)
 {
@@ -3631,14 +3713,14 @@ void structureUpdate(STRUCTURE *psBuilding, bool mission)
 			if (!found)	// no droids on our tile, safe to close
 			{
 				psBuilding->state = SAS_CLOSING;
-				auxStructureBlocking(psBuilding); // closed
+				auxStructureClosedGate(psBuilding);     // closed
 				psBuilding->lastStateTime = gameTime;	// reset timer
 			}
 		}
 		else if (psBuilding->state == SAS_OPENING && psBuilding->lastStateTime + SAS_OPEN_SPEED < gameTime)
 		{
 			psBuilding->state = SAS_OPEN;
-			auxStructureNonblocking(psBuilding); // opened
+			auxStructureOpenGate(psBuilding);       // opened
 			psBuilding->lastStateTime = gameTime;	// reset timer
 		}
 		else if (psBuilding->state == SAS_CLOSING && psBuilding->lastStateTime + SAS_OPEN_SPEED < gameTime)
@@ -3962,10 +4044,10 @@ UDWORD fillStructureList(STRUCTURE_STATS **ppList, UDWORD selectedPlayer, UDWORD
 }
 
 
-typedef enum
+enum STRUCTURE_PACKABILITY
 {
 	PACKABILITY_EMPTY = 0, PACKABILITY_DEFENSE = 1, PACKABILITY_NORMAL = 2, PACKABILITY_REPAIR = 3
-} STRUCTURE_PACKABILITY;
+};
 
 static inline bool canPack(STRUCTURE_PACKABILITY a, STRUCTURE_PACKABILITY b)
 {
@@ -7801,6 +7883,7 @@ void checkStructure(const STRUCTURE* psStructure, const char * const location_de
 
 	ASSERT_HELPER(psStructure != NULL, location_description, function, "CHECK_STRUCTURE: NULL pointer");
 	ASSERT_HELPER(psStructure->id != 0, location_description, function, "CHECK_STRUCTURE: Structure with ID 0");
+	if (psStructure->id == 0) const_cast<uint32_t &>(psStructure->id) = 0xFEDBCA98;  // HACK Don't spam assertions in maps with a structure with structure ID 0.
 	ASSERT_HELPER(psStructure->type == OBJ_STRUCTURE, location_description, function, "CHECK_STRUCTURE: No structure (type num %u)", (unsigned int)psStructure->type);
 	ASSERT_HELPER(psStructure->player < MAX_PLAYERS, location_description, function, "CHECK_STRUCTURE: Out of bound player num (%u)", (unsigned int)psStructure->player);
 	ASSERT_HELPER(psStructure->pStructureType->type < NUM_DIFF_BUILDINGS, location_description, function, "CHECK_STRUCTURE: Out of bound structure type (%u)", (unsigned int)psStructure->pStructureType->type);
