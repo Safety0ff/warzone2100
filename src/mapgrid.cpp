@@ -34,17 +34,69 @@
 // the current state of the iterator
 void **gridIterator;
 
+struct ConditionUnseen
+{
+	ConditionUnseen() : player(0) {}
+	ConditionUnseen(int32_t player_) : player(player_) {}
+	inline bool operator()(void *obj_) const
+	{
+		const BASE_OBJECT * const obj = static_cast<BASE_OBJECT*>(obj_);
+		return obj->seenThisTick[player] < UINT8_MAX;
+	}
+	inline bool operator()(int32_t, int32_t, void *obj_) const
+	{
+		const BASE_OBJECT * const obj = static_cast<BASE_OBJECT*>(obj_);
+		return obj->seenThisTick[player] < UINT8_MAX;
+	}
+	int player;
+};
+
+struct ConditionDroidsByPlayer
+{
+	ConditionDroidsByPlayer() : player(0) {}
+	ConditionDroidsByPlayer(int32_t player_) : player(player_) {}
+	inline bool operator()(void *obj_) const
+	{
+		const BASE_OBJECT * const obj = static_cast<BASE_OBJECT*>(obj_);
+		return obj->type == OBJ_DROID && obj->player == player;
+	}
+	inline bool operator()(int32_t, int32_t, void *obj_) const
+	{
+		const BASE_OBJECT * const obj = static_cast<BASE_OBJECT*>(obj_);
+		return obj->type == OBJ_DROID && obj->player == player;
+	}
+	int player;
+};
+
+struct ConditionInCircle
+{
+	ConditionInCircle() : x(0), y(0), radiusSq(0) {}
+	ConditionInCircle(int32_t x_, int32_t y_, uint32_t radius) : x(x_), y(y_), radiusSq(radius*radius) {}
+	inline bool operator()(int32_t x_, int32_t y_, void *) const
+	{
+		return (uint32_t)((x_ - x)*(x_ - x) + (y_ - y)*(y_ - y)) <= radiusSq;
+	}
+	int32_t x, y;
+	uint64_t radiusSq;
+};
+
 PointTree *gridPointTree = NULL;  // A quad-tree-like object.
-PointTree::Filter *gridFiltersUnseen;
-PointTree::Filter *gridFiltersDroidsByPlayer;
+Filter<ConditionUnseen> *gridFiltersUnseen;
+Filter<ConditionDroidsByPlayer> *gridFiltersDroidsByPlayer;
 
 // initialise the grid system
 bool gridInitialise(void)
 {
 	ASSERT(gridPointTree == NULL, "gridInitialise already called, without calling gridShutDown.");
 	gridPointTree = new PointTree;
-	gridFiltersUnseen = new PointTree::Filter[MAX_PLAYERS];
-	gridFiltersDroidsByPlayer = new PointTree::Filter[MAX_PLAYERS];
+	gridFiltersUnseen = new Filter<ConditionUnseen>[MAX_PLAYERS];
+	gridFiltersDroidsByPlayer = new Filter<ConditionDroidsByPlayer>[MAX_PLAYERS];
+
+	for (int i = 0; i < MAX_PLAYERS; ++i)
+	{
+		gridFiltersDroidsByPlayer[i].setPred(ConditionDroidsByPlayer(i));
+		gridFiltersUnseen[i].setPred(ConditionUnseen(i));
+	}
 
 	return true;  // Yay, nothing failed!
 }
@@ -94,88 +146,37 @@ void gridShutDown(void)
 	gridFiltersDroidsByPlayer = NULL;
 }
 
-static bool isInRadius(int32_t x, int32_t y, uint32_t radius)
-{
-	return (uint32_t)(x*x + y*y) <= radius*radius;
-}
-
-// initialise the grid system to start iterating through units that
-// could affect a location (x,y in world coords)
-template<class Condition>
-void gridStartIterateFiltered(int32_t x, int32_t y, uint32_t radius, PointTree::Filter *filter, Condition const &condition)
-{
-	if (filter == NULL)
-	{
-		gridPointTree->query(x, y, radius);
-	}
-	else
-	{
-		gridPointTree->query(*filter, x, y, radius);
-	}
-	PointTree::ResultVector::iterator w = gridPointTree->lastQueryResults.begin(), i;
-	for (i = w; i != gridPointTree->lastQueryResults.end(); ++i)
-	{
-		BASE_OBJECT *obj = static_cast<BASE_OBJECT *>(*i);
-		if (!condition.test(obj))  // Check if we should skip this object.
-		{
-			filter->erase(gridPointTree->lastFilteredQueryIndices[i - gridPointTree->lastQueryResults.begin()]);  // Stop the object from appearing in future searches.
-		}
-		else if (isInRadius(obj->pos.x - x, obj->pos.y - y, radius))  // Check that search result is less than radius (since they can be up to a factor of sqrt(2) more).
-		{
-			*w = *i;
-			++w;
-		}
-	}
-	gridPointTree->lastQueryResults.erase(w, i);  // Erase all points that were a bit too far.
-	gridPointTree->lastQueryResults.push_back(NULL);  // NULL-terminate the result.
-	gridIterator = &gridPointTree->lastQueryResults[0];
-	/*
-	// In case you are curious.
-	debug(LOG_WARNING, "gridStartIterateFiltered(%d, %d, %u) found %u objects", x, y, radius, (unsigned)gridPointTree->lastQueryResults.size() - 1);
-	*/
-}
-
-struct ConditionTrue
-{
-	bool test(BASE_OBJECT *) const
-	{
-		return true;
-	}
-};
-
 void gridStartIterate(int32_t x, int32_t y, uint32_t radius)
 {
-	gridStartIterateFiltered(x, y, radius, NULL, ConditionTrue());
+	ConditionInCircle cond(x, y, radius);
+	gridPointTree->query(cond, x - radius,
+							  x + radius,
+							  y - radius,
+							  y + radius);
+	gridPointTree->lastQueryResults.push_back(NULL);  // NULL-terminate the result.
+	gridIterator = &gridPointTree->lastQueryResults[0];
 }
-
-struct ConditionDroidsByPlayer
-{
-	ConditionDroidsByPlayer(int32_t player_) : player(player_) {}
-	bool test(BASE_OBJECT *obj) const
-	{
-		return obj->type == OBJ_DROID && obj->player == player;
-	}
-	int player;
-};
 
 void gridStartIterateDroidsByPlayer(int32_t x, int32_t y, uint32_t radius, int player)
 {
-	gridStartIterateFiltered(x, y, radius, &gridFiltersDroidsByPlayer[player], ConditionDroidsByPlayer(player));
+	ConditionInCircle cond(x, y, radius);
+	gridPointTree->query(cond, gridFiltersDroidsByPlayer[player], x - radius,
+																  x + radius,
+																  y - radius,
+																  y + radius);
+	gridPointTree->lastQueryResults.push_back(NULL);  // NULL-terminate the result.
+	gridIterator = &gridPointTree->lastQueryResults[0];
 }
-
-struct ConditionUnseen
-{
-	ConditionUnseen(int32_t player_) : player(player_) {}
-	bool test(BASE_OBJECT *obj) const
-	{
-		return obj->seenThisTick[player] < UINT8_MAX;
-	}
-	int player;
-};
 
 void gridStartIterateUnseen(int32_t x, int32_t y, uint32_t radius, int player)
 {
-	gridStartIterateFiltered(x, y, radius, &gridFiltersUnseen[player], ConditionUnseen(player));
+	ConditionInCircle cond(x, y, radius);
+	gridPointTree->query(cond, gridFiltersUnseen[player], x - radius,
+														  x + radius,
+														  y - radius,
+														  y + radius);
+	gridPointTree->lastQueryResults.push_back(NULL);  // NULL-terminate the result.
+	gridIterator = &gridPointTree->lastQueryResults[0];
 }
 
 BASE_OBJECT **gridIterateDup(void)

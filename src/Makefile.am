@@ -252,7 +252,6 @@ warzone2100_SOURCES = \
 	oprint.cpp \
 	order.cpp \
 	parsetest.cpp \
-	pointtree.cpp \
 	power.cpp \
 	projectile.cpp \
 	radar.cpp \
