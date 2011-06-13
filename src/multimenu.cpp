@@ -1020,7 +1020,7 @@ static void displayMultiPlayer(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 		rotation.z = 0;
 		position.x = 0;
 		position.y = 0;
-		position.z = 2000;		//scale them!
+		position.z = BUTTON_DEPTH;		//scale them!
 
 		displayComponentButtonObject(displayDroid, &rotation, &position, false, 100);
 	}
