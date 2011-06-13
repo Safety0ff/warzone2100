@@ -649,6 +649,32 @@ void draw3DScene( void )
 	// draw terrain
 	displayTerrain();
 
+	// BEGIN - DELETE ME DEBUG
+	pie_SetRendMode(REND_OPAQUE);
+	pie_SetTexturePage(TEXPAGE_NONE);
+	pie_SetAlphaTest(false);
+	glDisable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_OFF);
+	glColor3f(0.f, 1.f, 0.f);
+	for (int i = 0; i < visibleTiles.y; i++)
+	{
+		for (int j = 0; j < visibleTiles.x; j++)
+		{
+			glBegin(GL_QUADS);
+			glVertex2f(tileScreenInfo[i+0][j+0].x, tileScreenInfo[i+0][j+0].y);
+			glVertex2f(tileScreenInfo[i+0][j+1].x, tileScreenInfo[i+0][j+1].y);
+			glVertex2f(tileScreenInfo[i+1][j+1].x, tileScreenInfo[i+1][j+1].y);
+			glVertex2f(tileScreenInfo[i+1][j+0].x, tileScreenInfo[i+1][j+0].y);
+			glEnd();
+		}
+	}
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
+	drawStructureSelections();
+	glEnable(GL_CULL_FACE);
+	// BEGIN - DELETE ME DEBUG
+
 	pie_BeginInterface();
 	drawDroidSelections();
 
