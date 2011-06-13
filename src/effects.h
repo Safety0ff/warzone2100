@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -28,20 +28,15 @@
 	temporary world 'effects
 	Alex McLean, Pumpkin Studios, EIDOS Interactive, 1998.
 */
-#include "lib/ivis_common/piedef.h"
+#include "lib/ivis_opengl/piedef.h"
 #include "lib/framework/fixedpoint.h"
-#include "lib/ivis_common/pietypes.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
+#include "lib/ivis_opengl/pietypes.h"
 
 #define SHOCK_WAVE_HEIGHT	(64)
 
 
 /* All the effect groups */
-typedef enum
+enum EFFECT_GROUP
 {
 	EFFECT_EXPLOSION,
 	EFFECT_CONSTRUCTION,
@@ -55,11 +50,11 @@ typedef enum
 	EFFECT_DUST_BALL,
 	EFFECT_FIRE,
 	EFFECT_FIREWORK
-} EFFECT_GROUP;
+};
 
 
 /* Might not even need this */
-typedef enum
+enum EFFECT_TYPE
 {
 	EXPLOSION_TYPE_SMALL,
 	EXPLOSION_TYPE_VERY_SMALL,
@@ -113,21 +108,20 @@ typedef enum
 
 	FIREWORK_TYPE_STARBURST,
 	FIREWORK_TYPE_LAUNCHER,
+};
 
-} EFFECT_TYPE;
 
-
-typedef enum
+enum LAND_LIGHT_SPEC
 {
 	LL_MIDDLE,
 	LL_INNER,
 	LL_OUTER
-} LAND_LIGHT_SPEC;
+};
 
 
-typedef struct _effect_def EFFECT;
-struct _effect_def
+struct EFFECT
 {
+	uint8_t           player;      //	when the effect in question needs a player's color
 	uint8_t           control;     // Controls the bits above - essential,flips etc
 	EFFECT_GROUP      group;       // what group is it - explosion, building effect etc....
 	EFFECT_TYPE       type;        // what type is it within the group?
@@ -168,9 +162,6 @@ bool	readFXData(const char* fileName);
 bool	writeFXData(const char* fileName);
 void	effectSetSize(UDWORD size);
 void	effectSetLandLightSpec(LAND_LIGHT_SPEC spec);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+void	SetEffectForPlayer(uint8_t player);
 
 #endif // __INCLUDED_SRC_EFFECTS_H__

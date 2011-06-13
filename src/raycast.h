@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -25,11 +25,6 @@
 #define __INCLUDED_SRC_RAYCAST_H__
 
 #include "lib/framework/vector.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
 
 #define NUM_RAYS 360
 
@@ -61,10 +56,5 @@ extern void rayCast(Vector3i pos, uint16_t dir, uint32_t length, RAY_CALLBACK ca
 // Calculates the maximum height and distance found along a line from any
 // point to the edge of the grid
 extern void getBestPitchToEdgeOfGrid(UDWORD x, UDWORD y, uint16_t direction, uint16_t *pitch);
-
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_RAYCAST_H__

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,12 +27,7 @@
 #include "basedef.h"
 #include "statsdef.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
-typedef enum _feature_type
+enum FEATURE_TYPE
 {
 	FEAT_BUILD_WRECK,
 	FEAT_HOVER,
@@ -60,12 +55,13 @@ typedef enum _feature_type
 	//FEAT_BOULDER3,
 	//FEAT_FUTCAR,
 	//FEAT_FUTVAN,
-} FEATURE_TYPE;
+};
 
 /* Stats for a feature */
-typedef struct _feature_stats
+struct FEATURE_STATS : public BASE_STATS
 {
-	STATS_BASE;
+	FEATURE_STATS() {}
+	FEATURE_STATS(LineView line);
 
 	FEATURE_TYPE    subType;                ///< type of feature
 
@@ -73,24 +69,20 @@ typedef struct _feature_stats
 	UWORD           baseWidth;              ///< The width of the base in tiles
 	UWORD           baseBreadth;            ///< The breadth of the base in tiles
 
-	BOOL            tileDraw;               ///< Whether the tile needs to be drawn
-	BOOL            allowLOS;               ///< Whether the feature allows the LOS. true = can see through the feature
-	BOOL            visibleAtStart;         ///< Whether the feature is visible at the start of the mission
-	BOOL            damageable;             ///< Whether the feature can be destroyed
+	bool            tileDraw;               ///< Whether the tile needs to be drawn
+	bool            allowLOS;               ///< Whether the feature allows the LOS. true = can see through the feature
+	bool            visibleAtStart;         ///< Whether the feature is visible at the start of the mission
+	bool            damageable;             ///< Whether the feature can be destroyed
 	UDWORD		body;			///< Number of body points
 	UDWORD          armourValue;            ///< Feature armour
-} WZ_DECL_MAY_ALIAS FEATURE_STATS;
+};
 
-typedef struct _feature
+struct FEATURE : public BASE_OBJECT
 {
-	/* The common structure elements for all objects */
-	BASE_ELEMENTS(struct _feature);
+	FEATURE(uint32_t id, FEATURE_STATS const *psStats);
+	~FEATURE();
 
-	FEATURE_STATS*  psStats;
-} WZ_DECL_MAY_ALIAS FEATURE;
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+	FEATURE_STATS const *psStats;
+};
 
 #endif // __INCLUDED_FEATUREDEF_H__

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,19 +27,11 @@
 #include "lib/script/event.h" // needed for _scr_user_types
 #include "lib/script/parse.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 // How many game ticks for one event tick
 #define SCR_TICKRATE	100
 
 
-#define BARB1		6	
-#define BARB2		7
-
-typedef enum _scr_callback_types
+enum SCR_CALLBACK_TYPES
 {
 	CALL_GAMEINIT = TR_CALLBACKSTART,
 	CALL_DELIVPOINTMOVED,
@@ -103,7 +95,7 @@ typedef enum _scr_callback_types
 	CALL_DROID_REACH_LOCATION,	// Fired when droid reached the destination and stopped on its own
 	CALL_KEY_PRESSED,		// Allows to process key presses, mainly for debug purposes
 	CALL_VTOL_RETARGET,		// VTOL is out of targets
-} SCR_CALLBACK_TYPES;
+};
 
 // The table of user types for the compiler
 extern TYPE_SYMBOL asTypeTable[];
@@ -121,13 +113,9 @@ extern VAR_SYMBOL asObjTable[];
 extern CONST_SYMBOL asConstantTable[];
 
 // Initialise the script system
-extern BOOL scrTabInitialise(void);
+extern bool scrTabInitialise(void);
 
 // Shut down the script system
 extern void scrShutDown(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_SCRIPTTABS_H__

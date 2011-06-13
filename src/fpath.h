@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,47 +26,45 @@
 
 #include "droiddef.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 /** Return values for routing
  *
  *  @ingroup pathfinding
  *  @{
  */
 
-typedef enum _fpath_movetype
+enum FPATH_MOVETYPE
 {
 	FMT_MOVE,		///< Move around all obstacles
 	FMT_ATTACK,		///< Assume that we will destroy enemy obstacles
-} FPATH_MOVETYPE;
+	FMT_BLOCK,              ///< Don't go through obstacles, not even gates.
+};
 
-typedef struct _jobNode
+struct PathBlockingMap;
+
+struct PATHJOB
 {
 	PROPULSION_TYPE	propulsion;
 	DROID_TYPE	droidType;
 	int		destX, destY;
 	int		origX, origY;
 	UDWORD		droidID;
-	struct _jobNode	*next;
 	FPATH_MOVETYPE	moveType;
 	int		owner;		///< Player owner
-	struct PathBlockingMap *blockingMap;  ///< Map of blocking tiles.
+	PathBlockingMap *blockingMap;   ///< Map of blocking tiles.
 	bool		acceptNearest;
-} PATHJOB;
+	bool            deleted;        ///< Droid was deleted, so throw away result when complete. Must still process this PATHJOB, since processing order can affect resulting paths (but can't affect the path length).
+};
 
-typedef enum _fpath_retval
+enum FPATH_RETVAL
 {
 	FPR_OK,         ///< found a route
 	FPR_FAILED,     ///< failed to find a route
 	FPR_WAIT,       ///< route is being calculated by the path-finding thread
-} FPATH_RETVAL;
+};
 
 /** Initialise the path-finding module.
  */
-extern BOOL fpathInitialise(void);
+extern bool fpathInitialise(void);
 
 /** Shutdown the path-finding module.
  */
@@ -84,13 +82,19 @@ bool fpathIsEquivalentBlocking(PROPULSION_TYPE propulsion1, int player1, FPATH_M
 
 /** Function pointer to the currently in-use blocking tile check function.
  *  
- *  This function will check if the map tile at the given location blocks droids
- *  with the currently selected propulsion type.
+ *  This function will check if the map tile at the given location should be considered to block droids
+ *  with the currently selected propulsion type. This is not identical to whether it will actually block,
+ *  which can depend on hostilities and open/closed attributes.
+ *
+ * fpathBlockingTile -- when it is irrelevant who owns what buildings, they all block unless propulsion is right
+ * fpathDroidBlockingTile -- when you may want to factor the above into account
+ * fpathBaseBlockingTile -- set all parameters; the others are convenience functions for this one
  *
  *  @return true if the given tile is blocking for this droid
  */
-BOOL fpathBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion);
-BOOL fpathBaseBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int player, FPATH_MOVETYPE moveType);
+bool fpathBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion);
+bool fpathDroidBlockingTile(DROID *psDroid, int x, int y, FPATH_MOVETYPE moveType);
+bool fpathBaseBlockingTile(SDWORD x, SDWORD y, PROPULSION_TYPE propulsion, int player, FPATH_MOVETYPE moveType);
 
 /** Set a direct path to position.
  *
@@ -106,7 +110,7 @@ extern void fpathRemoveDroidData(int id);
 
 /** Check LOS (Line Of Sight) between two world positions.
  */
-extern BOOL fpathTileLOS(DROID *psDroid, Vector3i dest);
+extern bool fpathTileLOS(DROID *psDroid, Vector3i dest);
 
 /** Quick O(1) test of whether it is theoretically possible to go from origin to destination
  *  using the given propulsion type. orig and dest are in world coordinates. */
@@ -116,9 +120,5 @@ bool fpathCheck(Position orig, Position dest, PROPULSION_TYPE propulsion);
 void fpathTest(int x, int y, int x2, int y2);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_FPATH_H__

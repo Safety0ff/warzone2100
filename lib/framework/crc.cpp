@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -43,6 +43,23 @@ uint32_t crcSumU16(uint32_t crc, const uint16_t *data, size_t dataLen)
 	{
 		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)(*data>>8)];
 		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)*data++];
+	}
+
+	return crc;
+}
+
+uint32_t crcSumVector2i(uint32_t crc, const Vector2i *data, size_t dataLen)
+{
+	while (dataLen-- > 0)
+	{
+		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)(data->x>>24)];
+		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)(data->x>>16)];
+		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)(data->x>>8)];
+		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)data->x];
+		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)(data->y>>24)];
+		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)(data->y>>16)];
+		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)(data->y>>8)];
+		crc = crc<<8 ^ crcTable[crc>>24 ^ (uint8_t)data++->y];
 	}
 
 	return crc;

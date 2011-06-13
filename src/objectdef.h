@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 #define __INCLUDED_OBJECTDEF_H__
 
 #include "lib/framework/frame.h"
-#include "lib/ivis_common/pietypes.h"
+#include "lib/ivis_opengl/pietypes.h"
 
 #include "functiondef.h"
 #include "movedef.h"
@@ -38,11 +38,5 @@
 #include "structuredef.h"
 #include "projectiledef.h"
 #include "featuredef.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_OBJECTDEF_H__

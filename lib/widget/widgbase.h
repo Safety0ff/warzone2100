@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -25,13 +25,8 @@
 #define __INCLUDED_LIB_WIDGET_WIDGBASE_H__
 
 #include "lib/framework/frame.h"
-#include "lib/ivis_common/piedef.h"
-#include "lib/ivis_common/textdraw.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
+#include "lib/ivis_opengl/piedef.h"
+#include "lib/ivis_opengl/textdraw.h"
 
 /* Button colours */
 #define WBUTC_TEXT		0			// Colour for button text
@@ -42,36 +37,21 @@ extern "C"
 
 
 /* Forward definitions */
-struct _widget;
-struct _w_context;
+struct WIDGET;
+struct W_CONTEXT;
+struct W_FORM;
+struct W_INIT;
 
 /* The display function prototype */
-typedef void (*WIDGET_DISPLAY)(struct _widget *psWidget, UDWORD xOffset, UDWORD yOffset, PIELIGHT *pColours);
+typedef void (*WIDGET_DISPLAY)(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, PIELIGHT *pColours);
 
 /* The optional user callback function */
-typedef void (*WIDGET_CALLBACK)(struct _widget *psWidget, struct _w_context *psContext);
+typedef void (*WIDGET_CALLBACK)(WIDGET *psWidget, W_CONTEXT *psContext);
 typedef void (*WIDGET_AUDIOCALLBACK)(int AudioID);
 
 
-/* The common widget data */
-#define WIDGET_BASE \
-	UDWORD			formID;			/* ID of the widgets base form. */ \
-	UDWORD			id;				/* The user set ID number for the widget */ \
-									/* This is returned when e.g. a button is pressed */ \
-	WIDGET_TYPE		type;			/* The widget type */ \
-	UDWORD			style;			/* The style of the widget */ \
-	SWORD			x,y;			/* The location of the widget */ \
-	UWORD			width,height;	/* The size of the widget */ \
-	WIDGET_DISPLAY	display;		/* Display the widget */\
-	WIDGET_CALLBACK	callback;		/* User callback (if any) */\
-	void			*pUserData;		/* Pointer to a user data block (if any) */\
-	UDWORD			UserData;		/* User data (if any) */\
-	\
-	struct _widget	*psNext			/* Pointer to the next widget in the screen list */
-
-
 /* The different base types of widget */
-typedef enum _widget_type
+enum WIDGET_TYPE
 {
 	WIDG_FORM,
 	WIDG_LABEL,
@@ -79,37 +59,55 @@ typedef enum _widget_type
 	WIDG_EDITBOX,
 	WIDG_BARGRAPH,
 	WIDG_SLIDER,
-} WIDGET_TYPE;
+};
 
+/* The keys that can be used to press a button */
+enum WIDGET_KEY
+{
+	WKEY_NONE,
+	WKEY_PRIMARY,
+	WKEY_SECONDARY,
+};
 
 /* The base widget data type */
-typedef struct _widget
+struct WIDGET
 {
-	/* The common widget data */
-	WIDGET_BASE;
-} WIDGET;
+	WIDGET(W_INIT const *init, WIDGET_TYPE type);
+	virtual ~WIDGET() {}
+
+	virtual void clicked(W_CONTEXT *, WIDGET_KEY = WKEY_PRIMARY) {}
+
+	UDWORD                  formID;                 ///< ID of the widgets base form.
+	UDWORD                  id;                     ///< The user set ID number for the widget. This is returned when e.g. a button is pressed.
+	WIDGET_TYPE             type;                   ///< The widget type
+	UDWORD                  style;                  ///< The style of the widget
+	SWORD                   x, y;                   ///< The location of the widget
+	UWORD                   width, height;          ///< The size of the widget
+	WIDGET_DISPLAY          display;                ///< Display the widget
+	WIDGET_CALLBACK         callback;               ///< User callback (if any)
+	void *                  pUserData;              ///< Pointer to a user data block (if any)
+	UDWORD                  UserData;               ///< User data (if any)
+
+	WIDGET *                psNext;                 ///< Pointer to the next widget in the screen list
+};
 
 
 /* The screen structure which stores all info for a widget screen */
-typedef struct _w_screen
+struct W_SCREEN
 {
-	WIDGET*          psForm;        ///< The root form of the screen
+	W_FORM *         psForm;        ///< The root form of the screen
 	WIDGET*          psFocus;       ///< The widget that has keyboard focus
 	enum iV_fonts    TipFontID;     ///< ID of the IVIS font to use for tool tips.
 	WIDGET*          psRetWidget;   ///< The widget to be returned by widgRunScreen
-} W_SCREEN;
+};
 
 /* Context information to pass into the widget functions */
-typedef struct _w_context
+struct W_CONTEXT
 {
 	W_SCREEN	*psScreen;			// Parent screen of the widget
-	struct _w_form	*psForm;			// Parent form of the widget
+	W_FORM *        psForm;                 ///< Parent form of the widget
 	SDWORD		xOffset,yOffset;	// Screen offset of the parent form
 	SDWORD		mx,my;				// mouse position on the form
-} W_CONTEXT;
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+};
 
 #endif // __INCLUDED_LIB_WIDGET_WIDGBASE_H__

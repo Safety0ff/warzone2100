@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,12 +24,8 @@
 #ifndef __INCLUDED_SRC_INTFAC_H__
 #define __INCLUDED_SRC_INTFAC_H__
 
-#ifdef __cplusplus
-extern "C"
+enum
 {
-#endif //__cplusplus
-
-enum {
 	IMAGE_PBAR_EMPTY,
 	IMAGE_PBAR_AVAIL,
 	IMAGE_PBAR_USED,
@@ -377,6 +373,12 @@ enum {
 	IMAGE_VDP_UP,
 	IMAGE_VDP_HI,
 	IMAGE_GN_STAR,
+	IMAGE_GN_15,
+	IMAGE_GN_14,
+	IMAGE_GN_13,
+	IMAGE_GN_12,
+	IMAGE_GN_11,
+	IMAGE_GN_10,
 	IMAGE_GN_9,
 	IMAGE_GN_8,
 	IMAGE_GN_7,
@@ -498,18 +500,18 @@ enum {
 	IMAGE_ORD_FIREDES_UP,
 	IMAGE_ORD_FIREDES_DOWN,
 	IMAGE_ASCII64,
-	IMAGE_LFTTAB, 	
-	IMAGE_LFTTABD, 
-	IMAGE_LFTTABH, 
-	IMAGE_RGTTAB,		
-	IMAGE_RGTTABD, 
-	IMAGE_RGTTABH, 
+	IMAGE_LFTTAB,
+	IMAGE_LFTTABD,
+	IMAGE_LFTTABH,
+	IMAGE_RGTTAB,
+	IMAGE_RGTTABD,
+	IMAGE_RGTTABH,
 	IMAGE_NADDA,
 	IMAGE_ORD_PATROLUP,
 	IMAGE_ORD_PATROLDOWN,
-	IMAGE_DISCONNECT_LO,		// player disconnect icon 
+	IMAGE_DISCONNECT_LO,
 	IMAGE_DISCONNECT_HI,
-	IMAGE_PLAYER_LEFT_LO,		// player left icon 
+	IMAGE_PLAYER_LEFT_LO,
 	IMAGE_PLAYER_LEFT_HI,
 	IMAGE_EDIT_OPTIONS_UP,
 	IMAGE_EDIT_OPTIONS_DOWN,
@@ -560,11 +562,11 @@ enum {
 	IMAGE_RAD_BURNRES3,
 	IMAGE_RAD_BURNRES4,
 	IMAGE_RAD_BURNRES5,
-	IMAGE_RAD_BURNRES6
+	IMAGE_RAD_BURNRES6,
+	IMAGE_ALLY_RESEARCH,
+	IMAGE_ALLY_RESEARCH_TC,
+	IMAGE_GENERIC_TANK,
+	IMAGE_GENERIC_TANK_TC,
 };
 
-#ifdef __cplusplus
-}
-#endif //__cplusplus
-
-#endif // __INCLUDED_SRC_INTFAC_H__
+#endif //__INCLUDED_SRC_INTFAC_H__

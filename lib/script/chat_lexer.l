@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 2006-2008  Roman
-	Copyright (C) 2006-2010  Warzone 2100 Project
+	Copyright (C) 2006-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -28,11 +28,11 @@
 // FIXME: #include from src/
 #include "src/scriptfuncs.h"
 
-#include "script.h"
-#include "chat_processing.h"
+#include "lib/script/script.h"
+#include "lib/script/chat_processing.h"
 
 /* Get the Yacc definitions */
-#include "chat_parser.tab.h"
+#include "chat_parser.tab.hpp"
 
 // fwrite declared with warn_unused_result, resulting in mysterious errors in "%%" on some distros.
 static inline bool no_warn_unused_result(int ignore) { if (ignore) {} return true; }
@@ -80,6 +80,7 @@ static SDWORD playerIndex;
 %option prefix="chat_"
 %option nounput
 %option case-insensitive
+%option never-interactive
 
 %%
 

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,8 +21,6 @@
 #define _point_tree_h
 
 #include "lib/framework/types.h"
-
-#ifdef __cplusplus
 
 #include <vector>
 
@@ -71,29 +69,5 @@ private:
 
 	Vector points;
 };
-
-
-extern "C"
-{
-#endif //_cplusplus
-
-struct PointTree;
-typedef struct PointTree POINT_TREE;
-
-POINT_TREE *pointTreeCreate(void);
-void pointTreeDestroy(POINT_TREE *pointTree);
-
-void pointTreeInsert(POINT_TREE *pointTree, void *point, int32_t x, int32_t y);
-void pointTreeClear(POINT_TREE *pointTree);
-
-// Must sort after inserting, and before querying.
-void pointTreeSort(POINT_TREE *pointTree);
-
-// Returns all points less than or equal to radius from (x, y), possibly plus some extra nearby points.
-void **pointTreeQuery(POINT_TREE *pointTree, int32_t x, int32_t y, uint32_t radius);
-
-#ifdef __cplusplus
-}
-#endif //_cplusplus
 
 #endif //_point_tree_h

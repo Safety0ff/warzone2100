@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 2008  Giel van Schijndel
-	Copyright (C) 2008-2010  Warzone 2100 Project
+	Copyright (C) 2008-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,10 +26,10 @@
 #include "lib/framework/frame.h"
 #include "lib/framework/strres.h"
 #include "lib/framework/frameresource.h"
-#include "message.h"
-#include "messagedef.h"
-#include "messagely.h"
-#include "text.h"
+#include "src/message.h"
+#include "src/messagedef.h"
+#include "src/messagely.h"
+#include "src/text.h"
 
 extern void yyerror(const char* msg);
 void yyerror(const char* msg)
@@ -37,11 +37,11 @@ void yyerror(const char* msg)
 	debug(LOG_ERROR, "SMSG file parse error:\n%s at line %d\nText: '%s'", msg, message_get_lineno(), message_get_text());
 }
 
-typedef struct TEXT_MESSAGE
+struct TEXT_MESSAGE
 {
 	char * str;
-	struct TEXT_MESSAGE* psNext;
-} TEXT_MESSAGE;
+	TEXT_MESSAGE *psNext;
+};
 
 static void freeTextMessageList(TEXT_MESSAGE* list)
 {
@@ -54,11 +54,11 @@ static void freeTextMessageList(TEXT_MESSAGE* list)
 	}
 }
 
-typedef struct VIEWDATAMESSAGE
+struct VIEWDATAMESSAGE
 {
 	VIEWDATA view;
 	struct VIEWDATAMESSAGE* psNext;
-} VIEWDATAMESSAGE;
+};
 
 static void freeViewDataMessageList(VIEWDATAMESSAGE* list)
 {
@@ -72,7 +72,7 @@ static void freeViewDataMessageList(VIEWDATAMESSAGE* list)
 		{
 			case VIEW_RES:
 			{
-				VIEW_RESEARCH* const psViewRes = toDelete->view.pData;
+				VIEW_RESEARCH* const psViewRes = (VIEW_RESEARCH *)toDelete->view.pData;
 				if (psViewRes->pAudio)
 					free(psViewRes->pAudio);
 				free(psViewRes);
@@ -168,7 +168,7 @@ file:			all_messages
 						YYABORT;
 					}
 
-					psViewData = malloc(numData * sizeof(*psViewData));
+					psViewData = (VIEWDATA *)malloc(numData * sizeof(*psViewData));
 					if (psViewData == NULL)
 					{
 						debug(LOG_ERROR, "Out of memory");
@@ -202,7 +202,7 @@ all_messages:		message
 
 message:		TEXT_T '{' message_list ',' research_message '}' ';'
 				{
-					$$ = malloc(sizeof(*$$));
+					$$ = (VIEWDATAMESSAGE *)malloc(sizeof(*$$));
 					if ($$ == NULL)
 					{
 						debug(LOG_ERROR, "Out of memory");
@@ -226,7 +226,7 @@ message:		TEXT_T '{' message_list ',' research_message '}' ';'
 
 research_message:	imd_name ',' imd_name2 ',' sequence_name ',' audio_name ','
 				{
-					$$ = malloc(sizeof(*$$));
+					$$ = (VIEW_RESEARCH *)malloc(sizeof(*$$));
 					if ($$ == NULL)
 					{
 						debug(LOG_ERROR, "Out of memory");
@@ -315,7 +315,7 @@ message_list:		'{' text_messages '}'
 
 					if ($$.count)
 					{
-						$$.stringArray = malloc(bytes);
+						$$.stringArray = (char const **)malloc(bytes);
 						if ($$.stringArray == NULL)
 						{
 							debug(LOG_ERROR, "Out of memory");
@@ -364,7 +364,7 @@ text_message: 		TEXT_T
 						YYABORT;
 					}
 
-					$$ = malloc(sizeof(*$$));
+					$$ = (TEXT_MESSAGE *)malloc(sizeof(*$$));
 					if ($$ == NULL)
 					{
 						debug(LOG_ERROR, "Out of memory");
@@ -378,7 +378,7 @@ text_message: 		TEXT_T
 				}
 			| QTEXT_T
 				{
-					$$ = malloc(sizeof(*$$));
+					$$ = (TEXT_MESSAGE *)malloc(sizeof(*$$));
 					if ($$ == NULL)
 					{
 						debug(LOG_ERROR, "Out of memory");
@@ -392,7 +392,7 @@ text_message: 		TEXT_T
 				}
 			| '_' '(' QTEXT_T ')'
 				{
-					$$ = malloc(sizeof(*$$));
+					$$ = (TEXT_MESSAGE *)malloc(sizeof(*$$));
 					if ($$ == NULL)
 					{
 						debug(LOG_ERROR, "Out of memory");

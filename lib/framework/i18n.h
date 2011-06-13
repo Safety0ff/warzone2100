@@ -1,6 +1,6 @@
 /*
 	This file is part of Warzone 2100.
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -29,11 +29,6 @@
 
 #include "gettext.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 // Enable NLS for our parsers when it's enabled for us
 #define YYENABLE_NLS ENABLE_NLS
 
@@ -59,9 +54,5 @@ extern WZ_DECL_CONST const char* getLanguageName(void);
 extern bool setLanguage(const char *name);
 extern void setNextLanguage(void);
 extern void initI18n(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // _i18n_h

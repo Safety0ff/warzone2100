@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,13 +24,7 @@
 #ifndef _gtime_h
 #define _gtime_h
 
-//#include "lib/netplay/nettypes.h"
-typedef struct _netqueue NETQUEUE_;
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
+struct NETQUEUE;
 
 /// The number of time units per second of the game clock.
 #define GAME_TICKS_PER_SEC 1000
@@ -63,10 +57,8 @@ extern UDWORD deltaGameTime;
 #define frameTime deltaGameTime
 /// The difference between the previous and current graphicsTime.
 extern UDWORD deltaGraphicsTime;
-/// The difference between the previous and current gameTime2 (FIXME gameTime2 should be called realTime).
-/// FIXME This should be renamed from frameTime2 to deltaRealTime.
+/// The difference between the previous and current realTime.
 extern UDWORD deltaRealTime;
-#define frameTime2 deltaRealTime
 
 /** Initialise the game clock. */
 extern void gameTimeInit(void);
@@ -74,17 +66,19 @@ extern void gameTimeInit(void);
 /// Changes the game (and graphics) time.
 extern void setGameTime(uint32_t newGameTime);
 
-/** Call this each loop to update the gameTime and graphicsTime timers, and corresponding deltaGameTime and deltaRealTime.
- * If logicalUpdates is true, then the game time increases in GAME_UNITS_PER_TICK increments, and deltaGameTime is either 0 or GAME_UNITS_PER_TICK. If false, the game time is equal to the graphics time, and the game always ticks.
+/** Call this each loop to update the gameTime, graphicsTime and realTime timers, and corresponding deltaGameTime, deltaGraphicsTime and deltaRealTime.
+ * The game time increases in GAME_UNITS_PER_TICK increments, and deltaGameTime is either 0 or GAME_UNITS_PER_TICK.
  * @returns true iff the game time ticked.
  */
 extern void gameTimeUpdate(void);
+/// Call after updating the state, and before processing any net messages that use deltaGameTime. (Sets deltaGameTime = 0.)
+void gameTimeUpdateEnd(void);
 
 /// Updates the realTime timer, and corresponding deltaRealTime.
 void realTimeUpdate(void);
 
 /* Returns true if gameTime is stopped. */
-extern BOOL gameTimeIsStopped(void);
+extern bool gameTimeIsStopped(void);
 
 /** Call this to stop the game timer. */
 extern void gameTimeStop(void);
@@ -142,14 +136,13 @@ extern void	getTimeComponents(UDWORD time, UDWORD *hours, UDWORD *minutes, UDWOR
 
 
 
-extern int32_t gameTimeFraction;    ///< Private performance calculation. Do not use.
 extern float graphicsTimeFraction;  ///< Private performance calculation. Do not use.
 extern float realTimeFraction;  ///< Private performance calculation. Do not use.
 
 /// Returns the value times deltaGameTime, converted to seconds.
-static inline int gameTimeAdjustedIncrement(int value)
+static inline int32_t gameTimeAdjustedIncrement(int value)
 {
-	return value * gameTimeFraction / GAME_TICKS_PER_SEC;
+	return value * (int)deltaGameTime / GAME_TICKS_PER_SEC;
 }
 /// Returns the value times deltaGraphicsTime, converted to seconds.
 static inline float graphicsTimeAdjustedIncrement(float value)
@@ -163,14 +156,10 @@ static inline float realTimeAdjustedIncrement(float value)
 }
 
 void sendPlayerGameTime(void);                            ///< Sends a GAME_GAME_TIME message with gameTime plus latency to our game queues.
-void recvPlayerGameTime(NETQUEUE_ queue);                 ///< Processes a GAME_GAME_TIME message.
+void recvPlayerGameTime(NETQUEUE queue);                  ///< Processes a GAME_GAME_TIME message.
 bool checkPlayerGameTime(unsigned player);                ///< Checks that we are not waiting for a GAME_GAME_TIME message from this player. (player can be NET_ALL_PLAYERS.)
 void setPlayerGameTime(unsigned player, uint32_t time);   ///< Sets the player's time.
 
 bool isInSync(void);                                      ///< Returns true unless there was a CRC mismatch between the last GAME_GAME_TIME messages.
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif

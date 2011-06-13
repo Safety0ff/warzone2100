@@ -2,7 +2,7 @@
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
 	Copyright (C) 2008       Giel van Schijndel
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -25,13 +25,13 @@
  */
 
 #include "lib/framework/frame.h"
-#include "messagedef.h"
+#include "src/messagedef.h"
 
 /* Get the Yacc definitions */
-#include "message_parser.tab.h"
+#include "message_parser.tab.hpp"
 
 #include "lib/framework/lexer_input.h"
-#include "messagely.h"
+#include "src/messagely.h"
 
 // fwrite declared with warn_unused_result, resulting in mysterious errors in "%%" on some distros.
 static inline bool no_warn_unused_result(int ignore) { if (ignore) {} return true; }
@@ -79,7 +79,7 @@ extern void message_set_debug(int bdebug);
 
 %}
 
-%option yylineno noyywrap nounput
+%option yylineno noyywrap nounput never-interactive
 %option prefix="message_"
 
 %x COMMENT

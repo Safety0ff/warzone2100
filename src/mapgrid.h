@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,16 +24,11 @@
 #ifndef __INCLUDED_SRC_MAPGRID_H__
 #define __INCLUDED_SRC_MAPGRID_H__
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 extern void **gridIterator;  ///< The iterator.
 
 
 // initialise the grid system
-extern BOOL gridInitialise(void);
+extern bool gridInitialise(void);
 
 // shutdown the grid system
 extern void gridShutDown(void);
@@ -63,9 +58,5 @@ static inline BASE_OBJECT *gridIterate(void)
 // Isn't, but could be used by some weird recursive calls in cluster.c.
 /// Make a copy of the list. Free with free().
 BASE_OBJECT **gridIterateDup(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_MAPGRID_H__

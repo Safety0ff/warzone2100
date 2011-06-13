@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -22,14 +22,9 @@
 #define __INCLUDED_SRC_ATMOS_H__
 
 #include "lib/framework/vector.h"
-#include "lib/ivis_common/ivisdef.h"
+#include "lib/ivis_opengl/ivisdef.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
-typedef struct _atmosParticle
+struct ATPART
 {
 	UBYTE		status;
 	UBYTE		type;
@@ -37,14 +32,14 @@ typedef struct _atmosParticle
 	Vector3f	position;
 	Vector3f	velocity;
 	iIMDShape	*imd;
-} ATPART;
+};
 
-typedef	enum
+enum WT_CLASS
 {
 	WT_RAINING,
 	WT_SNOWING,
 	WT_NONE
-} WT_CLASS;
+};
 
 void atmosInitSystem(void);
 void atmosUpdateSystem(void);
@@ -52,9 +47,5 @@ void renderParticle(ATPART *psPart);
 void atmosDrawParticles(void);
 void atmosSetWeatherType(WT_CLASS type);
 WT_CLASS atmosGetWeatherType(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_ATMOS_H__

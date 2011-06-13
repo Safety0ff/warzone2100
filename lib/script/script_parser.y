@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -42,12 +42,12 @@ extern int scr_lex(void);
 extern int scr_lex_destroy(void);
 
 /* Error return codes for code generation functions */
-typedef enum _code_error
+enum CODE_ERROR
 {
 	CE_OK,				// No error
 	CE_MEMORY,			// Out of memory
 	CE_PARSE			// A parse error occured
-} CODE_ERROR;
+};
 
 /* Turn off a couple of warnings that the yacc generated code gives */
 
@@ -67,7 +67,7 @@ static OBJVAR_BLOCK	*psObjVarBlock=NULL;
 static PARAM_BLOCK	*psCurrPBlock=NULL;
 
 /* Any errors occured? */
-static BOOL bError=false;
+static bool bError=false;
 
 //String support
 //-----------------------------
@@ -111,7 +111,7 @@ EVENT_SYMBOL		*psCurEvent = NULL;		/* stores current event: for local var declar
 static INTERP_TYPE	objVarContext = (INTERP_TYPE)0;
 
 /* Control whether debug info is generated */
-static BOOL			genDebugInfo = true;
+static bool			genDebugInfo = true;
 
 /* Currently defined triggers */
 static TRIGGER_SYMBOL	*psTriggers;
@@ -124,7 +124,7 @@ static UDWORD			numEvents;
 /* This is true when local variables are being defined.
  * (So local variables can have the same name as global ones)
  */
-static BOOL localVariableDef=false;
+static bool localVariableDef=false;
 
 /* The identifier for the current script function being defined */
 //static char *pCurrFuncIdent=NULL;
@@ -216,13 +216,13 @@ void script_debug(const char *pFormat, ...);
 	(psProg)->numArrays = (UWORD)(numArys); \
 	if ((numTrigs) > 0) \
 	{ \
-		(psProg)->pTriggerTab = malloc(sizeof(UWORD) * ((numTrigs) + 1)); \
+		(psProg)->pTriggerTab = (uint16_t *)malloc(sizeof(uint16_t) * ((numTrigs) + 1)); \
 		if ((psProg)->pTriggerTab == NULL) \
 		{ \
 			debug(LOG_ERROR, "Out of memory"); \
 			ALLOC_ERROR_ACTION; \
 		} \
-		(psProg)->psTriggerData = malloc(sizeof(TRIGGER_DATA) * (numTrigs)); \
+		(psProg)->psTriggerData = (TRIGGER_DATA *)malloc(sizeof(TRIGGER_DATA) * (numTrigs)); \
 		if ((psProg)->psTriggerData == NULL) \
 		{ \
 			debug(LOG_ERROR, "Out of memory"); \
@@ -234,13 +234,13 @@ void script_debug(const char *pFormat, ...);
 		(psProg)->pTriggerTab = NULL; \
 		(psProg)->psTriggerData = NULL; \
 	} \
-	(psProg)->pEventTab = malloc(sizeof(UWORD) * ((numEvnts) + 1)); \
+	(psProg)->pEventTab = (uint16_t *)malloc(sizeof(uint16_t) * ((numEvnts) + 1)); \
 	if ((psProg)->pEventTab == NULL) \
 	{ \
 		debug(LOG_ERROR, "Out of memory"); \
 		ALLOC_ERROR_ACTION; \
 	} \
-	(psProg)->pEventLinks = malloc(sizeof(SWORD) * (numEvnts)); \
+	(psProg)->pEventLinks = (int16_t *)malloc(sizeof(int16_t) * (numEvnts)); \
 	if ((psProg)->pEventLinks == NULL) \
 	{ \
 		debug(LOG_ERROR, "Out of memory"); \
@@ -408,7 +408,7 @@ void script_debug(const char *pFormat, ...);
 
 /* Allocate a trigger subdecl */
 #define ALLOC_TSUBDECL(psTSub, blockType, blockSize, blockTime) \
-	(psTSub) = malloc(sizeof(TRIGGER_DECL)); \
+	(psTSub) = (TRIGGER_DECL *)malloc(sizeof(TRIGGER_DECL)); \
 	if ((psTSub) == NULL) \
 	{ \
 		scr_error("Out of memory"); \
@@ -442,7 +442,7 @@ void script_debug(const char *pFormat, ...);
 
 /* Allocate a variable declaration block */
 #define ALLOC_VARDECL(psDcl) \
-	(psDcl)=malloc(sizeof(VAR_DECL)); \
+	(psDcl) = (VAR_DECL *)malloc(sizeof(VAR_DECL)); \
 	if ((psDcl) == NULL) \
 	{ \
 		scr_error("Out of memory"); \
@@ -457,7 +457,7 @@ void script_debug(const char *pFormat, ...);
 static inline CODE_ERROR do_ALLOC_VARIDENTDECL(VAR_IDENT_DECL** psDcl, const char* ident, unsigned int dim)
 {
 	// Allocate memory
-	*psDcl = malloc(sizeof(VAR_IDENT_DECL));
+	*psDcl = (VAR_IDENT_DECL *)malloc(sizeof(VAR_IDENT_DECL));
 	if (*psDcl == NULL)
 	{
 		scr_error("Out of memory");
@@ -531,7 +531,7 @@ static void freeVARIDENTDECL(VAR_IDENT_DECL* psDcl)
 /* Macros to store a value in a code block */
 #define PUT_DATA_BOOL(ip, value) \
 	(ip)->type = VAL_BOOL; \
-	(ip)->v.bval = (BOOL)(value); \
+	(ip)->v.bval = (int32_t)(value); \
 	(ip)++
 
 #define PUT_DATA_INT(ip, value) \
@@ -667,7 +667,7 @@ static SCRIPT_DEBUG	*_psCurr;
 #define DEBUG_LABEL(psBlock, offset, pString) \
 	if (genDebugInfo) \
 	{ \
-		(psBlock)->psDebug[offset].pLabel = malloc(strlen(pString)+1); \
+		(psBlock)->psDebug[offset].pLabel = (char *)malloc(strlen(pString)+1); \
 		if (!(psBlock)->psDebug[offset].pLabel) \
 		{ \
 			scr_error("Out of memory"); \
@@ -714,13 +714,13 @@ void script_debug(const char *pFormat, ...)
  */
 static CODE_ERROR scriptCodeFunction(FUNC_SYMBOL	*psFSymbol,		// The function being called
 							PARAM_BLOCK		*psPBlock,		// The functions parameters
-							BOOL			expContext,		// Whether the function is being
+							int32_t			expContext,		// Whether the function is being
 															// called in an expression context
 							CODE_BLOCK		**ppsCBlock)	// The generated code block
 {
 	UDWORD		size, i;
 	INTERP_VAL	*ip;
-	BOOL		typeError = false;
+	bool		typeError = false;
 	char		aErrorString[255];
 	INTERP_TYPE	type1,type2;
 
@@ -740,8 +740,8 @@ static CODE_ERROR scriptCodeFunction(FUNC_SYMBOL	*psFSymbol,		// The function be
 		//TODO: string support
 		if(psFSymbol->aParams[i] != VAL_STRING)	// string - allow mixed types if string is parameter type	//TODO: tweak this
 		{
-			type1 = psFSymbol->aParams[i];
-			type2 = psPBlock->aParams[i];
+			type1 = (INTERP_TYPE)psFSymbol->aParams[i];
+			type2 = (INTERP_TYPE)psPBlock->aParams[i];
 			if (!interpCheckEquiv(type1, type2))
 			{
 				debug(LOG_ERROR, "scriptCodeFunction: Type mismatch for parameter %d (%d/%d)", i, psFSymbol->aParams[i], psPBlock->aParams[i]);
@@ -843,49 +843,6 @@ static UDWORD checkFuncParamTypes(EVENT_SYMBOL		*psFSymbol,		// The function bei
 	return 0;	//all ok
 }
 
-#ifdef UNUSED
-/*
- *  function call
- */
-static CODE_ERROR scriptCodeCallFunction(FUNC_SYMBOL	*psFSymbol,		// The function being called
-						PARAM_BLOCK		*psPBlock,		// The functions parameters
-						CODE_BLOCK		**ppsCBlock)	// The generated code block
-{
-	UDWORD		size;
-	INTERP_VAL	*ip;
-
-	//debug(LOG_SCRIPT, "scriptCodeCallFunction");
-
-	ASSERT( psFSymbol != NULL, "scriptCodeCallFunction: Invalid function symbol pointer" );
-	ASSERT( psPBlock != NULL,
-		"scriptCodeCallFunction: Invalid param block pointer" );
-	ASSERT( (psPBlock->size == 0) || psPBlock->pCode != NULL,
-		"scriptCodeCallFunction: Invalid parameter code pointer" );
-	ASSERT( ppsCBlock != NULL,
-		 "scriptCodeCallFunction: Invalid generated code block pointer" );
-
-
-	//size = psPBlock->size + sizeof(OPCODE) + sizeof(SCRIPT_FUNC);
-	size = psPBlock->size + 1 + 1;	//size + opcode + SCRIPT_FUNC
-
-	ALLOC_BLOCK(*ppsCBlock, size);
-	ip = (*ppsCBlock)->pCode;
-	(*ppsCBlock)->type = psFSymbol->type;
-
-	/* Copy in the code for the parameters */
-	PUT_BLOCK(ip, psPBlock);
-	FREE_PBLOCK(psPBlock);
-
-	/* Make the function call */
-	PUT_OPCODE(ip, OP_CALL);
-	PUT_FUNC_EXTERN(ip, psFSymbol->pFunc);
-
-	//debug(LOG_SCRIPT, "END scriptCodeCallFunction");
-
-	return CE_OK;
-}
-#endif
-
 /* Generate the code for a parameter callback, checking the parameter
  * types match.
  */
@@ -896,7 +853,7 @@ static CODE_ERROR scriptCodeCallbackParams(
 {
 	UDWORD		size, i;
 	INTERP_VAL	*ip;
-	BOOL		typeError = false;
+	bool		typeError = false;
 	char		aErrorString[255];
 
 	ASSERT( psPBlock != NULL,
@@ -911,7 +868,7 @@ static CODE_ERROR scriptCodeCallbackParams(
 	/* Check the parameter types match what the function needs */
 	for(i=0; (i<psCBSymbol->numParams) && (i<psPBlock->numParams); i++)
 	{
-		if (!interpCheckEquiv(psCBSymbol->aParams[i], psPBlock->aParams[i]))
+		if (!interpCheckEquiv((INTERP_TYPE)psCBSymbol->aParams[i], psPBlock->aParams[i]))
 		{
 			snprintf(aErrorString, sizeof(aErrorString), "Type mismatch for parameter %d", i);
 			scr_error("%s", aErrorString);
@@ -1121,9 +1078,6 @@ static CODE_ERROR scriptCodeArrayAssignment(ARRAY_BLOCK	*psVariable,// The varia
 															// assign
 								 CODE_BLOCK		**ppsBlock)	// Generated code
 {
-//	SDWORD		elementDWords, i;
-//	UBYTE		*pElement;
-
 	ASSERT( psVariable != NULL,
 		"scriptCodeObjAssignment: Invalid object variable block pointer" );
 	ASSERT( psVariable->pCode != NULL,
@@ -1144,11 +1098,6 @@ static CODE_ERROR scriptCodeArrayAssignment(ARRAY_BLOCK	*psVariable,// The varia
 		return CE_PARSE;
 	}
 
-	// calculate the number of DWORDs needed to store the number of elements for each dimension of the array
-//	elementDWords = (psVariable->psArrayVar->dimensions - 1)/4 + 1;
-
-//	ALLOC_BLOCK(*ppsBlock, psVariable->size + psValue->size + sizeof(OPCODE) + elementDWords*4);
-	//ALLOC_BLOCK(*ppsBlock, psVariable->size + psValue->size + sizeof(OPCODE));
 	ALLOC_BLOCK(*ppsBlock, psVariable->size + psValue->size + 1);	//size + size + opcode
 
 	ip = (*ppsBlock)->pCode;
@@ -1165,14 +1114,6 @@ static CODE_ERROR scriptCodeArrayAssignment(ARRAY_BLOCK	*psVariable,// The varia
 		((psVariable->psArrayVar->dimensions << ARRAY_DIMENSION_SHIFT) & ARRAY_DIMENSION_MASK) |
 		(psVariable->psArrayVar->index & ARRAY_BASE_MASK) );
 
-	// store the size of each dimension
-/*	pElement = (UBYTE *)ip;
-	for(i=0; i<psVariable->psArrayVar->dimensions; i++)
-	{
-		*pElement = (UBYTE)psVariable->psArrayVar->elements[i];
-		pElement += 1;
-	}*/
-
 	/* Free the variable block */
 	FREE_ARRAYBLOCK(psVariable);
 
@@ -1184,9 +1125,6 @@ static CODE_ERROR scriptCodeArrayAssignment(ARRAY_BLOCK	*psVariable,// The varia
 static CODE_ERROR scriptCodeArrayGet(ARRAY_BLOCK	*psVariable,// The variable to get from
 						  CODE_BLOCK	**ppsBlock)	// Generated code
 {
-//	SDWORD		elementDWords, i;
-//	UBYTE		*pElement;
-
 	ASSERT( psVariable != NULL,
 		"scriptCodeObjAssignment: Invalid object variable block pointer" );
 	ASSERT( psVariable->pCode != NULL,
@@ -1203,11 +1141,6 @@ static CODE_ERROR scriptCodeArrayGet(ARRAY_BLOCK	*psVariable,// The variable to 
 		return CE_PARSE;
 	}
 
-	// calculate the number of DWORDs needed to store the number of elements for each dimension of the array
-//	elementDWords = (psVariable->psArrayVar->dimensions - 1)/4 + 1;
-
-//	ALLOC_BLOCK(*ppsBlock, psVariable->size + sizeof(OPCODE) + elementDWords*4);
-	//ALLOC_BLOCK(*ppsBlock, psVariable->size + sizeof(OPCODE));
 	ALLOC_BLOCK(*ppsBlock, psVariable->size + 1);	//size + opcode
 
 	ip = (*ppsBlock)->pCode;
@@ -1220,14 +1153,6 @@ static CODE_ERROR scriptCodeArrayGet(ARRAY_BLOCK	*psVariable,// The variable to 
 	PUT_PKOPCODE(ip, OP_PUSHARRAYGLOBAL,
 		((psVariable->psArrayVar->dimensions << ARRAY_DIMENSION_SHIFT) & ARRAY_DIMENSION_MASK) |
 		(psVariable->psArrayVar->index & ARRAY_BASE_MASK) );
-
-	// store the size of each dimension
-/*	pElement = (UBYTE *)ip;
-	for(i=0; i<psVariable->psArrayVar->dimensions; i++)
-	{
-		*pElement = (UBYTE)psVariable->psArrayVar->elements[i];
-		pElement += 1;
-	}*/
 
 	/* Free the variable block */
 	FREE_ARRAYBLOCK(psVariable);
@@ -1331,7 +1256,7 @@ static CODE_ERROR scriptCodeBinaryOperator(CODE_BLOCK	*psFirst,	// Code for firs
 
 /* check if the arguments in the function definition body match the argument types
 and names from function declaration (if there was any) */
-static BOOL checkFuncParamType(UDWORD argIndex, UDWORD argType)
+static bool checkFuncParamType(UDWORD argIndex, UDWORD argType)
 {
 	VAR_SYMBOL		*psCurr;
 	SDWORD			i,j;
@@ -1427,13 +1352,6 @@ static CODE_ERROR scriptCodeArrayVariable(ARRAY_BLOCK	*psArrayCode,	// Code for 
 	ASSERT( ppsBlock != NULL,
 		"scriptCodeObjectVariable: Invalid generated code block pointer" );
 
-/*	ALLOC_ARRAYBLOCK(*ppsBlock, psArrayCode->size, psVar);
-	ip = (*ppsBlock)->pCode;
-
-	// Copy the already generated bit of code into the code block
-	PUT_BLOCK(ip, psArrayCode);
-	FREE_BLOCK(psArrayCode);*/
-
 	// Check the variable is the correct type
 	if (psVar->dimensions != psArrayCode->dimensions)
 	{
@@ -1457,7 +1375,6 @@ static CODE_ERROR scriptCodeConstant(CONST_SYMBOL	*psConst,	// The object variab
 	ASSERT( ppsBlock != NULL,
 		"scriptCodeConstant: Invalid generated code block pointer" );
 
-	//ALLOC_BLOCK(*ppsBlock, sizeof(OPCODE) + sizeof(UDWORD));
 	ALLOC_BLOCK(*ppsBlock, 1 + 1);		//OP_PUSH opcode + variable value
 
 	ip = (*ppsBlock)->pCode;
@@ -1590,7 +1507,7 @@ static CODE_ERROR scriptCodeVarRef(VAR_SYMBOL		*psVariable,	// The object variab
 	ALLOC_PBLOCK(*ppsBlock, size, 1);
 	ip = (*ppsBlock)->pCode;
 
-	(*ppsBlock)->aParams[0] = psVariable->type | VAL_REF;
+	(*ppsBlock)->aParams[0] = (INTERP_TYPE)(psVariable->type | VAL_REF);
 
 	/* Code to get the value onto the stack */
 	switch (psVariable->storage)
@@ -1623,104 +1540,6 @@ static CODE_ERROR scriptCodeVarRef(VAR_SYMBOL		*psVariable,	// The object variab
 	return CE_OK;
 }
 
-#ifdef UNUSED
-/* Generate the code for a trigger and store it in the trigger list */
-static CODE_ERROR scriptCodeTrigger(char *pIdent, CODE_BLOCK *psCode)
-{
-	CODE_BLOCK		*psNewBlock;
-	UDWORD			line;
-	char			*pDummy;
-
-	// Have to add the exit code to the end of the event
-	//ALLOC_BLOCK(psNewBlock, psCode->size + sizeof(OPCODE));
-	ALLOC_BLOCK(psNewBlock, psCode->size + 1);	//size + opcode
-
-	ip = psNewBlock->pCode;
-	PUT_BLOCK(ip, psCode);
-	PUT_OPCODE(ip, OP_EXIT);
-
-	// Add the debug info
-	ALLOC_DEBUG(psNewBlock, psCode->debugEntries + 1);
-	PUT_DEBUG(psNewBlock, psCode);
-	if (genDebugInfo)
-	{
-		/* Add debugging info for the EXIT instruction */
-		scriptGetErrorData((SDWORD *)&line, &pDummy);
-		psNewBlock->psDebug[psNewBlock->debugEntries].line = line;
-		psNewBlock->psDebug[psNewBlock->debugEntries].offset =
-				ip - psNewBlock->pCode;
-		psNewBlock->debugEntries ++;
-	}
-	FREE_BLOCK(psCode);
-
-	// Create the trigger
-/*	if (!scriptAddTrigger(pIdent, psNewBlock))
-	{
-		return CE_MEMORY;
-	}*/
-
-	return CE_OK;
-}
-#endif
-
-#ifdef UNUSED
-/* Generate the code for an event and store it in the event list */
-static CODE_ERROR scriptCodeEvent(EVENT_SYMBOL *psEvent, TRIGGER_SYMBOL *psTrig, CODE_BLOCK *psCode)
-{
-	CODE_BLOCK		*psNewBlock;
-	UDWORD			line;
-	char			*pDummy;
-
-	// Have to add the exit code to the end of the event
-	//ALLOC_BLOCK(psNewBlock, psCode->size + sizeof(OPCODE));
-	ALLOC_BLOCK(psNewBlock, psCode->size + 1);	//size + opcode
-
-	ip = psNewBlock->pCode;
-	PUT_BLOCK(ip, psCode);
-	PUT_OPCODE(ip, OP_EXIT);
-
-	// Add the debug info
-	ALLOC_DEBUG(psNewBlock, psCode->debugEntries + 1);
-	PUT_DEBUG(psNewBlock, psCode);
-	if (genDebugInfo)
-	{
-		/* Add debugging info for the EXIT instruction */
-		scriptGetErrorData((SDWORD *)&line, &pDummy);
-		psNewBlock->psDebug[psNewBlock->debugEntries].line = line;
-		psNewBlock->psDebug[psNewBlock->debugEntries].offset =
-				ip - psNewBlock->pCode;
-		psNewBlock->debugEntries ++;
-	}
-	FREE_BLOCK(psCode);
-
-	// Create the event
-	if (!scriptDefineEvent(psEvent, psNewBlock, psTrig->index))
-	{
-		return CE_MEMORY;
-	}
-
-	return CE_OK;
-}
-#endif
-
-#ifdef UNUSED
-/* Store the types of a list of variables into a code block.
- * The order of the list is reversed so that the type of the
- * first variable defined is stored first.
- */
-static void scriptStoreVarTypes(VAR_SYMBOL *psVar)
-{
-	if (psVar != NULL)
-	{
-		/* Recurse down the list to get to the end of it */
-		scriptStoreVarTypes(psVar->psNext);
-
-		/* Now store the current variable */
-		PUT_INDEX(ip, psVar->type);
-	}
-}
-#endif
-
 /* Change the error action for the ALLOC macro's to what it
  * should be inside a rule body.
  *
@@ -1738,7 +1557,7 @@ static void scriptStoreVarTypes(VAR_SYMBOL *psVar)
 
 %union {
 	/* Types returned by the lexer */
-	BOOL			bval;
+	int32_t			bval;
 	float			fval;
 	SDWORD			ival;
 	char			*sval;
@@ -2030,7 +1849,7 @@ accept_script:			script
 							psFinalProg->psTriggerData[i].code = false;
 						}
 						// Store the data
-						psFinalProg->psTriggerData[i].type = (UWORD)psTrig->type;
+						psFinalProg->psTriggerData[i].type = psTrig->type;
 						psFinalProg->psTriggerData[i].time = psTrig->time;
 					}
 					// Note the end of the final trigger
@@ -2067,7 +1886,7 @@ accept_script:			script
 					{
 						if (numVars > 0)
 						{
-							psFinalProg->psVarDebug = malloc(sizeof(VAR_DEBUG) * numVars);
+							psFinalProg->psVarDebug = (VAR_DEBUG *)malloc(sizeof(VAR_DEBUG) * numVars);
 							if (psFinalProg->psVarDebug == NULL)
 							{
 								scr_error("Out of memory");
@@ -2080,7 +1899,7 @@ accept_script:			script
 						}
 						if (numArrays > 0)
 						{
-							psFinalProg->psArrayDebug = malloc(sizeof(ARRAY_DEBUG) * numArrays);
+							psFinalProg->psArrayDebug = (ARRAY_DEBUG *)malloc(sizeof(ARRAY_DEBUG) * numArrays);
 							if (psFinalProg->psArrayDebug == NULL)
 							{
 								scr_error("Out of memory");
@@ -2122,7 +1941,7 @@ accept_script:			script
 					{
 						unsigned int i = psCurr->index, dimension;
 
-						psFinalProg->psArrayInfo[i].type = (UBYTE)psCurr->type;
+						psFinalProg->psArrayInfo[i].type = psCurr->type;
 						psFinalProg->psArrayInfo[i].dimensions = (UBYTE)psCurr->dimensions;
 						for(dimension = 0; dimension < psCurr->dimensions; dimension++)
 						{
@@ -5618,7 +5437,7 @@ num_objvar:		objexp_dot NUM_OBJVAR
 					CHECK_CODE_ERROR(codeRet);
 
 					// reset the object type
-					objVarContext = 0;
+					objVarContext = (INTERP_TYPE)0;
 
 					/* Return the code block */
 					$$ = psObjVarBlock;
@@ -5631,7 +5450,7 @@ bool_objvar:	objexp_dot BOOL_OBJVAR
 					CHECK_CODE_ERROR(codeRet);
 
 					// reset the object type
-					objVarContext = 0;
+					objVarContext = (INTERP_TYPE)0;
 
 					/* Return the code block */
 					$$ = psObjVarBlock;
@@ -5644,7 +5463,7 @@ user_objvar:	objexp_dot USER_OBJVAR
 					CHECK_CODE_ERROR(codeRet);
 
 					// reset the object type
-					objVarContext = 0;
+					objVarContext = (INTERP_TYPE)0;
 
 					/* Return the code block */
 					$$ = psObjVarBlock;
@@ -5656,7 +5475,7 @@ obj_objvar:		objexp_dot OBJ_OBJVAR
 					CHECK_CODE_ERROR(codeRet);
 
 					// reset the object type
-					objVarContext = 0;
+					objVarContext = (INTERP_TYPE)0;
 
 					/* Return the code block */
 					$$ = psObjVarBlock;
@@ -5887,7 +5706,7 @@ void scr_error(const char *pMessage, ...)
 
 
 /* Look up a type symbol */
-BOOL scriptLookUpType(const char *pIdent, INTERP_TYPE *pType)
+bool scriptLookUpType(const char *pIdent, INTERP_TYPE *pType)
 {
 	UDWORD	i;
 
@@ -5911,7 +5730,7 @@ BOOL scriptLookUpType(const char *pIdent, INTERP_TYPE *pType)
 }
 
 /* pop passed arguments (if any) */
-BOOL popArguments(INTERP_VAL **ip_temp, SDWORD numParams)
+bool popArguments(INTERP_VAL **ip_temp, SDWORD numParams)
 {
 	SDWORD			i;
 
@@ -5929,7 +5748,7 @@ BOOL popArguments(INTERP_VAL **ip_temp, SDWORD numParams)
  * If localVariableDef is true a local variable symbol is defined,
  * otherwise a global variable symbol is defined.
  */
-BOOL scriptAddVariable(VAR_DECL *psStorage, VAR_IDENT_DECL *psVarIdent)
+bool scriptAddVariable(VAR_DECL *psStorage, VAR_IDENT_DECL *psVarIdent)
 {
 	VAR_SYMBOL		*psNew;
 	unsigned int i;
@@ -6019,7 +5838,7 @@ BOOL scriptAddVariable(VAR_DECL *psStorage, VAR_IDENT_DECL *psVarIdent)
 }
 
 /* Look up a variable symbol */
-BOOL scriptLookUpVariable(const char *pIdent, VAR_SYMBOL **ppsSym)
+bool scriptLookUpVariable(const char *pIdent, VAR_SYMBOL **ppsSym)
 {
 	VAR_SYMBOL		*psCurr;
 	UDWORD			i;
@@ -6031,7 +5850,7 @@ BOOL scriptLookUpVariable(const char *pIdent, VAR_SYMBOL **ppsSym)
 	{
 		for(psCurr = asScrObjectVarTab; psCurr->pIdent != NULL; psCurr++)
 		{
-			if (interpCheckEquiv(psCurr->objType, objVarContext) &&
+			if (interpCheckEquiv((INTERP_TYPE)psCurr->objType, objVarContext) &&
 				strcmp(psCurr->pIdent, pIdent) == 0)
 			{
 				*ppsSym = psCurr;
@@ -6126,18 +5945,18 @@ BOOL scriptLookUpVariable(const char *pIdent, VAR_SYMBOL **ppsSym)
 
 
 /* Add a new trigger symbol */
-BOOL scriptAddTrigger(const char *pIdent, TRIGGER_DECL *psDecl, UDWORD line)
+bool scriptAddTrigger(const char *pIdent, TRIGGER_DECL *psDecl, UDWORD line)
 {
 	TRIGGER_SYMBOL		*psTrigger, *psCurr, *psPrev;
 
 	// Allocate the trigger
-	psTrigger = malloc(sizeof(TRIGGER_SYMBOL));
+	psTrigger = (TRIGGER_SYMBOL *)malloc(sizeof(TRIGGER_SYMBOL));
 	if (!psTrigger)
 	{
 		scr_error("Out of memory");
 		return false;
 	}
-	psTrigger->pIdent = malloc(strlen(pIdent) + 1);
+	psTrigger->pIdent = (char *)malloc(strlen(pIdent) + 1);
 	if (!psTrigger->pIdent)
 	{
 		scr_error("Out of memory");
@@ -6167,7 +5986,7 @@ BOOL scriptAddTrigger(const char *pIdent, TRIGGER_DECL *psDecl, UDWORD line)
 	// Add debug info
 	if (genDebugInfo)
 	{
-		psTrigger->psDebug = malloc(sizeof(SCRIPT_DEBUG));
+		psTrigger->psDebug = (SCRIPT_DEBUG *)malloc(sizeof(SCRIPT_DEBUG));
 		psTrigger->psDebug[0].offset = 0;
 		psTrigger->psDebug[0].line = line;
 		psTrigger->debugEntries = 1;
@@ -6199,7 +6018,7 @@ BOOL scriptAddTrigger(const char *pIdent, TRIGGER_DECL *psDecl, UDWORD line)
 
 
 /* Lookup a trigger symbol */
-BOOL scriptLookUpTrigger(const char *pIdent, TRIGGER_SYMBOL **ppsTrigger)
+bool scriptLookUpTrigger(const char *pIdent, TRIGGER_SYMBOL **ppsTrigger)
 {
 	TRIGGER_SYMBOL	*psCurr;
 
@@ -6222,7 +6041,7 @@ BOOL scriptLookUpTrigger(const char *pIdent, TRIGGER_SYMBOL **ppsTrigger)
 
 
 /* Lookup a callback trigger symbol */
-BOOL scriptLookUpCallback(const char *pIdent, CALLBACK_SYMBOL **ppsCallback)
+bool scriptLookUpCallback(const char *pIdent, CALLBACK_SYMBOL **ppsCallback)
 {
 	CALLBACK_SYMBOL		*psCurr;
 
@@ -6248,18 +6067,18 @@ BOOL scriptLookUpCallback(const char *pIdent, CALLBACK_SYMBOL **ppsCallback)
 }
 
 /* Add a new event symbol */
-BOOL scriptDeclareEvent(const char *pIdent, EVENT_SYMBOL **ppsEvent, SDWORD numArgs)
+bool scriptDeclareEvent(const char *pIdent, EVENT_SYMBOL **ppsEvent, SDWORD numArgs)
 {
 	EVENT_SYMBOL		*psEvent, *psCurr, *psPrev;
 
 	// Allocate the event
-	psEvent = malloc(sizeof(EVENT_SYMBOL));
+	psEvent = (EVENT_SYMBOL *)malloc(sizeof(EVENT_SYMBOL));
 	if (!psEvent)
 	{
 		scr_error("Out of memory");
 		return false;
 	}
-	psEvent->pIdent = malloc(strlen(pIdent) + 1);
+	psEvent->pIdent = (char *)malloc(strlen(pIdent) + 1);
 	if (!psEvent->pIdent)
 	{
 		scr_error("Out of memory");
@@ -6300,7 +6119,7 @@ BOOL scriptDeclareEvent(const char *pIdent, EVENT_SYMBOL **ppsEvent, SDWORD numA
 }
 
 // Add the code to a defined event
-BOOL scriptDefineEvent(EVENT_SYMBOL *psEvent, CODE_BLOCK *psCode, SDWORD trigger)
+bool scriptDefineEvent(EVENT_SYMBOL *psEvent, CODE_BLOCK *psCode, SDWORD trigger)
 {
 	ASSERT(psCode != NULL, "scriptDefineEvent: psCode == NULL");
 	ASSERT(psCode->size > 0,
@@ -6325,7 +6144,7 @@ BOOL scriptDefineEvent(EVENT_SYMBOL *psEvent, CODE_BLOCK *psCode, SDWORD trigger
 	// Add debug info
 	if (genDebugInfo && (psCode->debugEntries > 0))
 	{
-		psEvent->psDebug = malloc(sizeof(SCRIPT_DEBUG) * psCode->debugEntries);
+		psEvent->psDebug = (SCRIPT_DEBUG *)malloc(sizeof(SCRIPT_DEBUG) * psCode->debugEntries);
 
 		if (!psEvent->psDebug)
 		{
@@ -6353,7 +6172,7 @@ BOOL scriptDefineEvent(EVENT_SYMBOL *psEvent, CODE_BLOCK *psCode, SDWORD trigger
 }
 
 /* Lookup an event symbol */
-BOOL scriptLookUpEvent(const char *pIdent, EVENT_SYMBOL **ppsEvent)
+bool scriptLookUpEvent(const char *pIdent, EVENT_SYMBOL **ppsEvent)
 {
 	EVENT_SYMBOL	*psCurr;
 	//debug(LOG_SCRIPT, "scriptLookUpEvent");
@@ -6373,7 +6192,7 @@ BOOL scriptLookUpEvent(const char *pIdent, EVENT_SYMBOL **ppsEvent)
 
 
 /* Look up a constant variable symbol */
-BOOL scriptLookUpConstant(const char *pIdent, CONST_SYMBOL **ppsSym)
+bool scriptLookUpConstant(const char *pIdent, CONST_SYMBOL **ppsSym)
 {
 	CONST_SYMBOL	*psCurr;
 
@@ -6399,7 +6218,7 @@ BOOL scriptLookUpConstant(const char *pIdent, CONST_SYMBOL **ppsSym)
 
 
 /* Look up a function symbol */
-BOOL scriptLookUpFunction(const char *pIdent, FUNC_SYMBOL **ppsSym)
+bool scriptLookUpFunction(const char *pIdent, FUNC_SYMBOL **ppsSym)
 {
 	UDWORD i;
 
@@ -6426,7 +6245,7 @@ BOOL scriptLookUpFunction(const char *pIdent, FUNC_SYMBOL **ppsSym)
 }
 
 /* Look up a function symbol defined in script */
-BOOL scriptLookUpCustomFunction(const char *pIdent, EVENT_SYMBOL **ppsSym)
+bool scriptLookUpCustomFunction(const char *pIdent, EVENT_SYMBOL **ppsSym)
 {
 	EVENT_SYMBOL	*psCurr;
 
@@ -6465,7 +6284,7 @@ void scriptSetTypeTab(TYPE_SYMBOL *psTypeTab)
 	{
 		ASSERT( psTypeTab[i].typeID == type,
 			"scriptSetTypeTab: ID's must be >= VAL_USERTYPESTART and sequential" );
-		type = type + 1;
+		type = (INTERP_TYPE)(type + 1);
 	}
 #endif
 
@@ -6508,7 +6327,7 @@ void scriptSetCallbackTab(CALLBACK_SYMBOL *psCallTab)
 	{
 		ASSERT( psCallTab[i].type == type,
 			"scriptSetCallbackTab: ID's must be >= VAL_CALLBACKSTART and sequential" );
-		type = type + 1;
+		type = (TRIGGER_TYPE)(type + 1);
 	}
 #endif
 

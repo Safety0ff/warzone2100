@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,16 +26,11 @@
 
 #include "objectdef.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 //holder for all functions
 extern FUNCTION **asFunctions;
 extern UDWORD numFunctions;
 
-extern BOOL loadFunctionStats(const char *pFunctionData, UDWORD bufferSize);
+extern bool loadFunctionStats(const char *pFunctionData, UDWORD bufferSize);
 
 extern void productionUpgrade(FUNCTION *pFunction, UBYTE player);
 extern void researchUpgrade(FUNCTION *pFunction, UBYTE player);
@@ -66,10 +61,6 @@ extern void droidBodyUpgrade(FUNCTION *pFunction, DROID *psDroid);
 extern void upgradeTransporterDroids(DROID *psTransporter,
                               void(*pUpgradeFunction)(DROID *psDroid));
 
-extern BOOL FunctionShutDown(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+extern bool FunctionShutDown(void);
 
 #endif // __INCLUDED_SRC_FUNCTION_H__

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,48 +26,39 @@
 
 #include "lib/framework/vector.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 //Watermelon:num of VTOL weapons should be same as DROID_MAXWEAPS
-#define VTOL_MAXWEAPS		3
+#define VTOL_MAXWEAPS 3
 
-typedef enum _move_status
+enum MOVE_STATUS
 {
-MOVEINACTIVE,
-MOVENAVIGATE,
-MOVETURN,
-MOVEPAUSE,
-MOVEPOINTTOPOINT,
-MOVETURNSTOP,
-MOVETURNTOTARGET,
-MOVEROUTE,		// unused
-MOVEHOVER,
-MOVEDRIVE,
-MOVEWAITROUTE,
-MOVESHUFFLE,
-MOVEROUTESHUFFLE,	// unused
-} MOVE_STATUS;
+	MOVEINACTIVE,
+	MOVENAVIGATE,
+	MOVETURN,
+	MOVEPAUSE,
+	MOVEPOINTTOPOINT,
+	MOVETURNTOTARGET,
+	MOVEHOVER,
+	MOVEDRIVE,
+	MOVEWAITROUTE,
+	MOVESHUFFLE,
+};
 
-/// Extra precision added to movement calculations
-#define EXTRA_BITS				8
-#define EXTRA_PRECISION				((1 << EXTRA_BITS) - 1)
-#define EXTRA_MASK				0xff
+/// Extra precision added to movement calculations, stored in ebitX, ebitY.
+#define EXTRA_BITS                              8
+#define EXTRA_PRECISION                         (1 << EXTRA_BITS)
+#define EXTRA_MASK                              (EXTRA_PRECISION - 1)
 
-typedef struct _move_control
+struct MOVE_CONTROL
 {
 	MOVE_STATUS	Status;					// Inactive, Navigating or moving point to point status
-	uint16_t	Position;				// Position in asPath
-	uint16_t	numPoints;				// number of points in asPath
+	int             pathIndex;                              // Position in asPath
+	int             numPoints;                              // number of points in asPath
 	Vector2i	 *asPath;				// Pointer to list of block X,Y map coordinates.
 
-	SDWORD	DestinationX, DestinationY;			// World coordinates of movement destination
-	SDWORD	srcX,srcY,targetX,targetY;
+	Vector2i destination;                                   // World coordinates of movement destination
+	Vector2i src, target;
 	int	speed;						// Speed of motion
-	SWORD	boundX,boundY;				// Vector for the end of path boundary
-	int32_t	eBitX, eBitY;					// extra bits stored in a temporary bit bucket
+	uint8_t  eBitX, eBitY;                                  // extra bits stored in a temporary bit bucket
 
 	uint16_t moveDir;					// direction of motion (not the direction the droid is facing)
 	uint16_t bumpDir;					// direction at last bump
@@ -78,17 +69,11 @@ typedef struct _move_control
 
 	UDWORD	shuffleStart;				// when a shuffle started
 
-	struct _formation	*psFormation;			// formation the droid is currently a member of
-
 	/* vtol movement - GJ */
 	SWORD	iVertSpeed;
 
 	// iAttackRuns tracks the amount of ammunition a VTOL has remaining for each weapon
 	UDWORD	iAttackRuns[VTOL_MAXWEAPS];
-} MOVE_CONTROL;
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+};
 
 #endif // __INCLUDED_MOVEDEF_H__

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,11 +24,6 @@
 #ifndef __INCLUDED_SRC_TEXT_H__
 #define __INCLUDED_SRC_TEXT_H__
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 // Forward declaration to allow pointers to this type
 struct STR_RES;
 
@@ -36,13 +31,9 @@ struct STR_RES;
 extern struct STR_RES *psStringRes;
 
 /* Initialise the string system */
-extern BOOL stringsInitialise(void);
+extern bool stringsInitialise(void);
 
 /* Shut down the string system */
 extern void stringsShutDown(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_TEXT_H__

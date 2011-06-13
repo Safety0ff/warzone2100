@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,11 +26,6 @@
 
 #include "messagedef.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 /* Intelligence Map screen IDs */
 #define IDINTMAP_FORM			6000	//The intelligence map base form
 #define IDINTMAP_MSGVIEW		6002	//The message 3D view for the intelligence screen
@@ -45,16 +40,14 @@ extern "C"
 
 // The current message being displayed
 extern MESSAGE			*psCurrentMsg;
-// The display stats for the current messages' text
-extern TEXT_DISPLAY		currentTextDisplay;
 
 /* Add the Intelligence Map widgets to the widget screen */
-//extern BOOL intAddIntelMap(BOOL playCurrent);
-extern BOOL intAddIntelMap(void);
+//extern bool intAddIntelMap(bool playCurrent);
+extern bool intAddIntelMap(void);
 /*Add the 3D world view for the current message */
-extern BOOL intAddMessageView(MESSAGE *psMessage);
+extern bool intAddMessageView(MESSAGE *psMessage);
 /* Remove the Message View from the Intelligence screen */
-extern void intRemoveMessageView(BOOL animated);
+extern void intRemoveMessageView(bool animated);
 
 /* Process return codes from the Intelligence Map */
 extern void intProcessIntelMap(UDWORD id);
@@ -63,7 +56,7 @@ extern void intProcessIntelMap(UDWORD id);
 
 /* rotate the view so looking directly down if forward = true or
  back to previous view if forward = false */
-//extern void intelMapView(BOOL forward);
+//extern void intelMapView(bool forward);
 
 /* Remove the Intelligence Map widgets from the screen */
 extern void intRemoveIntelMap(void);
@@ -89,12 +82,8 @@ extern void resetIntelligencePauseState(void);
 extern void displayImmediateMessage(MESSAGE *psMessage);
 
 // return whether a message is immediate
-extern BOOL messageIsImmediate(void);
+extern bool messageIsImmediate(void);
 /*sets the flag*/
-extern void setMessageImmediate(BOOL state);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+extern void setMessageImmediate(bool state);
 
 #endif	// __INCLUDED_SRC_INTELMAP_H__

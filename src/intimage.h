@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -22,22 +22,19 @@
 
 #include "intfac.h" // Interface image id's.
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 #define FILLRED 16
 #define FILLGREEN 16
 #define FILLBLUE 128
 #define FILLTRANS 128
 
 /** Frame type */
-typedef enum {
+enum FRAMETYPE
+{
 	FRAME_NORMAL, FRAME_RADAR
-} FRAMETYPE;
+};
 
-typedef struct {
+struct TABDEF
+{
 	SWORD MajorUp;			//< Index of image to use for tab not pressed.
 	SWORD MajorDown;		//< Index of image to use for tab pressed.
 	SWORD MajorHilight;		//< Index of image to use for tab hilighted by mouse.
@@ -47,7 +44,7 @@ typedef struct {
 	SWORD MinorDown;
 	SWORD MinorHilight;
 	SWORD MinorSelected;
-} TABDEF;
+};
 
 extern IMAGEFILE *IntImages;	//< All the 2d graphics for the user interface.
 
@@ -55,13 +52,9 @@ extern IMAGEFILE *IntImages;	//< All the 2d graphics for the user interface.
 extern TABDEF StandardTab;
 extern TABDEF SmallTab;
 
-BOOL imageInitBitmaps(void);
+bool imageInitBitmaps(void);
 
 /** Draws a transparent window. */
 void RenderWindowFrame(FRAMETYPE frame, UDWORD x, UDWORD y, UDWORD Width, UDWORD Height);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif

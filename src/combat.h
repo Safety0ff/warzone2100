@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,11 +24,6 @@
 #ifndef __INCLUDED_SRC_COMBAT_H__
 #define __INCLUDED_SRC_COMBAT_H__
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 // maximum difference in direction for a fixed turret to fire
 #define FIXED_TURRET_DIR DEG(1)
 
@@ -47,18 +42,14 @@ extern "C"
 #define ORIGIN_RADAR_DETECTOR		8	///< Came from Radar Detector sensor
 
 /* Fire a weapon at something added int weapon_slot*/
-void combFire(WEAPON *psWeap, BASE_OBJECT *psAttacker, BASE_OBJECT *psTarget, int weapon_slot);
+bool combFire(WEAPON *psWeap, BASE_OBJECT *psAttacker, BASE_OBJECT *psTarget, int weapon_slot);
 
 /*checks through the target players list of structures and droids to see
 if any support a counter battery sensor*/
 void counterBatteryFire(BASE_OBJECT *psAttacker, BASE_OBJECT *psTarget);
 
-float objDamage(BASE_OBJECT *psObj, UDWORD damage, UDWORD originalhp, UDWORD weaponClass, UDWORD weaponSubClass, HIT_SIDE impactSide);
+int32_t objDamage(BASE_OBJECT *psObj, UDWORD damage, UDWORD originalhp, WEAPON_CLASS weaponClass, WEAPON_SUBCLASS weaponSubClass, HIT_SIDE impactSide);
 
 unsigned int objGuessFutureDamage(WEAPON_STATS *psStats, unsigned int player, BASE_OBJECT *psTarget, HIT_SIDE impactSide);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_COMBAT_H__

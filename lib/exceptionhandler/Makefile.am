@@ -1,6 +1,6 @@
-AM_CPPFLAGS = $(SDL_CFLAGS) $(WZ_CPPFLAGS)
+AM_CPPFLAGS = $(WZ_CPPFLAGS) $(QT4_CFLAGS)
 AM_CFLAGS = $(WZ_CFLAGS) $(WZ_C99FLAGS)
-AM_CXXFLAGS = $(WZ_CXXFLAGS)
+AM_CXXFLAGS = $(WZ_CXXFLAGS) $(QT4_CFLAGS)
 noinst_LIBRARIES = libexceptionhandler.a
 noinst_HEADERS = \
 	dumpinfo.h \
@@ -12,9 +12,8 @@ noinst_HEADERS = \
 
 libexceptionhandler_a_SOURCES = \
 	dumpinfo.cpp \
-	exceptionhandler.c
+	exceptionhandler.cpp
 
 if MINGW32
-libexceptionhandler_a_SOURCES += exchndl.c
+libexceptionhandler_a_SOURCES += exchndl.cpp
 endif
-

@@ -1,12 +1,12 @@
 PKG_NAME:=libogg
-PKG_VERSION:=1.2.0
+PKG_VERSION:=1.2.2
 
 PKG_SOURCEBASE=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_SOURCEBASE).tar.gz
 PKG_SOURCE_URL:= \
 	http://downloads.xiph.org/releases/ogg/ \
-	http://www.il.fontys.nl/~giel/warzone/devpkg/
-PKG_MD5SUM:=c95b73759acfc30712beef6ce4e88efa
+	http://wzhost.wz2100.net/~buildbot/dev/
+PKG_MD5SUM:=5a9fcabc9a1b7c6f1cd75ddc78f36c56
 
 TARGETS:= \
 	$(TOPDIR)/build/libs/include/ogg/ogg.h \
@@ -14,7 +14,7 @@ TARGETS:= \
 
 include $(TOPDIR)/rules.mk
 
-$(PKG_SOURCEBASE) extract-stamp: $(TOPDIR)/downloads/$(PKG_SOURCE)
+$(PKG_SOURCEBASE) extract-stamp: $(DOWNLOADS)/$(PKG_SOURCE)
 	tar xzf $^
 	@echo autoconf ; \
 	cd $(PKG_SOURCEBASE) && autoconf || $(RM) -r $(PKG_SOURCEBASE)

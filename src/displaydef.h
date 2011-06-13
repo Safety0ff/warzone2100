@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,29 +24,20 @@
 #ifndef __INCLUDED_DISPLAYDEF_H__
 #define __INCLUDED_DISPLAYDEF_H__
 
-#include "lib/ivis_common/imd.h"
-#include "lib/ivis_common/pieclip.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
+#include "lib/ivis_opengl/imd.h"
+#include "lib/ivis_opengl/pieclip.h"
 
 #define	BOUNDARY_X			(22)
 #define BOUNDARY_Y			(22)
 //#define BOUNDARY_X		(DISP_WIDTH/20)	   // proportional to resolution - Alex M
 //#define	BOUNDARY_Y		(DISP_WIDTH/16)
 
-typedef struct _screen_disp_data
+struct SCREEN_DISP_DATA
 {
 	iIMDShape	*imd;
 	UDWORD		frameNumber;		// last frame it was drawn
 	UDWORD		screenX,screenY;
 	UDWORD		screenR;
-} SCREEN_DISP_DATA;
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+};
 
 #endif // __INCLUDED_DISPLAYDEF_H__

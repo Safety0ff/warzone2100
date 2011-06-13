@@ -39,6 +39,7 @@ typedef int bool;
 #define iV_IMD_TEX	0x00000200
 #define iV_IMD_XNOCUL	0x00002000
 #define iV_IMD_TEXANIM	0x00004000
+#define iV_IMD_TCMASK	0x00010000
 #define MAX_POLYGON_SIZE 6 // the game can't handle more
 
 static bool verbose = false;
@@ -81,6 +82,7 @@ static void dump_to_pie(FILE *ctl, FILE *fp, const char *input)
 {
 	int num, x, y, z, levels, level;
 	char s[200];
+	bool tcmask = false;
 
 	num = fscanf(fp, "PIE %d\n", &x);
 	if (num != 1)
@@ -96,13 +98,21 @@ static void dump_to_pie(FILE *ctl, FILE *fp, const char *input)
 	}	
 	fprintf(ctl, "PIE 2\n");
 
-	num = fscanf(fp, "TYPE %d\n", &x); // ignore
+	num = fscanf(fp, "TYPE %x\n", &x); // ignore
 	if (num != 1)
 	{
 		fprintf(stderr, "Bad TYPE directive in %s\n", input);
 		exit(1);
 	}
-	fprintf(ctl, "TYPE 200\n");
+	if (x & iV_IMD_TCMASK)
+	{
+		tcmask = true;
+		fprintf(ctl, "TYPE 10200\n");
+	}
+	else
+	{
+		fprintf(ctl, "TYPE 200\n");
+	}
 
 	num = fscanf(fp, "TEXTURE %d %s %d %d\n", &z, s, &x, &y);
 	if (num != 4)
@@ -122,7 +132,7 @@ static void dump_to_pie(FILE *ctl, FILE *fp, const char *input)
 
 	for (level = 0; level < levels; level++)
 	{
-		int j, points, faces, facesPIE3, textureArrays = 1;
+		int j, points, faces, facesPIE3;
 		WZ_FACE *faceList;
 		WZ_POSITION *posList;
 
@@ -218,17 +228,18 @@ static void dump_to_pie(FILE *ctl, FILE *fp, const char *input)
 				num = fscanf(fp, "%d %d %d %d", &faceList[j].frames, &faceList[j].rate, &faceList[j].width, &faceList[j].height);
 				if (num != 4)
 				{
-					fprintf(stderr, "File %s. Bad texture animation entry level %d, number %d.\n", input, level, j);
+					fprintf(stderr, "File %s - Bad texture animation entry level %d, number %d.\n", input, level, j);
 					exit(1);
 				}
 				if (faceList[j].frames <= 1)
 				{
-					fprintf(stderr, "File %s. Level %d, polygon %d has a single animation frame. Disabled.\n", input, level, j);
+					fprintf(stderr, "File %s - Level %d, polygon %d has a single animation frame. Disabled.\n", input, level, j);
 					faceList[j].frames = 0;
 				}
-				if (textureArrays < faceList[j].frames)
+				if (faceList[0].frames != faceList[j].frames)
 				{
-					textureArrays = faceList[j].frames;
+					fprintf(stderr, "File %s - Polygon %d in level %d does not have the same number of frames as the first (%d, %d)!\n",
+							input, j, level, faceList[0].frames, faceList[j].frames);
 				}
 			}
 			else
@@ -282,7 +293,7 @@ static void dump_to_pie(FILE *ctl, FILE *fp, const char *input)
 		
 		if (verbose && (points - x))
 		{
-			printf("Duplicated vertexes: %d ", points - x);
+			printf("-vertices(%d) ", points - x);
 		}
 		
 		// Rewrite face table
@@ -294,11 +305,16 @@ static void dump_to_pie(FILE *ctl, FILE *fp, const char *input)
 			{
 				faceList[j].index[m] = posList[faceList[j].index[m]].reindex;
 			}
+			facesPIE3 += faceList[j].vertices - 3;	// easy tessellation
+			if (faceList[j].cull)
+			{
+				facesPIE3 += faceList[j].vertices - 3;	// must add additional face that is faced in the opposite direction also for tessellated faces
+			}
 		}
 
 		if (verbose && (facesPIE3 - faces))
 		{
-			printf("Corrected 2faces: %d ", facesPIE3 - faces);
+			printf("=faces(%d) ", facesPIE3 - faces);
 		}
 		
 		fprintf(ctl, "\nPOLYGONS %d", facesPIE3);
@@ -308,27 +324,44 @@ static void dump_to_pie(FILE *ctl, FILE *fp, const char *input)
 			char fill[128];
 
 			fill[0] = '\0';
-			if (faceList[j].frames > 0)
+			if (faceList[j].frames > 0 && (!tcmask || faceList[j].frames != 8))	// assuming 8 means team colours, strip them
 			{
 				flags |= iV_IMD_TEXANIM;
 				sprintf(fill, " %d 1 %d %d", faceList[j].frames, faceList[j].width, faceList[j].height);
 			}
+			else if (verbose && tcmask && faceList[j].frames == 8)
+			{
+				printf("-tcol(%d) ", j);
+			}
 
 			if (faceList[j].cull)
 			{
-				fprintf(ctl, "\n\t%x %d", flags, faceList[j].vertices);
-				for (k = faceList[j].vertices - 1; k >= 0; k--)
-					fprintf(ctl, " %d", faceList[j].index[k]);
-				fprintf(ctl, "%s", fill);
-				for (k = faceList[j].vertices - 1; k >= 0; k--)
-					fprintf(ctl, " %d %d", faceList[j].texCoord[k][0], faceList[j].texCoord[k][1]);
+				fprintf(ctl, "\n\t%x 3 %d %d %d%s %d %d %d %d %d %d", flags, faceList[j].index[2], faceList[j].index[1], faceList[j].index[0], fill,
+						faceList[j].texCoord[2][0], faceList[j].texCoord[2][1],
+						faceList[j].texCoord[1][0], faceList[j].texCoord[1][1],
+						faceList[j].texCoord[0][0], faceList[j].texCoord[0][1]);
+				printf("+nocull(%d) ", j);
 			}
-			fprintf(ctl, "\n\t%x %d", flags, faceList[j].vertices);
-			for (k = 0; k < faceList[j].vertices; k++)
-				fprintf(ctl, " %d", faceList[j].index[k]);
-			fprintf(ctl, "%s", fill);
-			for (k = 0; k < faceList[j].vertices; k++)
-				fprintf(ctl, " %d %d", faceList[j].texCoord[k][0], faceList[j].texCoord[k][1]);
+			fprintf(ctl, "\n\t%x 3 %d %d %d%s %d %d %d %d %d %d", flags, faceList[j].index[0], faceList[j].index[1], faceList[j].index[2], fill,
+					faceList[j].texCoord[0][0], faceList[j].texCoord[0][1],
+					faceList[j].texCoord[1][0], faceList[j].texCoord[1][1],
+					faceList[j].texCoord[2][0], faceList[j].texCoord[2][1]);
+
+			// Tessellate higher than triangle polygons
+			for (k = 3; k < faceList[j].vertices; k++)
+			{
+				if (faceList[j].cull)
+				{
+					fprintf(ctl, "\n\t%x 3 %d %d %d%s %d %d %d %d %d %d", flags, faceList[j].index[0], faceList[j].index[k], faceList[j].index[k - 1], fill,
+							faceList[j].texCoord[0][0], faceList[j].texCoord[0][1],
+							faceList[j].texCoord[k][0], faceList[j].texCoord[k][1],
+							faceList[j].texCoord[k - 1][0], faceList[j].texCoord[k - 1][1]);
+				}
+				fprintf(ctl, "\n\t%x 3 %d %d %d%s %d %d %d %d %d %d", flags, faceList[j].index[0], faceList[j].index[k - 1], faceList[j].index[k], fill,
+						faceList[j].texCoord[0][0], faceList[j].texCoord[0][1],
+						faceList[j].texCoord[k - 1][0], faceList[j].texCoord[k - 1][1],
+						faceList[j].texCoord[k][0], faceList[j].texCoord[k][1]);
+			}
 		}
 
 		num = fscanf(fp, "\nCONNECTORS %d", &x);
@@ -405,8 +438,9 @@ int main(int argc, char **argv)
 
 	for (i = parse_args(argc, argv); i < argc; i++)
 	{
-		printf("Processing %s\n", argv[i]);
+		if (verbose) printf("Processing %s ", argv[i]);
 		convert(argv[i]);
+		if (verbose) printf("\n");
 	}
 
 	return 0;

@@ -1,4 +1,22 @@
-SUBDIRS = build_tools win32 lib src data po doc icons pkg tests
+SUBDIRS = \
+	  win32 \
+	  3rdparty/miniupnpc \
+	  lib/framework \
+	  lib/exceptionhandler \
+	  lib/script \
+	  lib/sequence \
+	  lib/ivis_opengl \
+	  lib/gamelib \
+	  lib/sound \
+	  lib/netplay \
+	  lib/widget \
+	  src \
+	  data \
+	  po \
+	  doc \
+	  icons \
+	  pkg/nsis \
+	  tests
 
 dist_doc_DATA = \
 	AUTHORS \
@@ -14,6 +32,7 @@ macosx/prebuilt:
 	$(MKDIR_P) macosx/prebuilt
 
 EXTRA_DIST= \
+	build_tools/autorevision.sh \
 	autogen.sh \
 	autorevision.conf \
 	config.rpath \
@@ -23,3 +42,4 @@ EXTRA_DIST= \
 # get rid of SVN stuff in the tarball
 dist-hook:
 	rm -rf `find $(distdir) -type d -name .svn`
+

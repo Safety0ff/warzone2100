@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 2007  Giel van Schijndel
-	Copyright (C) 2007-2010  Warzone 2100 Project
+	Copyright (C) 2007-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,10 +24,6 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-
-#if defined(__cplusplus)
-extern "C" {
-#endif
 
 /** A variant on snprintf which appends its output string to the given string
  *  buffer, rather than to replace it.
@@ -114,9 +110,5 @@ do { \
 	/* Print into our newly created string-buffer */ \
 	sprintf(*var, fmt,  __VA_ARGS__); \
 } while(0)
-
-#if defined(__cplusplus)
-}
-#endif
 
 #endif // STDIO_EXT_H

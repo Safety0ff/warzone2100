@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,11 +26,6 @@
 
 #include "lib/framework/frame.h"
 
-#if defined(__cplusplus)
-extern "C"
-{
-#endif
-
 /** Maximum number of characters in a resource type. */
 #define RESTYPE_MAXCHAR		20
 
@@ -49,23 +44,23 @@ typedef void (*RES_FREE)(void *pData);
 /** callback type for resload display callback. */
 typedef void (*RESLOAD_CALLBACK)(void);
 
-typedef struct res_data
+struct RES_DATA
 {
 	void		*pData;				// pointer to the acutal data
 	SDWORD		blockID;			// which of the blocks is it in (so we can clear some of them...)
 
 	UDWORD	HashedID;				// hashed version of the name of the id
-	struct	res_data *psNext;		// next entry - most likely to be following on!
+	RES_DATA *      psNext;                         // next entry - most likely to be following on!
 	UDWORD		usage; // Reference count
 
 	// ID of the resource - filename from the .wrf - e.g. "TRON.PIE"
 	const char* aID;
-} RES_DATA;
+};
 
 
 // New reduced resource type ... specially for PSX
 // These types  are statically defined in data.c
-typedef struct _res_type
+struct RES_TYPE
 {
 	// type is still needed on psx ... strings are defined in source - data.c (yak!)
 	char			aType[RESTYPE_MAXCHAR];		// type string (e.g. "PIE"	 - just for debug use only, only aplicable when loading from wrf (not wdg)
@@ -78,8 +73,8 @@ typedef struct _res_type
 	UDWORD	HashedType;				// hashed version of the name of the id - // a null hashedtype indicates end of list
 
 	RES_FILELOAD	fileLoad;		// This isn't really used any more ?
-	struct _res_type	*psNext;
-} RES_TYPE;
+	RES_TYPE *      psNext;
+};
 
 
 /** Set the function to call when loading files with resloadfile. */
@@ -93,6 +88,7 @@ extern void resShutDown(void);
 
 /** Set the base resource directory. */
 extern void resSetBaseDir(const char* pResDir);
+extern void resForceBaseDir(const char* pResDir);
 
 /** Parse the res file. */
 bool resLoad(const char *pResFile, SDWORD blockID);
@@ -117,9 +113,6 @@ extern bool	resAddFileLoad(const char *pType, RES_FILELOAD fileLoad,
 /** Call the load function for a file. */
 extern bool resLoadFile(const char *pType, const char *pFile);
 
-/** Add data to the resource system. */
-extern bool resAddData(char *pType, char *pID, void *pData);
-
 /** Return the resource for a type and ID */
 extern void *resGetDataFromHash(const char *pType, UDWORD HashedID);
 extern void *resGetData(const char *pType, const char *pID);
@@ -142,9 +135,5 @@ const char *GetLastResourceFilename(void) WZ_DECL_PURE;
 
 /** Set the resource name of the last resource file loaded. */
 void SetLastResourceFilename(const char *pName);
-
-#if defined(__cplusplus)
-}
-#endif
 
 #endif // _frameresource_h

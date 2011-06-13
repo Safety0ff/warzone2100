@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,13 +27,9 @@
 
 #include <string.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 static inline void endian_uword(UWORD* p)
 {
+	STATIC_ASSERT(sizeof(*p) == 2);
 	uint8_t bytes[sizeof(*p)];
 	memcpy(bytes, p, sizeof(*p));
 	*p = bytes[1]<<8 | bytes[0];
@@ -41,6 +37,7 @@ static inline void endian_uword(UWORD* p)
 
 static inline void endian_sword(SWORD* p)
 {
+	STATIC_ASSERT(sizeof(*p) == 2);
 	uint8_t bytes[sizeof(*p)];
 	memcpy(bytes, p, sizeof(*p));
 	*p = bytes[1]<<8 | bytes[0];
@@ -48,6 +45,7 @@ static inline void endian_sword(SWORD* p)
 
 static inline void endian_udword(UDWORD* p)
 {
+	STATIC_ASSERT(sizeof(*p) == 4);
 	uint8_t bytes[sizeof(*p)];
 	memcpy(bytes, p, sizeof(*p));
 	*p = bytes[3]<<24 | bytes[2]<<16 | bytes[1]<<8 | bytes[0];
@@ -55,13 +53,19 @@ static inline void endian_udword(UDWORD* p)
 
 static inline void endian_sdword(SDWORD* p)
 {
+	STATIC_ASSERT(sizeof(*p) == 4);
 	uint8_t bytes[sizeof(*p)];
 	memcpy(bytes, p, sizeof(*p));
 	*p = bytes[3]<<24 | bytes[2]<<16 | bytes[1]<<8 | bytes[0];
 }
 
-#ifdef __cplusplus
+template <typename ENUM>
+static inline void endian_enum(ENUM *p)
+{
+	STATIC_ASSERT(sizeof(*p) == 4);
+	uint8_t bytes[sizeof(*p)];
+	memcpy(bytes, p, sizeof(*p));
+	*p = ENUM(bytes[3]<<24 | bytes[2]<<16 | bytes[1]<<8 | bytes[0]);
 }
-#endif //__cplusplus
 
 #endif // ENDIAN_HACK_H

@@ -1,6 +1,6 @@
 /*
 	This file is part of Warzone 2100.
-	Copyright (C) 2007-2010  Warzone 2100 Project
+	Copyright (C) 2007-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,7 +27,11 @@
 #include "lib/framework/string_ext.h"
 #include <string.h>
 
-#include <SDL_endian.h>
+#ifndef WZ_OS_WIN
+#include <arpa/inet.h>
+#else
+#include <winsock2.h>
+#endif
 
 #include "../framework/frame.h"
 #include "netplay.h"
@@ -83,7 +87,7 @@ static void queue(const Q &q, uint8_t &v)
 template<class Q>
 static void queue(const Q &q, uint16_t &v)
 {
-	uint8_t b[2] = {v>>8, v};
+	uint8_t b[2] = {uint8_t(v>>8), uint8_t(v)};
 	queue(q, b[0]);
 	queue(q, b[1]);
 	if (Q::Direction == Q::Read)
@@ -124,7 +128,7 @@ static void queue(const Q &q, uint32_t &vOrig)
 template<class Q>
 static void queueLarge(const Q &q, uint32_t &v)
 {
-	uint16_t b[2] = {v>>16, v};
+	uint16_t b[2] = {uint16_t(v>>16), uint16_t(v)};
 	queue(q, b[0]);
 	queue(q, b[1]);
 	if (Q::Direction == Q::Read)
@@ -136,7 +140,7 @@ static void queueLarge(const Q &q, uint32_t &v)
 template<class Q>
 static void queue(const Q &q, uint64_t &v)
 {
-	uint32_t b[2] = {v>>32, v};
+	uint32_t b[2] = {uint32_t(v>>32), uint32_t(v)};
 	queue(q, b[0]);
 	queue(q, b[1]);
 	if (Q::Direction == Q::Read)
@@ -210,37 +214,6 @@ static void queue(const Q &q, int64_t &v)
 	if (Q::Direction == Q::Read)
 	{
 		v = b;
-	}
-
-	STATIC_ASSERT(sizeof(b) == sizeof(v));
-}
-
-template<class Q>
-void queue(const Q &q, float &v)
-{
-	/*
-	 * NB: Not portable.
-	 * This routine only works on machines with IEEE754 floating point numbers.
-	 */
-
-	#if !defined(__STDC_IEC_559__) \
-	 && !defined(__m68k__) && !defined(__sparc__) && !defined(__i386__) \
-	 && !defined(__mips__) && !defined(__ns32k__) && !defined(__alpha__) \
-	 && !defined(__arm__) && !defined(__ppc__) && !defined(__ia64__) \
-	 && !defined(__arm26__) && !defined(__sparc64__) && !defined(__amd64__) \
-	 && !defined(WZ_CC_MSVC) // Assume that all platforms supported by
-	                         // MSVC provide IEEE754 floating point numbers
-	# error "this platform hasn't been confirmed to support IEEE754 floating point numbers"
-	#endif
-
-	// IEEE754 floating point numbers can be treated the same as 32-bit integers
-	// with regards to endian conversion
-	uint32_t b;
-	std::memcpy(&b, &v, sizeof(b));
-	queue(q, b);
-	if (Q::Direction == Q::Read)
-	{
-		std::memcpy(&v, &b, sizeof(b));
 	}
 
 	STATIC_ASSERT(sizeof(b) == sizeof(v));
@@ -399,46 +372,20 @@ void NETinsertRawData(NETQUEUE queue, uint8_t *data, size_t dataLen)
 	receiveQueue(queue)->writeRawData(data, dataLen);
 }
 
-void NETinsertMessageFromNet(NETQUEUE queue, NETMESSAGE message)
+void NETinsertMessageFromNet(NETQUEUE queue, NetMessage const *message)
 {
 	receiveQueue(queue)->pushMessage(*message);
 }
 
-BOOL NETisMessageReady(NETQUEUE queue)
+bool NETisMessageReady(NETQUEUE queue)
 {
 	return receiveQueue(queue)->haveMessage();
 }
 
-NETMESSAGE NETgetMessage(NETQUEUE queue)
+NetMessage const *NETgetMessage(NETQUEUE queue)
 {
 	return &receiveQueue(queue)->getMessage();
 }
-
-uint8_t NETmessageType(NETMESSAGE message)
-{
-	return message->type;
-}
-
-uint32_t NETmessageSize(NETMESSAGE message)
-{
-	return message->data.size();
-}
-
-uint8_t *NETmessageRawData(NETMESSAGE message)
-{
-	return message->rawDataDup();
-}
-
-void NETmessageDestroyRawData(uint8_t *data)
-{
-	delete[] data;
-}
-
-size_t NETmessageRawSize(NETMESSAGE message)
-{
-	return message->rawLen();
-}
-
 
 /*
  * Begin & End functions
@@ -500,7 +447,7 @@ void NETbeginDecode(NETQUEUE queue, uint8_t type)
 	assert(type == message.type);
 }
 
-BOOL NETend()
+bool NETend()
 {
 	// If we are encoding just return true
 	if (NETgetPacketDir() == PACKET_ENCODE)
@@ -626,27 +573,13 @@ void NETuint64_t(uint64_t *ip)
 	queueAuto(*ip);
 }
 
-void NETfloat(float *fp)
-{
-	queueAuto(*fp);
-}
-
-void NETbool(BOOL *bp)
+void NETbool(bool *bp)
 {
 	uint8_t i = !!*bp;
 	queueAuto(i);
 	*bp = !!i;
 }
 
-/*
- * NETnull should be used to either add 4 bytes of padding to a message, or to
- * discard 4 bytes of data from a message.
- */
-void NETnull()
-{
-	uint32_t zero = 0;
-	NETuint32_t(&zero);
-}
 
 /** Sends or receives a string to or from the current network package.
  *  \param str    When encoding a packet this is the (NUL-terminated string to
@@ -691,31 +624,18 @@ void NETstring(char *str, uint16_t maxlen)
 	}
 }
 
-void NETbin(uint8_t *str, uint32_t maxlen)
+void NETstring(char const *str, uint16_t maxlen)
 {
-	/*
-	 * Bins sent over the network are prefixed with their length, sent as an
-	 * unsigned 32-bit integer.
-	 */
+	ASSERT(NETgetPacketDir() == PACKET_ENCODE, "Writing to const!");
+	NETstring(const_cast<char *>(str), maxlen);
+}
 
-	// Work out the length of the bin if we are encoding
-	uint32_t len = NETgetPacketDir() == PACKET_ENCODE ? maxlen : 0;
-	queueAuto(len);
-
-	// Truncate length if necessary
-	if (len > maxlen)
-	{
-		debug(LOG_ERROR, "NETbin: Decoding packet, buffer size %u truncated at %u", len, maxlen);
-		len = maxlen;
-	}
-
+void NETbin(uint8_t *str, uint32_t len)
+{
 	for (unsigned i = 0; i < len; ++i)
 	{
 		queueAuto(str[i]);
 	}
-
-	// Throw away length...
-	//maxlen = len;
 }
 
 void NETPosition(Position *vp)
@@ -728,30 +648,7 @@ void NETRotation(Rotation *vp)
 	queueAuto(*vp);
 }
 
-void NETPACKAGED_CHECK(PACKAGED_CHECK *v)
-{
-	queueAuto(v->player);
-	queueAuto(v->droidID);
-	queueAuto(v->order);
-	queueAuto(v->secondaryOrder);
-	queueAuto(v->body);
-	queueAuto(v->experience);
-	queueAuto(v->pos);
-	queueAuto(v->rot);
-	queueAuto(v->sMoveX);
-	queueAuto(v->sMoveY);
-	if (v->order == DORDER_ATTACK)
-	{
-		queueAuto(v->targetID);
-	}
-	else if (v->order == DORDER_MOVE)
-	{
-		queueAuto(v->orderX);
-		queueAuto(v->orderY);
-	}
-}
-
-void NETNETMESSAGE(NETMESSAGE *message)
+void NETnetMessage(NetMessage const **message)
 {
 	if (NETgetPacketDir() == PACKET_ENCODE)
 	{
@@ -765,62 +662,4 @@ void NETNETMESSAGE(NETMESSAGE *message)
 		*message = m;
 		return;
 	}
-}
-
-void NETdestroyNETMESSAGE(NETMESSAGE message)
-{
-	delete message;
-}
-
-typedef enum
-{
-	test_a,
-	test_b,
-} test_enum;
-
-static void NETcoder(PACKETDIR dir)
-{
-	(void)dir;
-/*	static const char original[] = "THIS IS A TEST STRING";
-	char str[sizeof(original)];
-	BOOL b = true;
-	uint32_t u32 = 32;
-	uint16_t u16 = 16;
-	uint8_t u8 = 8;
-	int32_t i32 = -32;
-	int16_t i16 = -16;
-	int8_t i8 = -8;
-	test_enum te = test_b;
-
-	sstrcpy(str, original);
-
-	if (dir == PACKET_ENCODE)
-		NETbeginEncode(0, 0);
-	else
-		NETbeginDecode(0, 0);
-	NETbool(&b);			assert(b == true);
-	NETuint32_t(&u32);  assert(u32 == 32);
-	NETuint16_t(&u16);  assert(u16 == 16);
-	NETuint8_t(&u8);    assert(u8 == 8);
-	NETint32_t(&i32);   assert(i32 == -32);
-	NETint16_t(&i16);   assert(i16 == -16);
-	NETint8_t(&i8);     assert(i8 == -8);
-	NETstring(str, sizeof(str)); assert(strncmp(str, original, sizeof(str) - 1) == 0);
-	NETenum(&te);       assert(te == test_b);*/
-}
-
-void NETtest()
-{
-	/*NETMSG cmp;
-
-	memset(&cmp, 0, sizeof(cmp));
-	memset(&NetMsg, 0, sizeof(NetMsg));
-	*/
-	NETcoder(PACKET_ENCODE);
-	/*
-	memcpy(&cmp, &NetMsg, sizeof(cmp));
-	NETcoder(PACKET_DECODE);
-	ASSERT(memcmp(&cmp, &NetMsg, sizeof(cmp)) == 0, "nettypes unit test failed");
-	fprintf(stdout, "\tNETtypes self-test: PASSED\n");*/
-	ASSERT(false, "nettypes test disabled, since it doesn't compile anymore.");
 }

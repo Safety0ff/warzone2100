@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,10 +26,6 @@
 #include <stddef.h>
 #include <assert.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 /*!
  * On MSVC, in order to squelch tons of 'memory leaks' we set the allocator
@@ -50,7 +46,7 @@ static inline char *strdup2(const char *s, char *fileName, int line)
 	(void)debug_MEMCHKOFF();
 	result = (char*)malloc(strlen(s) + 1);
 	(void)debug_MEMCHKON();
-	debug(LOG_NEVER, "allocator toggled in %s %d",fileName,line);
+
 	if (result == (char*)0)
 		return (char*)0;
 	strcpy(result, s); 
@@ -178,10 +174,6 @@ static inline size_t strlcat(char *dest, const char *src, size_t size)
 #define ssprintf(dest, ...) (WZ_ASSERT_STATIC_STRING(dest), snprintf((dest), sizeof(dest), __VA_ARGS__))
 #define vssprintf(dest, format, ap) (WZ_ASSERT_STATIC_STRING(dest), vsnprintf((dest), sizeof(dest), format, ap))
 #define sstrcmp(str1, str2) (WZ_ASSERT_STATIC_STRING(str1), WZ_ASSERT_STATIC_STRING(str2), strncmp((str1), (str2), sizeof(str1) > sizeof(str2) ? sizeof(str2) : sizeof(str1)))
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif // STRING_EXT_H

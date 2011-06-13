@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -25,9 +25,9 @@
 #include "lib/framework/opengl.h"
 
 #include "lib/framework/fixedpoint.h"
-#include "lib/ivis_common/pieclip.h"
+#include "lib/ivis_opengl/pieclip.h"
 #include "piematrix.h"
-#include "lib/ivis_common/piemode.h"
+#include "lib/ivis_opengl/piemode.h"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -49,7 +49,7 @@ typedef Eigen::Matrix<Fixed, 3, 1> Vector3;
 static std::stack<Transform> matrixStack;
 #define curMatrix (ASSERT(!matrixStack.empty(), "No matrix on the stack"), matrixStack.top())
 
-BOOL drawing_interface = true;
+bool drawing_interface = true;
 
 //*************************************************************************
 //*** reset transformation matrix stack and make current identity
@@ -95,22 +95,7 @@ void pie_MatEnd(void)
 }
 
 
-void pie_MATTRANS(float x, float y, float z)
-{
-	GLfloat matrix[16];
-
-	curMatrix(0,3) = x;
-	curMatrix(1,3) = y;
-	curMatrix(2,3) = z;
-
-	glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
-	matrix[12] = x;
-	matrix[13] = y;
-	matrix[14] = z;
-	glLoadMatrixf(matrix);
-}
-
-void pie_TRANSLATE(float x, float y, float z)
+void pie_TRANSLATE(int32_t x, int32_t y, int32_t z)
 {
 	/*
 	 * curMatrix = curMatrix . translationMatrix(x, y, z)
@@ -335,7 +320,7 @@ void pie_MatInit(void)
 	pie_MatReset();
 }
 
-void pie_RotateTranslate3f(const Vector3f *v, Vector3f *s)
+void pie_RotateTranslate3i(const Vector3i *v, Vector3i *s)
 {
 	/*
 	 *               [ 1 0 0 0 ]

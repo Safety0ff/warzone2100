@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -32,9 +32,9 @@
 #include "lib/script/script.h"
 #include "lib/sound/audio.h"
 
-#include "scriptvals.h"
+#include "src/scriptvals.h"
 #include "lib/framework/lexer_input.h"
-#include "scriptvals_parser.tab.h"
+#include "scriptvals_parser.tab.hpp"
 #include "src/scripttabs.h"
 #include "src/objects.h"
 #include "src/droid.h"
@@ -42,7 +42,7 @@
 #include "src/message.h"
 #include "src/levels.h"
 #include "src/research.h"
-#include "text.h"
+#include "src/text.h"
 
 // The current script code
 static SCRIPT_CODE		*psCurrScript;
@@ -60,7 +60,7 @@ static SCRIPT_CONTEXT	*psCurrContext;
 static ARRAY_INDEXES	sCurrArrayIndexes;
 
 // check that an array index is valid
-static BOOL scrvCheckArrayIndex(SDWORD base, ARRAY_INDEXES *psIndexes, UDWORD *pIndex)
+static bool scrvCheckArrayIndex(SDWORD base, ARRAY_INDEXES *psIndexes, UDWORD *pIndex)
 {
 	SDWORD	i, size;
 
@@ -111,7 +111,7 @@ static BOOL scrvCheckArrayIndex(SDWORD base, ARRAY_INDEXES *psIndexes, UDWORD *p
 %error-verbose
 
 %union {
-	BOOL			bval;
+	bool			bval;
 	INTERP_TYPE		tval;
 	char			*sval;
 	UDWORD			vindex;
@@ -238,7 +238,7 @@ var_init:		var_entry TYPE var_value
 					/* set type */
 					data.type = $2;
 
-					switch ($2)
+					switch ((unsigned)$2)  // Unsigned cast to suppress compiler warnings due to enum abuse.
 					{
 					case VAL_INT:
 						data.v.ival = $3.index;	//index = integer value of the variable, not var index
@@ -698,7 +698,7 @@ var_init:		var_entry TYPE var_value
 							yyerror("Typemismatch for variable %d", $1);
 							YYABORT;
 						}
-						data.v.oval = getResearch($3.pString, true);	/* store pointer */
+						data.v.oval = getResearch($3.pString);	/* store pointer */
 						if (data.v.oval == NULL)
 						{
 							yyerror("Research %s not found", $3.pString);
@@ -781,7 +781,7 @@ var_value:		BOOLEAN_T
 %%
 
 // Lookup a type
-BOOL scrvLookUpType(const char *pIdent, INTERP_TYPE *pType)
+bool scrvLookUpType(const char *pIdent, INTERP_TYPE *pType)
 {
 	TYPE_SYMBOL		*psCurr;
 
@@ -799,7 +799,7 @@ BOOL scrvLookUpType(const char *pIdent, INTERP_TYPE *pType)
 
 
 // Lookup a variable identifier
-BOOL scrvLookUpVar(const char *pIdent, UDWORD *pIndex)
+bool scrvLookUpVar(const char *pIdent, UDWORD *pIndex)
 {
 	UDWORD	i;
 
@@ -823,7 +823,7 @@ BOOL scrvLookUpVar(const char *pIdent, UDWORD *pIndex)
 
 
 // Lookup an array identifier
-BOOL scrvLookUpArray(const char *pIdent, UDWORD *pIndex)
+bool scrvLookUpArray(const char *pIdent, UDWORD *pIndex)
 {
 	UDWORD	i;
 
@@ -847,7 +847,7 @@ BOOL scrvLookUpArray(const char *pIdent, UDWORD *pIndex)
 
 
 // Load a script value file
-BOOL scrvLoad(PHYSFS_file* fileHandle)
+bool scrvLoad(PHYSFS_file* fileHandle)
 {
 	bool retval;
 	lexerinput_t input;
@@ -874,7 +874,7 @@ void yyerror(const char* fmt, ...)
 	size = vsnprintf(NULL, 0, fmt, args);
 	va_end(args);
 
-	txtBuf = alloca(size + 1);
+	txtBuf = (char *)alloca(size + 1);
 
 	va_start(args, fmt);
 	vsprintf(txtBuf, fmt, args);

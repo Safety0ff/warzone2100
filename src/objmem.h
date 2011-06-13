@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,24 +26,20 @@
 
 #include "objectdef.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 /* The lists of objects allocated */
 extern DROID			*apsDroidLists[MAX_PLAYERS];
 extern STRUCTURE		*apsStructLists[MAX_PLAYERS];
 extern FEATURE			*apsFeatureLists[MAX_PLAYERS];
 extern FLAG_POSITION		*apsFlagPosLists[MAX_PLAYERS];
+extern STRUCTURE		*apsExtractorLists[MAX_PLAYERS];
 extern BASE_OBJECT		*apsSensorList[1];
-extern BASE_OBJECT		*apsOilList[1];
+extern FEATURE			*apsOilList[1];
 
 /* The list of destroyed objects */
 extern BASE_OBJECT	*psDestroyedObj;
 
 /* Initialise the object heaps */
-extern BOOL objmemInitialise(void);
+extern bool objmemInitialise(void);
 
 /* Release the object heaps */
 extern void objmemShutdown(void);
@@ -55,9 +51,6 @@ extern void objmemUpdate(void);
 uint32_t generateNewObjectId(void);
 /// Generates a new, (hopefully) unique object id, which all clients agree on.
 uint32_t generateSynchronisedObjectId(void);
-
-/* Create a new droid */
-extern DROID* createDroid(UDWORD player);
 
 /* add the droid to the Droid Lists */
 extern void addDroid(DROID *psDroidToAdd, DROID *pList[MAX_PLAYERS]);
@@ -77,9 +70,6 @@ extern void freeAllMissionDroids(void);
 /*Removes all droids that may be stored in the limbo lists*/
 extern void freeAllLimboDroids(void);
 
-/* Create a new structure */
-extern STRUCTURE* createStruct(UDWORD player);
-
 /* add the structure to the Structure Lists */
 extern void addStructure(STRUCTURE *psStructToAdd);
 
@@ -93,9 +83,6 @@ extern void freeAllStructs(void);
 extern void removeStructureFromList(STRUCTURE *psStructToRemove,
                                     STRUCTURE *pList[MAX_PLAYERS]);
 
-/* Create a new Feature */
-extern FEATURE* createFeature(void);
-
 /* add the feature to the Feature Lists */
  extern void addFeature(FEATURE *psFeatureToAdd);
 
@@ -106,7 +93,7 @@ void killFeature(FEATURE *psDel);
 extern void freeAllFeatures(void);
 
 /* Create a new Flag Position */
-extern BOOL createFlagPosition(FLAG_POSITION **ppsNew, UDWORD player);
+extern bool createFlagPosition(FLAG_POSITION **ppsNew, UDWORD player);
 /* add the Flag Position to the Flag Position Lists */
 extern void addFlagPosition(FLAG_POSITION *psFlagPosToAdd);
 /* Remove a Flag Position from the Lists */
@@ -116,8 +103,9 @@ extern void freeAllFlagPositions(void);
 extern void freeAllAssemblyPoints(void);
 
 // Find a base object from it's id
+extern BASE_OBJECT *getBaseObjFromData(unsigned id, unsigned player, OBJECT_TYPE type);
 extern BASE_OBJECT *getBaseObjFromId(UDWORD id);
-extern BOOL checkValidId(UDWORD id);
+extern bool checkValidId(UDWORD id);
 
 extern UDWORD getRepairIdFromFlag(FLAG_POSITION *psFlag);
 
@@ -126,9 +114,5 @@ void objCount(int *droids, int *structures, int *features);
 #ifdef DEBUG
 extern void checkFactoryFlags(void);
 #endif
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_OBJMEM_H__

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,18 +24,174 @@
 #ifndef __INCLUDED_STATSDEF_H__
 #define __INCLUDED_STATSDEF_H__
 
-#include "lib/ivis_common/ivisdef.h"
+#include "lib/ivis_opengl/ivisdef.h"
 
-#ifdef __cplusplus
-extern "C"
+#include <vector>
+#include <algorithm>
+
+static inline bool stringToEnumSortFunction(std::pair<char const *, unsigned> const &a, std::pair<char const *, unsigned> const &b) { return strcmp(a.first, b.first) < 0; }
+template <typename STATS>
+static inline STATS *findStatsByName(std::string const &name, STATS *asStats, unsigned numStats)
 {
-#endif //__cplusplus
+	for (unsigned inc = 0; inc < numStats; ++inc)  // Could be more efficient, if the stats were sorted by name...
+	{
+		//compare the names
+		if (name == asStats[inc].pName)
+		{
+			return &asStats[inc];
+		}
+	}
+	return NULL;  // Not found.
+}
+template <typename STATS>
+static inline STATS *findStatsByName(std::string const &name, STATS **asStats, unsigned numStats)
+{
+	for (unsigned inc = 0; inc < numStats; ++inc)  // Could be more efficient, if the stats were sorted by name...
+	{
+		//compare the names
+		if (name == asStats[inc]->pName)
+		{
+			return asStats[inc];
+		}
+	}
+	return NULL;  // Not found.
+}
+
+template <typename Enum>
+struct StringToEnum
+{
+	operator std::pair<char const *, unsigned>() const { return std::make_pair(string, value); }
+
+	char const *    string;
+	Enum            value;
+};
+
+template <typename Enum>
+struct StringToEnumMap : public std::vector<std::pair<char const *, unsigned> >
+{
+	typedef std::vector<std::pair<char const *, unsigned> > V;
+
+	template <int N>
+	static StringToEnumMap<Enum> const &FromArray(StringToEnum<Enum> const (&map)[N])
+	{
+		static StringToEnum<Enum> const (&myMap)[N] = map;
+		static const StringToEnumMap<Enum> sortedMap(map);
+		assert(map == myMap);
+		(void)myMap;  // Squelch warning in release mode.
+		return sortedMap;
+	}
+
+	template <int N>
+	StringToEnumMap(StringToEnum<Enum> const (&entries)[N]) : V(entries, entries + N) { std::sort(V::begin(), V::end(), stringToEnumSortFunction); }
+};
+
+/// Read-only view of file data in "A,1,2\nB,3,4" format as a 2D array-like object. Note — does not copy the file data.
+class TableView
+{
+public:
+	TableView(char const *buffer, unsigned size);
+
+	bool isError() const { return !parseError.isEmpty(); }  ///< If returning true, there was an error parsing the table.
+	QString getError() const { return parseError; }         ///< Returns an error message about what went wrong.
+
+	unsigned size() const { return lines.size(); }
+
+private:
+	friend class LineView;
+	char const *                                buffer;
+	std::vector<uint32_t>                       cells;
+	std::vector<std::pair<uint32_t, uint32_t> > lines;  // List of pairs of offsets into the cells array and the number of cells in the line.
+	QString                                     parseError;
+	std::string                                 returnString;
+};
+
+/// Read-only view of a line of file data in "A,1,2" format as an array-like object. Note — does not copy the file data.
+class LineView
+{
+public:
+	LineView(class TableView &table, unsigned lineNumber) : table(table), cells(&table.cells[table.lines.at(lineNumber).first]), numCells(table.lines.at(lineNumber).second), lineNumber(lineNumber) {}  ///< This LineView is only valid for the lifetime of the TableView.
+
+	bool isError() const { return !table.parseError.isEmpty(); }  ///< If returning true, there was an error parsing the table.
+	void setError(unsigned index, char const *error);  ///< Only the first error is saved.
+
+	unsigned size() const { return numCells; }
+	unsigned line() const { return lineNumber; }
+
+	/// Function for reading a bool (in the form of "0" or "1") in the line.
+	bool b(unsigned index) { return i(index, 0, 1); }
+
+	/// Functions for reading integers in the line.
+	int64_t i(unsigned index, int64_t min, int64_t max);
+	uint32_t i8(unsigned index)  { return i(index, INT8_MIN,  INT8_MAX);   }
+	uint32_t u8(unsigned index)  { return i(index, 0,         UINT8_MAX);  }
+	uint32_t i16(unsigned index) { return i(index, INT16_MIN, INT16_MAX);  }
+	uint32_t u16(unsigned index) { return i(index, 0,         UINT16_MAX); }
+	uint32_t i32(unsigned index) { return i(index, INT32_MIN, INT32_MAX);  }
+	uint32_t u32(unsigned index) { return i(index, 0,         UINT32_MAX); }
+
+	/// Function for reading a float in the line. (Should not use the result to affect game state.)
+	float f(unsigned index, float min = -1.e30f, float max = 1.e30f);
+
+	/// Function for reading the raw contents of the cell as a string.
+	std::string const &s(unsigned index);
+
+	// Function for reading enum values. The StringToEnum map should give a list of strings and corresponding enum values.
+	template <typename Enum>
+	Enum e(unsigned index, StringToEnumMap<Enum> const &map) { return (Enum)eu(index, map); }
+	template <typename Enum, int N>
+	Enum e(unsigned index, StringToEnum<Enum> const (&map)[N]) { return e(index, StringToEnumMap<Enum>::FromArray(map)); }
+
+	/// Returns the .pie file data referenced by the cell. May return NULL without error if the cell is "0" and accept0AsNULL is true.
+	iIMDShape *imdShape(unsigned index, bool accept0AsNULL = false);
+
+	/// Returns the STATS * in the given list with the same name as this cell. May return NULL without error if the cell is "0" and accept0AsNULL is true.
+	template <typename STATS>
+	inline STATS *stats(unsigned index, STATS *asStats, unsigned numStats, bool accept0AsNULL = false)
+	{
+		std::string const &name = s(index);
+		if (accept0AsNULL && name == "0")
+		{
+			return NULL;
+		}
+		STATS *ret = findStatsByName(name, asStats, numStats);
+		if (ret == NULL)
+		{
+			setError(index, "Couldn't find stats.");
+		}
+		return ret;
+	}
+	/// Returns the STATS * in the given list with the same name as this cell. May return NULL without error if the cell is "0" and accept0AsNULL is true.
+	template <typename STATS>
+	inline STATS *stats(unsigned index, STATS **asStats, unsigned numStats, bool accept0AsNULL = false)
+	{
+		std::string const &name = s(index);
+		if (accept0AsNULL && name == "0")
+		{
+			return NULL;
+		}
+		STATS *ret = findStatsByName(name, asStats, numStats);
+		if (ret == NULL)
+		{
+			setError(index, "Couldn't find stats.");
+		}
+		return ret;
+	}
+
+
+private:
+	unsigned eu(unsigned index, std::vector<std::pair<char const *, unsigned> > const &map);
+	bool checkRange(unsigned index);
+	class TableView &       table;
+	unsigned const *        cells;
+	unsigned                numCells;
+	unsigned                lineNumber;
+};
 
 /*
 if any types are added BEFORE 'COMP_BODY' - then Save/Load Game will have to be
 altered since it loops through the components from 1->MAX_COMP
 */
-typedef enum COMPONENT_TYPE
+enum COMPONENT_TYPE
 {
 	COMP_UNKNOWN,
 	COMP_BODY,
@@ -47,39 +203,39 @@ typedef enum COMPONENT_TYPE
 	COMP_CONSTRUCT,
 	COMP_WEAPON,
 	COMP_NUMCOMPONENTS,			/** The number of enumerators in this enum.	 */
-} COMPONENT_TYPE;
+};
 
 /**
  * LOC used for holding locations for Sensors and ECM's
  */
-typedef enum LOC
+enum LOC
 {
 	LOC_DEFAULT,
 	LOC_TURRET,
-} LOC;
+};
 
 /**
  * SIZE used for specifying body size
  */
-typedef enum BODY_SIZE
+enum BODY_SIZE
 {
 	SIZE_LIGHT,
 	SIZE_MEDIUM,
 	SIZE_HEAVY,
 	SIZE_SUPER_HEAVY,
-} BODY_SIZE;
+};
 
 /**
  * only using KINETIC and HEAT for now
  */
-typedef enum WEAPON_CLASS
+enum WEAPON_CLASS
 {
 	WC_KINETIC,					///< bullets etc
 	//WC_EXPLOSIVE,				///< rockets etc - classed as WC_KINETIC now to save space in DROID
 	WC_HEAT,					///< laser etc
 	//WC_MISC					///< others we haven't thought of! - classed as WC_HEAT now to save space in DROID
 	WC_NUM_WEAPON_CLASSES		/** The number of enumerators in this enum.	 */
-} WEAPON_CLASS;
+};
 
 /**
  * weapon subclasses used to define which weapons are affected by weapon upgrade
@@ -87,7 +243,7 @@ typedef enum WEAPON_CLASS
  *
  * Watermelon:added a new subclass to do some tests
  */
-typedef enum WEAPON_SUBCLASS
+enum WEAPON_SUBCLASS
 {
 	WSC_MGUN,
 	WSC_CANNON,
@@ -110,12 +266,12 @@ typedef enum WEAPON_SUBCLASS
 	WSC_EMP,
 	WSC_COUNTER,				// Counter missile
 	WSC_NUM_WEAPON_SUBCLASSES,	/** The number of enumerators in this enum.	 */
-} WEAPON_SUBCLASS;
+};
 
 /**
  * Used to define which projectile model to use for the weapon.
  */
-typedef enum MOVEMENT_MODEL
+enum MOVEMENT_MODEL
 {
 	MM_DIRECT,
 	MM_INDIRECT,
@@ -124,13 +280,13 @@ typedef enum MOVEMENT_MODEL
 	MM_ERRATICDIRECT,
 	MM_SWEEP,
 	NUM_MOVEMENT_MODEL,			/**  The number of enumerators in this enum. */
-} MOVEMENT_MODEL;
+};
 
 /**
  * Used to modify the damage to a propuslion type (or structure) based on
  * weapon.
  */
-typedef enum WEAPON_EFFECT
+enum WEAPON_EFFECT
 {
 	WE_ANTI_PERSONNEL,
 	WE_ANTI_TANK,
@@ -139,12 +295,12 @@ typedef enum WEAPON_EFFECT
 	WE_FLAMER,
 	WE_ANTI_AIRCRAFT,
 	WE_NUMEFFECTS,			/**  The number of enumerators in this enum. */
-} WEAPON_EFFECT;
+};
 
 /**
  * Sides used for droid impact
  */
-typedef enum HIT_SIDE
+enum HIT_SIDE
 {
 	HIT_SIDE_FRONT,
 	HIT_SIDE_REAR,
@@ -153,19 +309,19 @@ typedef enum HIT_SIDE
 	HIT_SIDE_TOP,
 	HIT_SIDE_BOTTOM,
 	NUM_HIT_SIDES,			/**  The number of enumerators in this enum. */
-} HIT_SIDE;
+};
 
 /**
  * Defines the left and right sides for propulsion IMDs
  */
-typedef enum PROP_SIDE
+enum PROP_SIDE
 {
 	LEFT_PROP,
 	RIGHT_PROP,
 	NUM_PROP_SIDES,			/**  The number of enumerators in this enum. */
-} PROP_SIDE;
+};
 
-typedef enum PROPULSION_TYPE
+enum PROPULSION_TYPE
 {
 	PROPULSION_TYPE_WHEELED,
 	PROPULSION_TYPE_TRACKED,
@@ -177,9 +333,9 @@ typedef enum PROPULSION_TYPE
 	PROPULSION_TYPE_HALF_TRACKED,
 	PROPULSION_TYPE_JUMP,
 	PROPULSION_TYPE_NUM,	/**  The number of enumerators in this enum. */
-} PROPULSION_TYPE;
+};
 
-typedef enum SENSOR_TYPE
+enum SENSOR_TYPE
 {
 	STANDARD_SENSOR,
 	INDIRECT_CB_SENSOR,
@@ -187,20 +343,20 @@ typedef enum SENSOR_TYPE
 	VTOL_INTERCEPT_SENSOR,
 	SUPER_SENSOR,			///< works as all of the above together! - new for updates
 	RADAR_DETECTOR_SENSOR,
-} SENSOR_TYPE;
+};
 
-typedef enum FIREONMOVE
+enum FIREONMOVE
 {
 	FOM_NO,			///< no capability - droid must stop
 	FOM_PARTIAL,	///< partial capability - droid has 50% chance to hit
 	FOM_YES,		///< full capability - droid fires normally on move
-} FIREONMOVE;
+};
 
-typedef enum TRAVEL_MEDIUM
+enum TRAVEL_MEDIUM
 {
 	GROUND,
 	AIR,
-} TRAVEL_MEDIUM;
+};
 
 /*
 * Stats structures type definitions
@@ -209,130 +365,64 @@ typedef enum TRAVEL_MEDIUM
 /* Elements common to all stats structures */
 
 /* Stats common to all stats structs */
-typedef struct BASE_STATS
+struct BASE_STATS
 {
+	BASE_STATS(unsigned ref = 0) : ref(ref), pName(NULL) {}   ///< Only initialised here when using new/delete! TODO Use new/delete only, not malloc()/free().
+	BASE_STATS(unsigned ref, std::string const &str);   ///< Only initialised here when using new/delete! TODO Use new/delete only, not malloc()/free(). TODO Then pName could be a QString...
+	//Gah, too soon to add destructors to BASE_STATS, thanks to local temporaries that are copied with memcpy()... --- virtual ~BASE_STATS() { free(pName); }  ///< pName is only freed here when using new/delete! TODO Use new/delete only, not malloc()/free().
+	//So this one isn't needed for now, maybe not ever. --- BASE_STATS(BASE_STATS const &stats) : ref(stats.ref), pName(strdup(stats.pName)) {}  // TODO Not needed when pName is a QString...
+	//So this one isn't needed for now, maybe not ever. --- BASE_STATS const &operator =(BASE_STATS const &stats) { ref = stats.ref; free(pName); pName = strdup(stats.pName); return *this; }  // TODO Not needed when pName is a QString...
+
 	UDWORD	ref;	/**< Unique ID of the item */
 	char	*pName; /**< pointer to the text id name (i.e. short language-independant name) */
-} WZ_DECL_MAY_ALIAS BASE_STATS;
-
-#define STATS_BASE \
-	UDWORD ref; /**< Unique ID of the item */ \
-	char *pName /**< pointer to the text id name (i.e. short language-independant name) */
+};
 
 /* Stats common to all droid components */
-typedef struct COMPONENT_STATS
+struct COMPONENT_STATS : public BASE_STATS
 {
-	UDWORD		ref;				/**< Unique ID of the item */
-	char		*pName;				/**< pointer to the text id name (i.e. short language-independant name) */
 	UDWORD		buildPower;			/**< Power required to build the component */
 	UDWORD		buildPoints;		/**< Time required to build the component */
 	UDWORD		weight;				/**< Component's weight */
 	UDWORD		body;				/**< Component's body points */
 	bool		designable;			/**< flag to indicate whether this component can be used in the design screen */
 	iIMDShape	*pIMD;				/**< The IMD to draw for this component */
-} WZ_DECL_MAY_ALIAS COMPONENT_STATS;
+};
 
-#define STATS_COMPONENT \
- \
-	UDWORD		ref;				/**< Unique ID of the item */ \
-	char		*pName;				/**< pointer to the text id name (i.e. short language-independant name) */ \
-	UDWORD		buildPower;			/**< Power required to build the component */ \
-	UDWORD		buildPoints;		/**< Time required to build the component */ \
-	UDWORD		weight;				/**< Component's weight */ \
-	UDWORD		body;				/**< Component's body points */ \
-	bool		designable;			/**< flag to indicate whether this component can be used in the design screen */ \
-	iIMDShape	*pIMD				/**< The IMD to draw for this component */
-
-typedef struct PROPULSION_STATS
+struct PROPULSION_STATS : public COMPONENT_STATS
 {
-
-	///< Common stats
-	UDWORD			ref;			/**< Unique ID of the item */
-	char			*pName;			/**< pointer to the text id name (i.e. short language-independant name) */
-	UDWORD			buildPower;		/**< Power required to build the component */
-	UDWORD			buildPoints;	/**< Time required to build the component */
-	UDWORD			weight;			/**< Component's weight */
-	UDWORD			body;			/**< Component's body points */
-	bool			designable;		/**< flag to indicate whether this component can be used in the design screen */
-	iIMDShape		*pIMD;			/**< The IMD to draw for this component */
-
 	UDWORD			maxSpeed;		///< Max speed for the droid
 	PROPULSION_TYPE propulsionType; ///< Type of propulsion used - index into PropulsionTable
-} WZ_DECL_MAY_ALIAS PROPULSION_STATS;
+};
 
-typedef struct SENSOR_STATS
+struct SENSOR_STATS : public COMPONENT_STATS
 {
-
-	///< Common stats
-	UDWORD		ref;			/**< Unique ID of the item */
-	char		*pName;			/**< pointer to the text id name (i.e. short language-independant name) */
-	UDWORD		buildPower;		/**< Power required to build the component */
-	UDWORD		buildPoints;	/**< Time required to build the component */
-	UDWORD		weight;			/**< Component's weight */
-	UDWORD		body;			/**< Component's body points */
-	bool		designable;		/**< flag to indicate whether this component can be used in the design screen */
-	iIMDShape	*pIMD;			/**< The IMD to draw for this component */
-
 	UDWORD		range;			///< Sensor range
 	UDWORD		power;			///< Sensor power (put against ecm power)
 	UDWORD		location;		///< specifies whether the Sensor is default or for the Turret
 	SENSOR_TYPE type;			///< used for combat
 	UDWORD		time;			///< time delay before associated weapon droids 'know' where the attack is from
 	iIMDShape	*pMountGraphic; ///< The turret mount to use
-} WZ_DECL_MAY_ALIAS SENSOR_STATS;
+};
 
-typedef struct ECM_STATS
+struct ECM_STATS : public COMPONENT_STATS
 {
-
-	///< Common stats
-	UDWORD		ref;			/**< Unique ID of the item */
-	char		*pName;			/**< pointer to the text id name (i.e. short language-independant name) */
-	UDWORD		buildPower;		/**< Power required to build the component */
-	UDWORD		buildPoints;	/**< Time required to build the component */
-	UDWORD		weight;			/**< Component's weight */
-	UDWORD		body;			/**< Component's body points */
-	bool		designable;		/**< flag to indicate whether this component can be used in the design screen */
-	iIMDShape	*pIMD;			/**< The IMD to draw for this component */
-
 	UDWORD		range;			///< ECM range
 	UDWORD		power;			///< ECM power (put against sensor power)
 	UDWORD		location;		///< specifies whether the ECM is default or for the Turret
 	iIMDShape	*pMountGraphic; ///< The turret mount to use
-} WZ_DECL_MAY_ALIAS ECM_STATS;
+};
 
-typedef struct REPAIR_STATS
+struct REPAIR_STATS : public COMPONENT_STATS
 {
-
-	///< Common stats
-	UDWORD		ref;			/**< Unique ID of the item */
-	char		*pName;			/**< pointer to the text id name (i.e. short language-independant name) */
-	UDWORD		buildPower;		/**< Power required to build the component */
-	UDWORD		buildPoints;	/**< Time required to build the component */
-	UDWORD		weight;			/**< Component's weight */
-	UDWORD		body;			/**< Component's body points */
-	bool		designable;		/**< flag to indicate whether this component can be used in the design screen */
-	iIMDShape	*pIMD;			/**< The IMD to draw for this component */
-
 	UDWORD		repairPoints;	///< How much damage is restored to Body Points and armour each Repair Cycle
 	bool		repairArmour;	///< whether armour can be repaired or not
 	UDWORD		location;		///< specifies whether the Repair is default or for the Turret
 	UDWORD		time;			///< time delay for repair cycle
 	iIMDShape	*pMountGraphic; ///< The turret mount to use
-} WZ_DECL_MAY_ALIAS REPAIR_STATS;
+};
 
-typedef struct WEAPON_STATS
+struct WEAPON_STATS : public COMPONENT_STATS
 {
-
-	///< Common stats
-	UDWORD			ref;		/**< Unique ID of the item */
-	char			*pName;		/**< pointer to the text id name (i.e. short language-independant name) */
-	UDWORD			buildPower; /**< Power required to build the component */
-	UDWORD			buildPoints;			/**< Time required to build the component */
-	UDWORD			weight;					/**< Component's weight */
-	UDWORD			body;					/**< Component's body points */
-	bool			designable;				/**< flag to indicate whether this component can be used in the design screen */
-	iIMDShape		*pIMD;					/**< The IMD to draw for this component */
-
 	UDWORD			shortRange;				///< Max distance to target for	short	range	shot
 	UDWORD			longRange;				///< Max distance to target for	long range shot
 	UDWORD			minRange;				///< Min distance to target for	shot
@@ -350,7 +440,6 @@ typedef struct WEAPON_STATS
 	UDWORD			incenDamage;			///< Damage done each burn cycle
 	UDWORD			incenRadius;			///< Burn radius of	the round
 	UDWORD			flightSpeed;			///< speed ammo travels at
-	UDWORD			indirectHeight;			///< how high	the ammo travels for indirect	fire
 	FIREONMOVE		fireOnMove;				///< indicates whether the droid has to stop before firing
 	WEAPON_CLASS	weaponClass;			///< the class of weapon
 	WEAPON_SUBCLASS weaponSubClass;			///< the subclass to which the weapon	belongs
@@ -384,40 +473,19 @@ typedef struct WEAPON_STATS
 	/* Audio */
 	SDWORD			iAudioFireID;
 	SDWORD			iAudioImpactID;
-} WZ_DECL_MAY_ALIAS WEAPON_STATS;
+};
 
-typedef struct CONSTRUCT_STATS
+struct CONSTRUCT_STATS : public COMPONENT_STATS
 {
-
-	///< Common stats
-	UDWORD		ref;			/**< Unique ID of the item */
-	char		*pName;			/**< pointer to the text id name (i.e. short language-independant name) */
-	UDWORD		buildPower;		/**< Power required to build the component */
-	UDWORD		buildPoints;	/**< Time required to build the component */
-	UDWORD		weight;			/**< Component's weight */
-	UDWORD		body;			/**< Component's body points */
-	bool		designable;		/**< flag to indicate whether this component can be used in the design screen */
-	iIMDShape	*pIMD;			/**< The IMD to draw for this component */
-
 	UDWORD		constructPoints;	///< The number of points contributed each cycle
 	iIMDShape	*pMountGraphic;		///< The turret mount to use
-} WZ_DECL_MAY_ALIAS CONSTRUCT_STATS;
+};
 
-typedef struct BRAIN_STATS
+struct BRAIN_STATS : public COMPONENT_STATS
 {
-	///< Common stats
-	UDWORD			ref;			/**< Unique ID of the item */
-	char			*pName;			/**< pointer to the text id name (i.e. short language-independant name) */
-	UDWORD			buildPower;		/**< Power required to build the component */
-	UDWORD			buildPoints;	/**< Time required to build the component */
-	UDWORD			weight;			/**< Component's weight */
-	UDWORD			body;			/**< Component's body points */
-	bool			designable;		/**< flag to indicate whether this component can be used in the design screen */
-	iIMDShape		*pIMD;			/**< The IMD to draw for this component */
-
 	UDWORD			progCap;		///< Program capacity
 	WEAPON_STATS	*psWeaponStat;	///< weapon stats associated with this brain - for Command Droids
-} WZ_DECL_MAY_ALIAS BRAIN_STATS;
+};
 
 
 #define NULL_COMP	(-1)
@@ -431,10 +499,8 @@ typedef struct BRAIN_STATS
 #define HIT_ANGLE_TOP		361
 #define HIT_ANGLE_BOTTOM	362
 
-typedef struct _body_stats
+struct BODY_STATS : public COMPONENT_STATS
 {
-	STATS_COMPONENT;			///< Common stats
-
 	UBYTE		size;			///< How big the body is - affects how hit
 	UDWORD		weaponSlots;	///< The number of weapon slots on the body
 	UDWORD		armourValue[NUM_HIT_SIDES][WC_NUM_WEAPON_CLASSES];	///< A measure of how much protection the armour provides. Cross referenced with the weapon types.
@@ -443,12 +509,12 @@ typedef struct _body_stats
 	UDWORD		powerOutput;	///< this is the engine output of the body
 	iIMDShape	**ppIMDList;	///< list of IMDs to use for propulsion unit - up to numPropulsionStats
 	iIMDShape	*pFlameIMD;		///< pointer to which flame graphic to use - for VTOLs only at the moment
-} BODY_STATS;
+};
 
 /************************************************************************************
 * Additional stats tables
 ************************************************************************************/
-typedef struct _propulsion_types
+struct PROPULSION_TYPES
 {
 	UWORD	powerRatioMult; ///< Multiplier for the calculated power ratio of the droid
 	UDWORD	travel;			///< Which medium the propulsion travels in
@@ -458,22 +524,22 @@ typedef struct _propulsion_types
 	SWORD	moveID;			///< sound to play when this prop type is moving
 	SWORD	hissID;			///< sound to link moveID and idleID
 	SWORD	shutDownID;		///< sound to play when this prop type shuts down
-} PROPULSION_TYPES;
+};
 
-typedef struct _terrain_table
+struct TERRAIN_TABLE
 {
 	UDWORD	speedFactor;	///< factor to multiply the speed by depending on the method of propulsion and the terrain type - to be divided by 100 before use
-} TERRAIN_TABLE;
+};
 
-typedef struct _special_ability
+struct SPECIAL_ABILITY
 {
 	char	*pName;			///< Text name of the component
-} SPECIAL_ABILITY;
+};
 
 typedef UWORD	WEAPON_MODIFIER;
 
 /* weapon stats which can be upgraded by research*/
-typedef struct _weapon_upgrade
+struct WEAPON_UPGRADE
 {
 	UBYTE	firePause;
 	UWORD	shortHit;
@@ -482,44 +548,40 @@ typedef struct _weapon_upgrade
 	UWORD	radiusDamage;
 	UWORD	incenDamage;
 	UWORD	radiusHit;
-} WEAPON_UPGRADE;
+};
 
 /*sensor stats which can be upgraded by research*/
-typedef struct _sensor_upgrade
+struct SENSOR_UPGRADE
 {
 	UWORD	power;
 	UWORD	range;
-} SENSOR_UPGRADE;
+};
 
 /*ECM stats which can be upgraded by research*/
-typedef struct _ecm_upgrade
+struct ECM_UPGRADE
 {
 	UWORD	power;
 	UDWORD	range;
-} ECM_UPGRADE;
+};
 
 /*repair stats which can be upgraded by research*/
-typedef struct _repair_upgrade
+struct REPAIR_UPGRADE
 {
 	UWORD	repairPoints;
-} REPAIR_UPGRADE;
+};
 
 /*constructor stats which can be upgraded by research*/
-typedef struct _constructor_upgrade
+struct CONSTRUCTOR_UPGRADE
 {
 	UWORD	constructPoints;
-} CONSTRUCTOR_UPGRADE;
+};
 
 /*body stats which can be upgraded by research*/
-typedef struct _body_upgrade
+struct BODY_UPGRADE
 {
 	UWORD	powerOutput;
 	UWORD	body;
 	UWORD	armourValue[WC_NUM_WEAPON_CLASSES];
-} BODY_UPGRADE;
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+};
 
 #endif // __INCLUDED_STATSDEF_H__

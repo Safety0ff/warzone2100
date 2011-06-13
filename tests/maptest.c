@@ -11,11 +11,11 @@ int main(int argc, char **argv)
 
 	if (!fp)
 	{
-		fprintf(stderr, "maptest: Failed to open list file\n");
+		fprintf(stderr, "%s: Failed to open list file\n", argv[0]);
 		return -1;
 	}
 	PHYSFS_init(argv[0]);
-	strcat(datapath, getenv("srcdir"));
+	strcpy(datapath, getenv("srcdir"));
 	strcat(datapath, "/../data");
 	PHYSFS_addToSearchPath(datapath, 1);
 

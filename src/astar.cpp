@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -113,6 +113,7 @@ struct PathBlockingMap
 
 	PathBlockingType type;
 	std::vector<bool> map;
+	std::vector<bool> dangerMap;	// using threatBits
 };
 
 // Data structures used for pathfinding, can contain cached results.
@@ -122,7 +123,11 @@ struct PathfindContext
 	bool isBlocked(int x, int y) const
 	{
 		// Not sure whether the out-of-bounds check is needed, can only happen if pathfinding is started on a blocking tile (or off the map).
-		return x < 0 || y < 0 || x >= mapWidth || y >= mapWidth || blockingMap->map[x + y*mapWidth];
+		return x < 0 || y < 0 || x >= mapWidth || y >= mapHeight || blockingMap->map[x + y*mapWidth];
+	}
+	bool isDangerous(int x, int y) const
+	{
+		return !blockingMap->dangerMap.empty() && blockingMap->dangerMap[x + y*mapWidth];
 	}
 	bool matches(PathBlockingMap const *blockingMap_, PathCoord tileS_) const
 	{
@@ -175,14 +180,14 @@ static uint32_t fpathCurrentGameTime;
 // dir 0 => x = 0, y = -1
 static const Vector2i aDirOffset[] =
 {
-	{ 0, 1},
-	{-1, 1},
-	{-1, 0},
-	{-1,-1},
-	{ 0,-1},
-	{ 1,-1},
-	{ 1, 0},
-	{ 1, 1},
+	Vector2i( 0, 1),
+	Vector2i(-1, 1),
+	Vector2i(-1, 0),
+	Vector2i(-1,-1),
+	Vector2i( 0,-1),
+	Vector2i( 1,-1),
+	Vector2i( 1, 0),
+	Vector2i( 1, 1),
 };
 
 void fpathHardTableReset()
@@ -225,8 +230,9 @@ static inline void fpathNewNode(PathfindContext &context, PathCoord dest, PathCo
 
 	// Create the node.
 	PathNode node;
+	unsigned costFactor = context.isDangerous(pos.x, pos.y) ? 5 : 1;
 	node.p = pos;
-	node.dist = prevDist + fpathEstimate(prevPos, pos);
+	node.dist = prevDist + fpathEstimate(prevPos, pos)*costFactor;
 	node.est = node.dist + fpathEstimate(pos, dest);
 
 	PathExploredTile &expl = context.map[pos.x + pos.y*mapWidth];
@@ -347,9 +353,9 @@ static void fpathInitContext(PathfindContext &context, PathBlockingMap const *bl
 	ASSERT(!context.nodes.empty(), "fpathNewNode failed to add node.");
 }
 
-SDWORD fpathAStarRoute(MOVE_CONTROL *psMove, PATHJOB *psJob)
+ASR_RETVAL fpathAStarRoute(MOVE_CONTROL *psMove, PATHJOB *psJob)
 {
-	int             retval = ASR_OK;
+	ASR_RETVAL      retval = ASR_OK;
 
 	bool            mustReverse = true;
 
@@ -427,8 +433,7 @@ SDWORD fpathAStarRoute(MOVE_CONTROL *psMove, PATHJOB *psJob)
 		ASSERT_OR_RETURN(ASR_FAILED, tileOnMap(p.x, p.y), "Assigned XY coordinates (%d, %d) not on map!", (int)p.x, (int)p.y);
 		ASSERT_OR_RETURN(ASR_FAILED, path.size() < (unsigned)mapWidth*mapHeight, "Pathfinding got in a loop.");
 
-		Vector2i v = {world_coord(p.x) + TILE_UNITS / 2, world_coord(p.y) + TILE_UNITS / 2};
-		path.push_back(v);
+		path.push_back(Vector2i(world_coord(p.x) + TILE_UNITS / 2, world_coord(p.y) + TILE_UNITS / 2));
 
 		PathExploredTile &tile = context.map[p.x + p.y*mapWidth];
 		newP = PathCoord(p.x - tile.dx, p.y - tile.dy);
@@ -440,13 +445,12 @@ SDWORD fpathAStarRoute(MOVE_CONTROL *psMove, PATHJOB *psJob)
 	if (path.empty())
 	{
 		// We are probably already in the destination tile. Go to the exact coordinates.
-		Vector2i v = {psJob->destX, psJob->destY};
-		path.push_back(v);
+		path.push_back(Vector2i(psJob->destX, psJob->destY));
 	}
 	else if (retval == ASR_OK)
 	{
 		// Found exact path, so use exact coordinates for last point, no reason to lose precision
-		Vector2i v = {psJob->destX, psJob->destY};
+		Vector2i v(psJob->destX, psJob->destY);
 		if (mustReverse)
 		{
 			path.front() = v;
@@ -457,8 +461,8 @@ SDWORD fpathAStarRoute(MOVE_CONTROL *psMove, PATHJOB *psJob)
 		}
 	}
 
-	// TODO FIXME once we can change numPoints to something larger than uint16_t
-	psMove->numPoints = std::min<int>(UINT16_MAX, path.size());
+	// TODO FIXME once we can change numPoints to something larger than int
+	psMove->numPoints = std::min<size_t>(INT32_MAX - 1, path.size());
 
 	// Allocate memory
 	psMove->asPath = static_cast<Vector2i *>(malloc(sizeof(*psMove->asPath) * path.size()));
@@ -503,8 +507,7 @@ SDWORD fpathAStarRoute(MOVE_CONTROL *psMove, PATHJOB *psJob)
 		fpathContexts.splice(fpathContexts.begin(), fpathContexts, contextIterator);
 	}
 
-	psMove->DestinationX = psMove->asPath[path.size() - 1].x;
-	psMove->DestinationY = psMove->asPath[path.size() - 1].y;
+	psMove->destination = psMove->asPath[path.size() - 1];
 
 	return retval;
 }
@@ -538,11 +541,29 @@ void fpathSetBlockingMap(PATHJOB *psJob)
 		i->type = type;
 		std::vector<bool> &map = i->map;
 		map.resize(mapWidth*mapHeight);
+		uint32_t checksumMap = 0, checksumDangerMap = 0, factor = 0;
 		for (int y = 0; y < mapHeight; ++y)
 			for (int x = 0; x < mapWidth; ++x)
 		{
 			map[x + y*mapWidth] = fpathBaseBlockingTile(x, y, type.propulsion, type.owner, type.moveType);
+			checksumMap ^= map[x + y*mapWidth]*(factor = 3*factor + 1);
 		}
+		if (!isHumanPlayer(type.owner) && type.moveType == FMT_MOVE)
+		{
+			std::vector<bool> &dangerMap = i->dangerMap;
+			dangerMap.resize(mapWidth*mapHeight);
+			for (int y = 0; y < mapHeight; ++y)
+				for (int x = 0; x < mapWidth; ++x)
+			{
+				dangerMap[x + y*mapWidth] = auxTile(x, y, type.owner) & AUXBITS_THREAT;
+				checksumDangerMap ^= map[x + y*mapWidth]*(factor = 3*factor + 1);
+			}
+		}
+		syncDebug("blockingMap(%d,%d,%d,%d) = %08X %08X", gameTime, psJob->propulsion, psJob->owner, psJob->moveType, checksumMap, checksumDangerMap);
+	}
+	else
+	{
+		syncDebug("blockingMap(%d,%d,%d,%d) = cached", gameTime, psJob->propulsion, psJob->owner, psJob->moveType);
 	}
 
 	// i now points to the correct map. Make psJob->blockingMap point to it.

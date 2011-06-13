@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -35,26 +35,25 @@
 #include "function.h"
 #include "stats.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 /* Initialise the object system */
-extern BOOL objInitialise(void);
+extern bool objInitialise(void);
 
 /* Shutdown the object system */
-extern BOOL objShutdown(void);
+extern bool objShutdown(void);
 
 /*goes thru' the list passed in reversing the order so the first entry becomes
 the last and the last entry becomes the first!*/
-extern void reverseObjectList(BASE_OBJECT **ppsList);
+void reverseObjectList(BASE_OBJECT **ppsList);
+template <typename OBJECT>
+void reverseObjectList(OBJECT **ppsList)
+{
+	BASE_OBJECT *baseList = *ppsList;
+	reverseObjectList(&baseList);
+	*ppsList = static_cast<OBJECT *>(baseList);
+}
+
 
 /** Output an informative string about this object. For debugging. */
 const char *objInfo(const BASE_OBJECT *psObj);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_OBJECTS_H__

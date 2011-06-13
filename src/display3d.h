@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -23,35 +23,30 @@
 
 #include "display.h"
 #include "display3ddef.h"	// This should be the only place including this file
-#include "lib/ivis_common/pietypes.h"
-#include "lib/ivis_common/piedef.h"
+#include "lib/ivis_opengl/pietypes.h"
+#include "lib/ivis_opengl/piedef.h"
 #include "objectdef.h"
 #include "message.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
 
 
 /*!
  * Special tile types
  */
-typedef enum
+enum TILE_ID
 {
 	RIVERBED_TILE = 5, //! Underwater ground
 	WATER_TILE = 17, //! Water surface
 	RUBBLE_TILE = 54, //! You can drive over these
 	BLOCKING_RUBBLE_TILE = 67 //! You cannot drive over these
-} TILE_ID;
+};
 
-typedef enum
+enum ENERGY_BAR
 {
 	BAR_SELECTED,
 	BAR_DROIDS,
 	BAR_DROIDS_AND_STRUCTURES,
 	BAR_LAST
-} ENERGY_BAR;
+};
 
 extern bool showFPS;
 extern bool showSAMPLES;
@@ -61,11 +56,11 @@ extern bool showLevelName;
 extern void	setViewAngle(SDWORD angle);
 extern UDWORD getViewDistance(void);
 extern void	setViewDistance(UDWORD dist);
-extern BOOL	radarOnScreen;
+extern bool	radarOnScreen;
 extern bool rangeOnScreen; // Added to get sensor/gun range on screen.  -Q 5-10-05
 extern void	scaleMatrix( UDWORD percent );
-extern void setViewPos( UDWORD x, UDWORD y, BOOL Pan);
-extern void getPlayerPos(SDWORD *px, SDWORD *py);
+extern void setViewPos( UDWORD x, UDWORD y, bool Pan);
+Vector2i    getPlayerPos();
 extern void setPlayerPos(SDWORD x, SDWORD y);
 extern void disp3d_setView(iView *newView);
 extern void disp3d_resetView(void);
@@ -78,7 +73,7 @@ extern void renderFeature				( FEATURE *psFeature );
 extern void renderProximityMsg			( PROXIMITY_DISPLAY	*psProxDisp);
 extern void renderProjectile			( PROJECTILE *psCurr);
 extern void renderAnimComponent			( const COMPONENT_OBJECT *psObj );
-extern void renderDeliveryPoint			( FLAG_POSITION *psPosition, BOOL blueprint );
+extern void renderDeliveryPoint			( FLAG_POSITION *psPosition, bool blueprint );
 extern void debugToggleSensorDisplay	( void );
 
 extern void displayFeatures( void );
@@ -89,21 +84,19 @@ extern void displayDelivPoints(void);
 extern void calcScreenCoords(DROID *psDroid);
 extern ENERGY_BAR toggleEnergyBars( void );
 
-extern BOOL doWeDrawProximitys( void );
-extern void setProximityDraw(BOOL val);
+extern bool doWeDrawProximitys( void );
+extern void setProximityDraw(bool val);
 extern void renderShadow( DROID *psDroid, iIMDShape *psShadowIMD );
 
-extern BOOL	clipXY ( SDWORD x, SDWORD y);
+extern bool	clipXY ( SDWORD x, SDWORD y);
 
-extern BOOL init3DView(void);
+extern bool init3DView(void);
 extern void initViewPosition(void);
 extern iView player;
-extern UDWORD distance;
-extern BOOL selectAttempt;
-extern BOOL draggingTile;
+extern bool selectAttempt;
+extern bool draggingTile;
 extern iIMDShape *g_imd;
-extern BOOL	droidSelected;
-extern UDWORD terrainMidX,terrainMidY;
+extern bool	droidSelected;
 
 extern SDWORD scrollSpeed;
 //extern void	assignSensorTarget( DROID *psDroid );
@@ -117,11 +110,14 @@ extern void setRubbleTile(UDWORD num);
 extern SDWORD	getCentreX( void );
 extern SDWORD	getCentreZ( void );
 
-extern SDWORD mouseTileX, mouseTileY;
+STRUCTURE *getTileBlueprint(int mapX, int mapY);  ///< Gets the blueprint at those coordinates, if any.
 
-extern BOOL bRender3DOnly;
-extern BOOL showGateways;
-extern BOOL showPath;
+extern SDWORD mouseTileX, mouseTileY;
+extern Vector2i mousePos;
+
+extern bool bRender3DOnly;
+extern bool showGateways;
+extern bool showPath;
 extern Vector2i visibleTiles;
 
 /*returns the graphic ID for a droid rank*/
@@ -143,9 +139,5 @@ extern UWORD barMode;
 extern bool CauseCrash;
 
 extern bool tuiTargetOrigin;
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_DISPLAY3D_H__

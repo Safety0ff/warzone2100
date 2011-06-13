@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,18 +24,9 @@
 #ifndef __INCLUDED_MULTILIMIT_H__
 #define __INCLUDED_MULTILIMIT_H__
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
-extern BOOL startLimitScreen	(void);
+extern bool startLimitScreen	(void);
 extern void runLimitScreen		(void);
 extern void applyLimitSet		(void);
 extern void createLimitSet		(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif //__cplusplus //__INCLUDED_MULTILIMIT_H__

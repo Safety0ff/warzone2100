@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,12 +21,7 @@
 #ifndef __INCLUDED_SRC_LIGHTNING_H__
 #define __INCLUDED_SRC_LIGHTNING_H__
 
-#include "lib/ivis_common/pietypes.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
+#include "lib/ivis_opengl/pietypes.h"
 
 #define FOG_FLAGS		7
 #define FOG_BACKGROUND	1
@@ -36,22 +31,22 @@ extern "C"
 
 extern UDWORD fogStatus;
 
-typedef enum _lightcols
+enum LIGHT_COLOUR
 {
 LIGHT_RED,
 LIGHT_GREEN,
 LIGHT_BLUE,
 LIGHT_YELLOW,
 LIGHT_WHITE
-}LIGHT_COLOUR;
+};
 
-typedef struct _light
+struct LIGHT
 {
 Vector3i	position;
 UBYTE	type;
 UDWORD	range;
 LIGHT_COLOUR	colour;
-} LIGHT;
+};
 
 extern void setTheSun(Vector3f newSun);
 extern Vector3f getTheSun(void);
@@ -65,11 +60,5 @@ extern void UpdateFogDistance(float distance);
 extern void	calcDroidIllumination(DROID *psDroid);
 //darkens down the tiles that are outside the scroll limits
 extern void setScrollLimitLighting(void);
-
-extern void	findSunVector(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_LIGHTNING_H__

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #define _frame_h
 
 #include "wzglobal.h"
+#include <stdlib.h>
 
 // Workaround X11 headers #defining Status
 #ifdef Status
@@ -45,15 +46,27 @@
 #include "trig.h"
 #include "cursors.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 extern uint32_t selectedPlayer;      ///< The player number corresponding to this client.
 extern uint32_t realSelectedPlayer;  ///< The player number corresponding to this client (same as selectedPlayer, unless changing players in the debug menu).
-#define MAX_PLAYERS		8	/**< Maximum number of players in the game. */
-#define MAX_PLAYER_SLOTS	10	/**< 8 players, 1 baba and 1 reserved for features. */
+#define MAX_PLAYERS         11                 ///< Maximum number of players in the game.
+#define MAX_PLAYERS_IN_GUI  (MAX_PLAYERS - 1)  ///< One player reserved for scavengers.
+#define PLAYER_FEATURE      (MAX_PLAYERS + 1)
+#define MAX_PLAYER_SLOTS    (MAX_PLAYERS + 2)  ///< Max players plus 1 baba and 1 reserved for features. Actually, if baba is a regular player, then it's plus 1 unused?
+
+#if MAX_PLAYERS <= 8
+typedef uint8_t PlayerMask;
+#elif MAX_PLAYERS <= 16
+typedef uint16_t PlayerMask;
+#else
+#error Warzone 2100 is not a MMO.
+#endif
+
+enum QUEUE_MODE
+{
+	ModeQueue,      ///< Sends a message on the game queue, which will get synchronised, by sending a GAME_ message.
+	ModeImmediate   ///< Performs the action immediately. Must already have been synchronised, for example by sending a GAME_ message.
+};
+
 
 /** Initialise the framework library
  *  @param pWindowName the text to appear in the window title bar
@@ -66,7 +79,7 @@ extern uint32_t realSelectedPlayer;  ///< The player number corresponding to thi
  *  @return true when the framework library is successfully initialised, false
  *          when a part of the initialisation failed.
  */
-extern bool frameInitialise(const char* pWindowName, UDWORD width, UDWORD height, UDWORD bitDepth, unsigned int fsaa, bool fullScreen, bool vsync);
+extern bool frameInitialise(void);
 
 extern bool selfTest;
 
@@ -105,17 +118,6 @@ extern UDWORD frameGetAverageRate(void);
 
 extern UDWORD HashString( const char *String );
 extern UDWORD HashStringIgnoreCase( const char *String );
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
-
-#if defined(WZ_OS_WIN)
-# include <winsock2.h> /* for struct timeval */
-
-struct timezone;
-extern int gettimeofday(struct timeval* tv, struct timezone* tz);
-#endif
 
 static inline WZ_DECL_CONST const char * bool2string(bool var)
 {

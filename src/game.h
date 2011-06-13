@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -30,11 +30,6 @@
 #define __INCLUDED_SRC_GAME_H__
 
 #include "lib/framework/vector.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
 
 /***************************************************************************/
 /*
@@ -80,9 +75,9 @@ extern "C"
 #define VERSION_36              36              //saves beacon properly
 #define VERSION_37              37              //dpid changes; this had better be the last version
 #define VERSION_38              38              //mod list!
+#define VERSION_39		39		//lots of changes, breaking everything
 
-
-#define CURRENT_VERSION_NUM     VERSION_38
+#define CURRENT_VERSION_NUM     VERSION_39
 
 //used in the loadGame
 #define KEEPOBJECTS				true
@@ -94,21 +89,21 @@ extern "C"
 #define VALIDITYKEY_CHEAT_MODE	0x08
 #define VALIDITYKEY_MID_GAME	0x10
 
-typedef enum
+enum GAME_TYPE
 {
 	GTYPE_SCENARIO_START,	///< Initial scenario state.
 	GTYPE_SCENARIO_EXPAND,	///< Scenario scroll area expansion.
 	GTYPE_MISSION,		///< Stand alone mission.
 	GTYPE_SAVE_START,	///< User saved game - at the start of a level.
 	GTYPE_SAVE_MIDMISSION,	///< User saved game - in the middle of a level
-} GAME_TYPE;
+};
 
 
-typedef struct _vis_save_header
+struct VIS_SAVEHEADER
 {
 	char        aFileType[4];
 	uint32_t    version;
-} VIS_SAVEHEADER;
+};
 
 
 /***************************************************************************/
@@ -117,27 +112,27 @@ typedef struct _vis_save_header
  */
 /***************************************************************************/
 
-extern BOOL loadGame(const char *pGameToLoad, BOOL keepObjects, BOOL freeMem, BOOL UserSaveGame);	// UserSaveGame is true when the save game is not a new level (User Save Game)
+extern bool loadGame(const char *pGameToLoad, bool keepObjects, bool freeMem, bool UserSaveGame);	// UserSaveGame is true when the save game is not a new level (User Save Game)
 
 /*This just loads up the .gam file to determine which level data to set up - split up
 so can be called in levLoadData when starting a game from a load save game*/
 extern bool loadGameInit(const char* fileName);
 
-extern BOOL loadMissionExtras(const char *pGameToLoad, SWORD levelType);
+extern bool loadMissionExtras(const char *pGameToLoad, SWORD levelType);
 
 // load the script state given a .gam name
-extern BOOL loadScriptState(char *pFileName);
+extern bool loadScriptState(char *pFileName);
 
 /// Load the terrain types
-extern BOOL loadTerrainTypeMap(const char *pFileData, UDWORD filesize);
+extern bool loadTerrainTypeMap(const char *pFileData, UDWORD filesize);
 
-extern BOOL saveGame(char *aFileName, GAME_TYPE saveType);
+extern bool saveGame(char *aFileName, GAME_TYPE saveType);
 
 // Get the campaign number for loadGameInit game
 extern UDWORD getCampaign(const char* fileName);
 
 /*calls windows find file tree*/
-extern BOOL getSaveGameName(char *pName);
+extern bool getSaveGameName(char *pName);
 
 /*set validty keys for save game debugging*/
 extern void game_SetValidityKey(UDWORD keys);
@@ -145,10 +140,7 @@ extern void game_SetValidityKey(UDWORD keys);
 /*returns the current type of save game being loaded*/
 extern UDWORD getSaveGameType(void);
 
-BOOL plotStructurePreview16(char *backDropSprite, Vector2i playeridpos[]);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+bool plotStructurePreview16(char *backDropSprite, Vector2i playeridpos[]);
+extern bool foundScavengerPlayerInMap;
 
 #endif // __INCLUDED_SRC_GAME_H__

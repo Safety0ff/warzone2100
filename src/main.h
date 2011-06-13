@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,23 +21,20 @@
 #ifndef __INCLUDED_SRC_MAIN_H__
 #define __INCLUDED_SRC_MAIN_H__
 
-#ifdef __cplusplus
-extern "C"
+enum GS_GAMEMODE
 {
-#endif //__cplusplus
-
-typedef enum {
 	GS_TITLE_SCREEN,
 	GS_NORMAL,
 	GS_SAVEGAMELOAD
-} GS_GAMEMODE;
+};
 
 //flag to indicate when initialisation is complete
-extern BOOL gameInitialised;
-extern BOOL bDisableLobby;
+extern bool gameInitialised;
+extern bool bDisableLobby;
 extern bool customDebugfile;
 extern GS_GAMEMODE GetGameMode(void) WZ_DECL_PURE;
 extern void SetGameMode(GS_GAMEMODE status);
+extern void mainLoop(void);
 
 extern char SaveGamePath[PATH_MAX];
 extern char datadir[PATH_MAX];
@@ -54,9 +51,7 @@ extern char * multiplay_mods[MAX_MODS];
 extern char * override_mods[MAX_MODS];
 extern char * override_mod_list;
 extern bool use_override_mods;
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+extern char * override_map[2];
+extern bool use_override_map;
 
 #endif // __INCLUDED_SRC_MAIN_H__

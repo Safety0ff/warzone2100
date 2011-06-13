@@ -19,7 +19,7 @@ a0,a0,ff,ff	// text medium
 60,60,ff,ff	// text dark
 1,1,1,ff	// score box border
 0,0,58,80	// score box
-ff,ff,ff,ff	// tooltip text
+cf,cf,cf,ff	// tooltip text
 0,0,80,ff	// unit select border
 ff,ff,ff,10	// unit select box
 0,1,61,0	// radar backgroudn
@@ -55,10 +55,10 @@ A0,70,00,ff	// team2 - orange
 20,20,20,ff	// team4 - black
 80,00,00,ff	// team5 - red
 20,30,60,ff	// team6 - blue
-90,00,70,ff	// team7 - purple
-00,80,80,ff	// team8 - teal
+90,00,70,ff	// team7 - pink
+00,80,80,ff	// team8 - cyan
 7f,7f,7f,ff	// default form background
-ff,ff,ff,ff	// default form text
+bf,bf,bf,ff	// default form text
 ff,ff,ff,ff	// default form light
 00,00,00,ff	// default form dark
 40,40,40,ff	// default form hilite
@@ -72,3 +72,14 @@ cc,eb,13,ff	// action progress bar major
 ff,ff,0,ff	// production run text
 0,20,40,ff	// production run background
 0,0,0,18	// game loading bar background
+ff,0,ff,ff	// WZCOL_MAP_PREVIEW_HQ
+ff,ff,00,ff	// WZCOL_MAP_PREVIEW_OIL
+b0,08,5f,ff	// fog colour
+80,C0,00,ff	// team9 - yellow
+B0,70,70,ff	// team10 - purple
+E0,E0,E0,ff	// team11 - white
+20,20,FF,ff	// team12 - bright blue
+00,A0,00,ff	// team13 - neon green
+40,00,00,ff	// team14 - infrared
+10,00,40,ff	// team15 - ultraviolet
+40,60,00,ff	// team16 - brown

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -21,23 +21,38 @@
 #ifndef __INCLUDED_WZAPP_C_H__
 #define __INCLUDED_WZAPP_C_H__
 
-// TODO Replace this file during Qt merge.
-#define WZ_THREAD SDL_Thread
-#define WZ_MUTEX SDL_mutex
-#define WZ_SEMAPHORE SDL_sem
-#define wzMutexLock SDL_LockMutex
-#define wzMutexUnlock SDL_UnlockMutex
-#define wzSemaphoreCreate SDL_CreateSemaphore
-#define wzSemaphoreDestroy SDL_DestroySemaphore
-#define wzSemaphoreWait SDL_SemWait
-#define wzSemaphorePost SDL_SemPost
-#define wzThreadJoin(x) SDL_WaitThread(x, NULL)
-#define wzMutexDestroy SDL_DestroyMutex
-#define wzMutexCreate SDL_CreateMutex
-#define wzYieldCurrentThread() SDL_Delay(10)
-#define wzThreadCreate SDL_CreateThread
-#define wzThreadStart(x)
-#include <SDL/SDL.h>
-#include <SDL/SDL_thread.h>
+struct _wzThread;
+struct _wzMutex;
+struct _wzSemaphore;
+
+typedef struct _wzThread WZ_THREAD;
+typedef struct _wzMutex WZ_MUTEX;
+typedef struct _wzSemaphore WZ_SEMAPHORE;
+
+void wzQuit(void);              ///< Quit game
+void wzCreateCursor(CURSOR index, uint8_t *data, uint8_t *mask, int w, int h, int hot_x, int hot_y);
+void wzSetCursor(CURSOR index);
+void wzScreenFlip(void);	///< Swap the graphics buffers
+void wzGrabMouse(void);		///< Trap mouse cursor in application window
+void wzReleaseMouse(void);	///< Undo the wzGrabMouse operation
+bool wzActiveWindow(void);	///< Whether application currently has the mouse pointer over it
+int wzGetTicks(void);		///< Milliseconds since start of game
+void wzFatalDialog(const char *text);	///< Throw up a modal warning dialog
+
+// Thread related
+WZ_THREAD *wzThreadCreate(int (*threadFunc)(void *), void *data);
+int wzThreadJoin(WZ_THREAD *thread);
+void wzThreadStart(WZ_THREAD *thread);
+bool wzIsThreadDone(WZ_THREAD *thread);
+void wzYieldCurrentThread(void);
+WZ_MUTEX *wzMutexCreate(void);
+void wzMutexDestroy(WZ_MUTEX *mutex);
+void wzMutexLock(WZ_MUTEX *mutex);
+void wzMutexUnlock(WZ_MUTEX *mutex);
+WZ_SEMAPHORE *wzSemaphoreCreate(int startValue);
+void wzSemaphoreDestroy(WZ_SEMAPHORE *semaphore);
+void wzSemaphoreWait(WZ_SEMAPHORE *semaphore);
+void wzSemaphorePost(WZ_SEMAPHORE *semaphore);
+int wzSemaphoreAvailable(WZ_SEMAPHORE *semaphore);
 
 #endif

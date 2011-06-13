@@ -1,6 +1,6 @@
-AM_CPPFLAGS = $(SDL_CFLAGS) $(OGGVORBIS_CFLAGS) $(OPENAL_CFLAGS) $(WZ_CPPFLAGS)
+AM_CPPFLAGS = $(OGGVORBIS_CFLAGS) $(OPENAL_CFLAGS) $(WZ_CPPFLAGS) $(QT4_CFLAGS)
 AM_CFLAGS = $(WZ_CFLAGS)
-AM_CXXFLAGS = $(WZ_CXXFLAGS)
+AM_CXXFLAGS = $(WZ_CXXFLAGS) $(QT4_CFLAGS) $(QT4_CFLAGS)
 
 noinst_LIBRARIES = libsound.a
 noinst_HEADERS = \
@@ -16,14 +16,11 @@ noinst_HEADERS = \
 	tracklib.h
 
 libsound_a_SOURCES = \
-	audio.c \
-	audio_id.c \
-	cdaudio.c \
-	oggvorbis.c \
-	openal_error.c \
-	openal_track.c \
-	playlist.c \
-	track.c
-
-libsound_a_LIBADD = $(top_builddir)/lib/gamelib/libgamelib.a \
-	$(top_builddir)/lib/framework/libframework.a
+	audio.cpp \
+	audio_id.cpp \
+	cdaudio.cpp \
+	oggvorbis.cpp \
+	openal_error.cpp \
+	openal_track.cpp \
+	playlist.cpp \
+	track.cpp

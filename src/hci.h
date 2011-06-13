@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,18 +24,13 @@
 #ifndef __INCLUDED_SRC_HCI_H__
 #define __INCLUDED_SRC_HCI_H__
 
-#include "lib/ivis_common/pieclip.h"
+#include <list>
+
+#include "lib/ivis_opengl/pieclip.h"
 #include "lib/widget/widget.h"
 
 #include "message.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
-// store the objects that are being used for the object bar
-#define MAX_OBJECTS 15 //10 we need at least 15 for the 3 different types of factory
 
 #define BASE_COORDS_X	(640)
 #define BASE_COORDS_Y	(480)
@@ -66,7 +61,7 @@ extern "C"
 #define IDOBJ_FORM			3000		// The object back form for build/manufacture/research
 #define IDOBJ_CLOSE			3001		// The form for the close button
 #define IDOBJ_OBJSTART		3002		// The first ID for droids/factories/research
-#define IDOBJ_OBJEND		3021		// The last ID for droids/factories/research
+#define IDOBJ_OBJEND            3099            // The last ID for droids/factories/research
 #define IDOBJ_STATSTART		3100		// The first ID for stats
 #define IDOBJ_STATEND		3199		// The last ID for stats
 #define IDOBJ_PROGBARSTART  3200		// The first ID for stats progress bars.
@@ -112,7 +107,7 @@ extern "C"
 #define IDSTAT_MANULIMITS		4700
 
 #define IDSTAT_ALLYSTART		4800
-#define IDSTAT_ALLYEND			4900
+#define IDSTAT_ALLYEND			5100
 
 // Reticule position.
 #define RET_X				24
@@ -230,12 +225,12 @@ extern "C"
 /* maximum array sizes */
 #define	MAXSTRUCTURES	200	//bumped up from 80.  NOTE: was used for max # in build menus.
 #define	MAXRESEARCH		200 //was 80 topic displayed   "           "
-#define	MAXTEMPLATES	80	//was 20
 #define	MAXFEATURES		80
 #define	MAXCOMPONENT	80
 #define	MAXEXTRASYS		80
 
-typedef enum {
+enum INTMODE
+{
 	INT_NORMAL,		// Standard mode (just the reticule)
 
 	INT_OPTION,		// Option screen
@@ -257,10 +252,7 @@ typedef enum {
 	INT_POPUPMSG,	// Adds a popup message to user
 
     INT_MAXMODE,   //leave as last so we can start the objMode at this value
-} INTMODE;
-
-//NOT ANYMORE! 10/08/98 AB
-//#define INCLUDE_PRODSLIDER	// Include quantity slider in manufacture window.
+};
 
 extern INTMODE intMode;
 
@@ -274,15 +266,8 @@ extern UDWORD			intLastWidget;
 extern UDWORD			objStatID;
 
 /* The current template for the design screen to start with*/
-extern DROID_TEMPLATE	*psCurrTemplate;
-extern DROID_TEMPLATE	**apsTemplateList;
-
-//two colours used for drawing the footprint outline for objects in 2D
-extern PIELIGHT	outlineOK;
-extern PIELIGHT	outlineNotOK;
-
-//value gets set to colour used for drawing
-extern BOOL	outlineTile;
+extern std::vector<DROID_TEMPLATE *> apsTemplateList;  ///< Either a list of templates a factory can build or a list of designable templates, for UI use only.
+extern std::list<DROID_TEMPLATE> localTemplates;       ///< Unsychnronised list, for UI use only.
 
 /*Message View Buffer width and height - MAXIMUM Sizes! - only need to be
 as big as Pie View in Research Msg now*/
@@ -292,21 +277,24 @@ as big as Pie View in Research Msg now*/
 /* pointer to hold the imd to use for a new template in the design screen */
 extern iIMDShape	*pNewDesignIMD;
 
-extern BOOL ClosingMessageView;
-extern BOOL ClosingIntelMap;
-extern BOOL	ClosingTrans;
-extern BOOL	ClosingTransCont;
-extern BOOL	ClosingTransDroids;
-extern BOOL ClosingOrder;
+extern bool ClosingMessageView;
+extern bool ClosingIntelMap;
+extern bool	ClosingTrans;
+extern bool	ClosingTransCont;
+extern bool	ClosingTransDroids;
+extern bool ClosingOrder;
 
 /* Initialise the in game interface */
-extern BOOL intInitialise(void);
+extern bool intInitialise(void);
+
+// Check of coordinate is in the build menu
+extern bool CoordInBuild(int x, int y);
 
 /* Shut down the in game interface */
 extern void interfaceShutDown(void);
 
 /* Return codes for the widget interface */
-typedef enum _int_retval
+enum INT_RETVAL
 {
 	INT_NONE,		// no key clicks have been intercepted
 	INT_INTERCEPT,	// key clicks have been intercepted
@@ -317,7 +305,7 @@ typedef enum _int_retval
 	INT_INTELNOSCROLL,		//The 3DView of the intelligence screen is up
 							// and we don't want scroll (or update!)
 	INT_QUIT,		// The game should quit
-} INT_RETVAL;
+};
 
 /* Run the widgets for the in game interface */
 extern INT_RETVAL intRunWidgets(void);
@@ -326,7 +314,7 @@ extern INT_RETVAL intRunWidgets(void);
 extern void intDisplayWidgets(void);
 
 /* Add the reticule widgets to the widget screen */
-extern BOOL intAddReticule(void);
+extern bool intAddReticule(void);
 extern void intRemoveReticule(void);
 
 /* Set the map view point to the world coordinates x,y */
@@ -346,17 +334,19 @@ extern void intBuildFinished(DROID *psDroid);
 extern void intBuildStarted(DROID *psDroid);
 /* Tell the interface a research facility has completed a topic */
 extern void intResearchFinished(STRUCTURE *psBuilding);
+void intAlliedResearchChanged();
 /* Tell the interface a factory has completed building ALL droids */
 extern void intManufactureFinished(STRUCTURE *psBuilding);
+extern void intUpdateManufacture(STRUCTURE *psBuilding);
 
 /* Sync the interface to an object */
 extern void intObjectSelected(BASE_OBJECT *psObj);
 
 // add the construction interface if a constructor droid is selected
 extern void intConstructorSelected(DROID *psDroid);
-extern BOOL intBuildSelectMode(void);
-extern BOOL intDemolishSelectMode(void);
-extern BOOL intBuildMode(void);
+extern bool intBuildSelectMode(void);
+extern bool intDemolishSelectMode(void);
+extern bool intBuildMode(void);
 
 // add the construction interface if a constructor droid is selected
 void intCommanderSelected(DROID *psDroid);
@@ -364,20 +354,20 @@ void intCommanderSelected(DROID *psDroid);
 extern UWORD numForms(UDWORD total, UDWORD perForm);
 
 //sets up the Intelligence Screen as far as the interface is concerned
-//extern void addIntelScreen(BOOL playImmediate);
+//extern void addIntelScreen(bool playImmediate);
 extern void addIntelScreen(void);
 
 // update shadow...
 extern void intSetShadowPower(UDWORD quantity);
 
 /* Reset the widget screen to just the reticule */
-extern void intResetScreen(BOOL NoAnim);
+extern void intResetScreen(bool NoAnim);
 
 /* Refresh icons on the interface, without disturbing the layout. i.e. smartreset*/
 extern void intRefreshScreen(void);
 
 /* Add the options widgets to the widget screen */
-extern BOOL intAddOptions(void);
+extern bool intAddOptions(void);
 
 /* Remove the stats widgets from the widget screen */
 extern void intRemoveStats(void);
@@ -389,7 +379,7 @@ extern void intRemoveStatsNoAnim(void);
 extern STRUCTURE* interfaceStructList(void);
 
 //sets up the Transporter Screen as far as the interface is concerned
-extern void addTransporterInterface(DROID *psSelected, BOOL onMission);
+extern void addTransporterInterface(DROID *psSelected, bool onMission);
 
 /*causes a reticule button to start flashing*/
 extern void flashReticuleButton(UDWORD buttonID);
@@ -410,7 +400,7 @@ extern void intShowPowerBar(void);
 extern void forceHidePowerBar(void);
 
 /* Add the Proximity message buttons */
-extern BOOL intAddProximityButton(PROXIMITY_DISPLAY *psProxDisp, UDWORD inc);
+extern bool intAddProximityButton(PROXIMITY_DISPLAY *psProxDisp, UDWORD inc);
 
 /*Remove a Proximity Button - when the message is deleted*/
 extern void intRemoveProximityButton(PROXIMITY_DISPLAY *psProxDisp);
@@ -421,14 +411,14 @@ void	setKeyButtonMapping( UDWORD	val );
 
 
 STRUCTURE *intFindAStructure(void);
-STRUCTURE* intGotoNextStructureType(UDWORD structType,BOOL JumpTo,BOOL CancelDrive);
-DROID *intGotoNextDroidType(DROID *CurrDroid,UDWORD droidType,BOOL AllowGroup);
+STRUCTURE* intGotoNextStructureType(UDWORD structType,bool JumpTo,bool CancelDrive);
+DROID *intGotoNextDroidType(DROID *CurrDroid,UDWORD droidType,bool AllowGroup);
 
 /*Checks to see if there are any research topics to do and flashes the button*/
 extern void intCheckResearchButton(void);
 
 // see if a reticule button is enabled
-extern BOOL intCheckReticuleButEnabled(UDWORD id);
+extern bool intCheckReticuleButEnabled(UDWORD id);
 
 //access function for selected object in the interface
 extern BASE_OBJECT * getCurrentSelected(void);
@@ -438,12 +428,8 @@ extern void intResetPreviousObj(void);
 
 extern void HandleClosingWindows(void);
 
-extern BOOL intIsRefreshing(void);
+extern bool intIsRefreshing(void);
 
 extern void intDemolishCancel(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_HCI_H__

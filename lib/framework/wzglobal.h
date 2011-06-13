@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1992-2007  Trolltech ASA.
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -424,6 +424,19 @@
 
 
 /*!
+ * \def WZ_DECL_ALWAYS_INLINE
+ * GCC: "Generally, functions are not inlined unless optimization is specified. For functions
+ *       declared inline, this attribute inlines the function even if no optimization level 
+ *       was specified."
+ */
+#if WZ_CC_GNU_PREREQ(2,5)
+#  define WZ_DECL_ALWAYS_INLINE __attribute__((__always_inline__))
+#else
+#  define WZ_DECL_ALWAYS_INLINE
+#endif
+
+
+/*!
  * \def WZ_DECL_PURE
  * GCC: "Many functions have no effects except the return value and their return value depends
  *       only on the parameters and/or global variables. Such a function can be subject to
@@ -501,34 +514,12 @@
 #  error "Thread local storage attribute required"
 #endif
 
-
-/*! \def WZ_ASSERT_STATIC_STRING
- * Asserts that the given string is statically allocated.
- */
-#if defined(__cplusplus)
-#  include <typeinfo>
-#  define WZ_ASSERT_STATIC_STRING(_var) assert(typeid(_var) == typeid(char[sizeof(_var)]))
-#elif defined(WZ_CC_GNU) || defined(WZ_CC_INTEL)
-#  define WZ_ASSERT_STATIC_STRING(_var) STATIC_ASSERT(__builtin_types_compatible_p(typeof(_var), char[]))
-#else
-#  define WZ_ASSERT_STATIC_STRING(_var) (void)(_var)
-#endif
-
-/*! \def WZ_ASSERT_ARRAY
- * Asserts that the given variable is a (statically sized) array, not just a pointer.
- */
-#if defined(__cplusplus)
-#  define WZ_ASSERT_ARRAY_EXPR(a) 0
-#elif defined(WZ_CC_GNU) || defined(WZ_CC_INTEL)
-/* &a[0] degrades to a pointer: a different type from an array */
-#  define WZ_ASSERT_ARRAY_EXPR(a) STATIC_ASSERT_EXPR(!__builtin_types_compatible_p(typeof(a), typeof(&(a)[0])))
-#else
-#  define WZ_ASSERT_ARRAY_EXPR(a) 0
-#endif
-#define WZ_ASSERT_ARRAY(a) (void)WZ_ASSERT_ARRAY_EXPR(a)
-
-
 /* ---- Platform specific setup ---- */
+#if defined __cplusplus
+// This check is required for the embed .c files (miniupnp) so we don't get conflicts.
+#include <QtCore/QString>
+// **NOTE: Qt headers _must_ be before platform specific headers so we don't get conflicts.
+#endif
 
 
 #if defined(WZ_OS_WIN)
@@ -547,6 +538,8 @@
 #      include <stdlib.h>
 #      include <crtdbg.h>
 #    endif /* _DEBUG */
+// Required for alloca
+#    include <malloc.h>
 #  endif /* WZ_CC_* */
 
 #  define WIN32_LEAN_AND_MEAN
@@ -557,7 +550,7 @@
 
 #  if defined(WZ_CC_MSVC)
 //   notify people we are disabling these warning messages.
-#    pragma message (" *** Warnings 4018,4100,4127,4204,4244,4267,4389 have been squelched. ***")
+#    pragma message (" *** Warnings 4018,4100,4127,4204,4244,4267,4389,4512,4800 have been squelched. ***")
 #    pragma warning (disable : 4018) // Shut up: '>' : signed/unsigned mismatch
 #    pragma warning (disable : 4100) // Shut up: unreferenced formal parameter (FIXME)
 #    pragma warning (disable : 4127) // Shut up: conditional expression is constant (eg. "while(0)")
@@ -565,6 +558,8 @@
 #    pragma warning (disable : 4244) // Shut up: conversion from 'float' to 'int', possible loss of data
 #    pragma warning (disable : 4267) // Shut up: conversion from 'size_t' to 'type', possible loss of data
 #    pragma warning (disable : 4389) // Shut up: '==' : signed/unsigned mismatch
+#    pragma warning (disable : 4800) // Shut up: 'bool' : forcing value to bool 'true' or 'false' (performance warning)
+#    pragma warning (disable : 4512) // Shut up: 'class' : assignment operator could not be generated
 
 #    define strcasecmp _stricmp
 #    define strncasecmp _strnicmp
@@ -576,6 +571,20 @@
 #    define isfinite _finite
 
 #    define PATH_MAX MAX_PATH
+
+// These are useless for MSVC builds, since we don't populate them / use them at this time.
+#ifndef PACKAGE_DISTRIBUTOR
+# define PACKAGE_DISTRIBUTOR "UNKNOWN"
+#endif
+#ifndef PACKAGE_VERSION
+# define PACKAGE_VERSION "UNKNOWN"
+#endif
+#ifndef PACKAGE
+# define PACKAGE "Warzone"
+#endif
+// Apparently flex declares isatty with C++ linkage on Windows. Don't ask why. Declaring here instead.
+//extern "C" int isatty(int);
+
 #  endif /* WZ_CC_MSVC */
 
 /* Make sure that PATH_MAX is large enough to use as the size for return
@@ -610,5 +619,40 @@
  */
 # define va_copy(dest, src) (void)((dest) = (src))
 #endif // !WZ_C99 && !va_copy
+
+/*! \def WZ_ASSERT_STATIC_STRING
+ * Asserts that the given string is statically allocated.
+ */
+#if defined(__cplusplus)
+   template <int N>
+   static inline char _WZ_ASSERT_STATIC_STRING_FUNCTION(char const (&)[N]) { return '\0'; }  // Regular array.
+   static inline char *_WZ_ASSERT_STATIC_STRING_FUNCTION(char const *&) { return NULL; }     // Eeek, it's a pointer!
+   static inline char *_WZ_ASSERT_STATIC_STRING_FUNCTION(char *&) { return NULL; }           // Eeek, it's a pointer!
+#  define WZ_ASSERT_STATIC_STRING(_var) STATIC_ASSERT(sizeof(_WZ_ASSERT_STATIC_STRING_FUNCTION(_var)) == sizeof(char))
+#elif defined(WZ_CC_GNU) || defined(WZ_CC_INTEL)
+#  define WZ_ASSERT_STATIC_STRING(_var) STATIC_ASSERT(__builtin_types_compatible_p(typeof(_var), char[]))
+#else
+#  define WZ_ASSERT_STATIC_STRING(_var) (void)(_var)
+#endif
+
+/*! \def WZ_ASSERT_ARRAY
+ * Asserts that the given variable is a (statically sized) array, not just a pointer.
+ */
+#if defined(__cplusplus)
+   template <typename T, int N>
+   static inline char _WZ_ASSERT_ARRAY_EXPR_FUNCTION(T (&)[N]) { return '\0'; }      // Regular array.
+   static inline char _WZ_ASSERT_ARRAY_EXPR_FUNCTION(void const *) { return '\0'; }  // Catch static arrays of unnamed structs.
+   template <typename T>
+   static inline char *_WZ_ASSERT_ARRAY_EXPR_FUNCTION(T *&) { return NULL; }         // Eeek, it's a pointer!
+#  define WZ_ASSERT_ARRAY_EXPR(_var) STATIC_ASSERT_EXPR(sizeof(_WZ_ASSERT_ARRAY_EXPR_FUNCTION(_var)) == sizeof(char))
+#elif defined(WZ_CC_GNU) || defined(WZ_CC_INTEL)
+/* &a[0] degrades to a pointer: a different type from an array */
+#  define WZ_ASSERT_ARRAY_EXPR(a) STATIC_ASSERT_EXPR(!__builtin_types_compatible_p(typeof(a), typeof(&(a)[0])))
+#else
+#  define WZ_ASSERT_ARRAY_EXPR(a) 0
+#endif
+#define WZ_ASSERT_ARRAY(a) (void)WZ_ASSERT_ARRAY_EXPR(a)
+
+
 
 #endif /* WZGLOBAL_H */

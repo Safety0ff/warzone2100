@@ -6,19 +6,25 @@ include $(top_srcdir)/makerules/common.mk
 CPPFLAGS := $(CPPFLAGS) -I$(top_srcdir)/lib/ivis_opengl
 
 SRC= \
+	bitimage.cpp \
+	imd.cpp \
+	imdload.cpp \
+	jpeg_encoder.cpp \
+	pieclip.cpp \
+	png_util.cpp \
 	GLee.c \
-	ivi.c \
-	pieblitfunc.c \
-	piedraw.c \
-	piefunc.c \
+	ivi.cpp \
+	pieblitfunc.cpp \
+	piedraw.cpp \
+	piefunc.cpp \
 	piematrix.cpp \
-	piemode.c \
-	piepalette.c \
-	piestate.c \
-	rendmode.c \
-	screen.c \
-	tex.c \
-	textdraw.c
+	piemode.cpp \
+	piepalette.cpp \
+	piestate.cpp \
+	rendmode.cpp \
+	screen.cpp \
+	tex.cpp \
+	textdraw.cpp
 
 LIB=ivis_opengl
 

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -27,13 +27,8 @@
 #include "cmddroiddef.h"
 #include "droiddef.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 // Initialise the command droids
-extern BOOL cmdDroidInit(void);
+extern bool cmdDroidInit(void);
 
 // ShutDown the command droids
 extern void cmdDroidShutDown(void);
@@ -63,7 +58,7 @@ extern SDWORD cmdDroidGetIndex(DROID *psCommander);
 extern unsigned int cmdDroidMaxGroup(const DROID* psCommander);
 
 // update the kills of a command droid if psKiller is in a command group
-extern void cmdDroidUpdateKills(DROID *psKiller, float experienceInc);
+extern void cmdDroidUpdateKills(DROID *psKiller, uint32_t experienceInc);
 
 // get the level of a droids commander, if any
 extern unsigned int cmdGetCommanderLevel(const DROID* psDroid);
@@ -71,17 +66,10 @@ extern unsigned int cmdGetCommanderLevel(const DROID* psDroid);
 // returns true if a unit in question has is assigned to a commander
 extern bool hasCommander(const DROID* psDroid);
 
-// Select all droids assigned to the passed in command droids
-extern void	cmdSelectSubDroids(DROID *psDroid);
-
 // note that commander experience should be increased
-extern void cmdDroidMultiExpBoost(BOOL bDoit);
+extern void cmdDroidMultiExpBoost(bool bDoit);
 
 // check whether commander experience should be increased
-extern BOOL cmdGetDroidMultiExpBoost(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+extern bool cmdGetDroidMultiExpBoost(void);
 
 #endif // __INCLUDED_SRC_CMDDROID_H__

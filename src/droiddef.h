@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,18 +24,19 @@
 #ifndef __INCLUDED_DROIDDEF_H__
 #define __INCLUDED_DROIDDEF_H__
 
+#include <vector>
+
 #include "lib/gamelib/animobj.h"
 
 #include "stringdef.h"
+#include "actiondef.h"
 #include "basedef.h"
 #include "movedef.h"
+#include "orderdef.h"
 #include "statsdef.h"
 #include "weapondef.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
+#include "orderdef.h"
+#include "actiondef.h"
 
 /*!
  * The number of components in the asParts / asBits arrays.
@@ -59,7 +60,7 @@ extern "C"
 /* The different types of droid */
 // NOTE, if you add to, or change this list then you'll need
 // to update the DroidSelectionWeights lookup table in Display.c
-typedef enum _droid_type
+enum DROID_TYPE
 {
 	DROID_WEAPON,           ///< Weapon droid
 	DROID_SENSOR,           ///< Sensor droid
@@ -75,33 +76,31 @@ typedef enum _droid_type
 	DROID_CYBORG_REPAIR,    ///< cyborg repair droid - new for update 28/5/99
 	DROID_CYBORG_SUPER,     ///< cyborg repair droid - new for update 7/6/99
 	DROID_ANY,              ///< Any droid. Only used as a parameter for intGotoNextDroidType(DROID_TYPE).
-} DROID_TYPE;
+};
 
-typedef struct _component
+struct COMPONENT
 {
 	UBYTE           nStat;          ///< Allowing a maximum of 255 stats per file
-} COMPONENT;
+};
 
-// maximum number of queued orders
-#define ORDER_LIST_MAX		10
-
-typedef struct _order_list
+struct OrderListEntry
 {
-	SDWORD          order;
-	void*           psOrderTarget;  ///< this needs to cope with objects and stats
+	DROID_ORDER     order;
 	UWORD           x, y, x2, y2;   ///< line build requires two sets of coords
 	uint16_t        direction;      ///< Needed to align structures with viewport.
-} ORDER_LIST;
+	void*           psOrderTarget;  ///< this needs to cope with objects and stats
+};
+typedef std::vector<OrderListEntry> OrderList;
 
-typedef struct _droid_template
+struct DROID_TEMPLATE : public BASE_STATS
 {
+	DROID_TEMPLATE();
+	DROID_TEMPLATE(LineView line);
+
 	// On the PC the pName entry in STATS_BASE is redundant and can be assumed to be NULL,
-	STATS_BASE;						/* basic stats */
 
 	/// on the PC this contains the full editable UTF-8 encoded name of the template
 	char            aName[MAX_STR_LENGTH];
-
-	UBYTE           NameVersion;                //< Version number used in name (e.g. Viper Mk "I" would be stored as 1 - Viper Mk "X" as 10)
 
 	/*!
 	 * The droid components.
@@ -124,14 +123,18 @@ typedef struct _droid_template
 
 	DROID_TYPE      droidType;                  ///< The type of droid
 	UDWORD          multiPlayerID;              ///< multiplayer unique descriptor(cant use id's for templates). Used for save games as well now - AB 29/10/98
-	struct _droid_template* psNext;             ///< Pointer to next template
+	DROID_TEMPLATE* psNext;                     ///< Pointer to next template
 	bool		prefab;                     ///< Not player designed, not saved, never delete or change
-} WZ_DECL_MAY_ALIAS DROID_TEMPLATE;
+};
 
-typedef struct DROID
+struct PACKAGED_CHECK;
+class DROID_GROUP;
+struct STRUCTURE;
+
+struct DROID : public BASE_OBJECT
 {
-	/* The common structure elements for all objects */
-	BASE_ELEMENTS(struct DROID);
+	DROID(uint32_t id, unsigned player);
+	~DROID();
 
 	/// UTF-8 name of the droid. This is generated from the droid template and cannot be changed by the game player after creation.
 	char            aName[MAX_STR_LENGTH];
@@ -151,8 +154,7 @@ typedef struct DROID
 	UDWORD          weight;
 	UDWORD          baseSpeed;                      ///< the base speed dependant on propulsion type
 	UDWORD          originalBody;                   ///< the original body points
-	float           experience;
-	UBYTE           NameVersion;                    ///< Version number used for generating on-the-fly names (e.g. Viper Mk "I" would be stored as 1 - Viper Mk "X" as 10)  - copied from droid template
+	uint32_t        experience;
 
 	int		lastFrustratedTime;		///< Set when eg being stuck; used for eg firing indiscriminately at map features to clear the way (note: signed, so wrap arounds after 24.9 days)
 
@@ -162,16 +164,16 @@ typedef struct DROID
 	WEAPON          asWeaps[DROID_MAXWEAPS];
 
 	// The group the droid belongs to
-	struct _droid_group* psGroup;
-	struct DROID*  psGrpNext;
-	struct _structure* psBaseStruct;                ///< a structure that this droid might be associated with. For VTOLs this is the rearming pad
+	DROID_GROUP *   psGroup;
+	DROID *         psGrpNext;
+	STRUCTURE *     psBaseStruct;                   ///< a structure that this droid might be associated with. For VTOLs this is the rearming pad
 	// queued orders
-	SDWORD          listSize;
-	ORDER_LIST      asOrderList[ORDER_LIST_MAX];
-	BOOL            waitingForOwnReceiveDroidInfoMessage;  ///< Set to true when processing a message from asOrderList, and reset to false when the message arrives.
+	SDWORD          listSize;                       ///< Gives the number of synchronised orders. Orders from listSize to the real end of the list may not affect game state.
+	OrderList       asOrderList;                    ///< The range [0; listSize - 1] corresponds to synchronised orders, and the range [listPendingBegin; listPendingEnd - 1] corresponds to the orders that will remain, once all orders are synchronised.
+	unsigned        listPendingBegin;               ///< Index of first order which will not be erased by a pending order. After all messages are processed, the orders in the range [listPendingBegin; listPendingEnd - 1] will remain.
 
 	/* Order data */
-	SDWORD          order;
+	DROID_ORDER     order;
 	UWORD           orderX, orderY;
 	UWORD           orderX2, orderY2;
 	uint16_t        orderDirection;
@@ -192,8 +194,8 @@ typedef struct DROID
 	UDWORD          secondaryOrder;
 
 	/* Action data */
-	SDWORD          action;
-	UDWORD          actionX, actionY;
+	DROID_ACTION    action;
+	Vector2i        actionPos;
 	BASE_OBJECT*    psActionTarget[DROID_MAXWEAPS]; ///< Action target object
 	UDWORD          actionStarted;                  ///< Game time action started
 	UDWORD          actionPoints;                   ///< number of points done by action since start
@@ -205,18 +207,15 @@ typedef struct DROID
 
 	/* Movement control data */
 	MOVE_CONTROL    sMove;
-	SPACETIME       prevSpacetime;                  ///< Location of droid in previous tick.
+	Spacetime       prevSpacetime;                  ///< Location of droid in previous tick.
+	uint8_t		blockedBits;			///< Bit set telling which tiles block this type of droid (TODO)
 
 	/* anim data */
 	ANIM_OBJECT     *psCurAnim;
 	SDWORD          iAudioID;
 
 	// Synch checking
-	void *          gameCheckDroid;                 ///< Last PACKAGED_CHECK, for synchronisation use only (see multisync.c). TODO Make synch perfect, so that this isn't needed at all.
-} WZ_DECL_MAY_ALIAS DROID;
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+	PACKAGED_CHECK *gameCheckDroid;                 ///< Last PACKAGED_CHECK, for synchronisation use only (see multisync.c). TODO Make synch perfect, so that this isn't needed at all.
+};
 
 #endif // __INCLUDED_DROIDDEF_H__

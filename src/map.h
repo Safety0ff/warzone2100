@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -31,13 +31,8 @@
 #include "multiplay.h"
 #include "display.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
-
 /* The different types of terrain as far as the game is concerned */
-typedef enum _terrain_type
+enum TYPE_OF_TERRAIN
 {
 	TER_SAND,
 	TER_SANDYBRUSH,
@@ -53,7 +48,7 @@ typedef enum _terrain_type
 	TER_SLUSH,
 
 	TER_MAX,
-} TYPE_OF_TERRAIN;
+};
 
 #define TILESET_ARIZONA 0
 #define TILESET_URBAN	1
@@ -68,10 +63,9 @@ typedef enum _terrain_type
 #define TILE_ROTMASK	0x3000
 #define TILE_ROTSHIFT	12
 #define TILE_TRIFLIP	0x0800	// This bit describes the direction the tile is split into 2 triangles (same as triangleFlip)
-#define TILE_HILIGHT	0x0400	// set when the tile has the structure cursor over it
-
 #define TILE_NUMMASK	0x01ff
 
+#define BITS_TEMPORARY		0x04	///< For used in temporary calculations
 
 static inline unsigned short TileNumber_tile(unsigned short tilenumber)
 {
@@ -84,39 +78,176 @@ static inline unsigned short TileNumber_texture(unsigned short tilenumber)
 	return tilenumber & ~TILE_NUMMASK;
 }
 
-#define BITS_NOTBLOCKING	0x01	///< Units can drive on this even if there is a structure or feature on it
 #define BITS_DECAL		0x02	///< Does this tile has a decal? If so, the tile from "texture" is drawn on top of the terrain.
 #define BITS_FPATHBLOCK		0x10	///< Bit set temporarily by find path to mark a blocking tile
 #define BITS_ON_FIRE            0x20    ///< Whether tile is burning
 #define BITS_GATEWAY		0x40	///< Bit set to show a gateway on the tile
-#define BITS_TALLSTRUCTURE	0x80	///< Bit set to show a tall structure which camera needs to avoid.
 
-typedef struct _ground_type
+struct GROUND_TYPE
 {
 	const char *textureName;
 	float textureSize;
-} GROUND_TYPE;
+};
 
 /* Information stored with each tile */
-typedef struct _maptile
+struct MAPTILE
 {
 	uint8_t			tileInfoBits;
-	uint8_t			tileExploredBits;
-	uint8_t			sensorBits;		// bit per player, who can see tile with sensor
-	float			height;			// The height at the top left of the tile
+	PlayerMask              tileExploredBits;
+	PlayerMask              sensorBits;             ///< bit per player, who can see tile with sensor
 	uint8_t			illumination;	// How bright is this tile?
-	uint16_t		texture;		// Which graphics texture is on this tile
 	uint8_t			watchers[MAX_PLAYERS];		// player sees through fog of war here with this many objects
-	float			level;
+	uint16_t		texture;		// Which graphics texture is on this tile
+	int32_t                 height;                 ///< The height at the top left of the tile
+	float                   level;                  ///< The visibility level of the top left of the tile, for this client.
 	BASE_OBJECT		*psObject;		// Any object sitting on the location (e.g. building)
 	PIELIGHT		colour;
 	uint16_t		limitedContinent;	///< For land or sea limited propulsion types
 	uint16_t		hoverContinent;		///< For hover type propulsions
 	uint8_t			ground;			///< The ground type used for the terrain renderer
 	uint16_t                fireEndTime;            ///< The (uint16_t)(gameTime / GAME_TICKS_PER_UPDATE) that BITS_ON_FIRE should be cleared.
-	float			waterLevel;		///< At what height is the water for this tile
-} MAPTILE;
+	int32_t                 waterLevel;             ///< At what height is the water for this tile
+};
 
+/* The size and contents of the map */
+extern SDWORD	mapWidth, mapHeight;
+extern MAPTILE *psMapTiles;
+extern float waterLevel;
+extern GROUND_TYPE *psGroundTypes;
+extern int numGroundTypes;
+extern int waterGroundType;
+extern int cliffGroundType;
+extern char *tileset;
+
+#define AIR_BLOCKED		0x01	///< Aircraft cannot pass tile
+#define FEATURE_BLOCKED		0x02	///< Ground units cannot pass tile due to item in the way
+#define WATER_BLOCKED		0x04	///< Units that cannot pass water are blocked by this tile
+#define LAND_BLOCKED		0x08	///< The inverse of the above -- for propeller driven crafts
+
+#define AUXBITS_NONPASSABLE     0x01    ///< Is there any building blocking here, other than a gate that would open for us?
+#define AUXBITS_OUR_BUILDING	0x02	///< Do we or our allies have a building at this tile
+#define AUXBITS_BLOCKING        0x04    ///< Is there any building currently blocking here?
+#define AUXBITS_TEMPORARY	0x08	///< Temporary bit used in calculations
+#define AUXBITS_DANGER		0x10	///< Does AI sense danger going there?
+#define AUXBITS_THREAT		0x20	///< Can hostile players shoot here?
+#define AUXBITS_AATHREAT	0x40	///< Can hostile players shoot at my VTOLs here?
+#define AUXBITS_UNUSED          0x80    ///< Unused
+#define AUXBITS_ALL		0xff
+
+#define AUX_MAP		0
+#define AUX_ASTARMAP	1
+#define AUX_DANGERMAP	2 
+#define AUX_MAX		3
+
+extern uint8_t *psBlockMap[AUX_MAX];
+extern uint8_t *psAuxMap[MAX_PLAYERS + AUX_MAX];	// yes, we waste one element... eyes wide open... makes API nicer
+
+/// Find aux bitfield for a given tile
+WZ_DECL_ALWAYS_INLINE static inline uint8_t auxTile(int x, int y, int player)
+{
+	return psAuxMap[player][x + y * mapWidth];
+}
+
+/// Find blocking bitfield for a given tile
+WZ_DECL_ALWAYS_INLINE static inline uint8_t blockTile(int x, int y, int slot)
+{
+	return psBlockMap[slot][x + y * mapWidth];
+}
+
+/// Store a shadow copy of a player's aux map for use in threaded calculations
+static inline void auxMapStore(int player, int slot)
+{
+	memcpy(psBlockMap[slot], psBlockMap[0], sizeof(*psBlockMap[player]) * mapWidth * mapHeight);
+	memcpy(psAuxMap[MAX_PLAYERS + slot], psAuxMap[player], sizeof(*psAuxMap[player]) * mapWidth * mapHeight);
+}
+
+/// Restore selected fields from the shadow copy of a player's aux map (ignoring the block map)
+static inline void auxMapRestore(int player, int slot, int mask)
+{
+	int i;
+	uint8_t original, cached;
+
+	for (i = 0; i < mapHeight * mapWidth; i++)
+	{
+		original = psAuxMap[player][i];
+		cached = psAuxMap[MAX_PLAYERS + slot][i];
+		psAuxMap[player][i] = original ^ ((original ^ cached) & mask); 
+	}
+}
+
+/// Set aux bits. Always set identically for all players. States not set are retained.
+WZ_DECL_ALWAYS_INLINE static inline void auxSet(int x, int y, int player, int state)
+{
+	psAuxMap[player][x + y * mapWidth] |= state;
+}
+
+/// Set aux bits. Always set identically for all players. States not set are retained.
+WZ_DECL_ALWAYS_INLINE static inline void auxSetAll(int x, int y, int state)
+{
+	int i;
+
+	for (i = 0; i < MAX_PLAYERS; i++)
+	{
+		psAuxMap[i][x + y * mapWidth] |= state;
+	}
+}
+
+/// Set aux bits. Always set identically for all players. States not set are retained.
+WZ_DECL_ALWAYS_INLINE static inline void auxSetAllied(int x, int y, int player, int state)
+{
+	int i;
+
+	for (i = 0; i < MAX_PLAYERS; i++)
+	{
+		if (alliancebits[player] & (1 << i))
+		{
+			psAuxMap[i][x + y * mapWidth] |= state;
+		}
+	}
+}
+
+/// Set aux bits. Always set identically for all players. States not set are retained.
+WZ_DECL_ALWAYS_INLINE static inline void auxSetEnemy(int x, int y, int player, int state)
+{
+	int i;
+
+	for (i = 0; i < MAX_PLAYERS; i++)
+	{
+		if (!(alliancebits[player] & (1 << i)))
+		{
+			psAuxMap[i][x + y * mapWidth] |= state;
+		}
+	}
+}
+
+/// Clear aux bits. Always set identically for all players. States not cleared are retained.
+WZ_DECL_ALWAYS_INLINE static inline void auxClear(int x, int y, int player, int state)
+{
+	psAuxMap[player][x + y * mapWidth] &= ~state;
+}
+
+/// Clear all aux bits. Always set identically for all players. States not cleared are retained.
+WZ_DECL_ALWAYS_INLINE static inline void auxClearAll(int x, int y, int state)
+{
+	int i;
+
+	for (i = 0; i < MAX_PLAYERS; i++)
+	{
+		psAuxMap[i][x + y * mapWidth] &= ~state;
+	}
+}
+
+/// Set blocking bits. Always set identically for all players. States not set are retained.
+WZ_DECL_ALWAYS_INLINE static inline void auxSetBlocking(int x, int y, int state)
+{
+	psBlockMap[0][x + y * mapWidth] |= state;
+}
+
+/// Clear blocking bits. Always set identically for all players. States not cleared are retained.
+WZ_DECL_ALWAYS_INLINE static inline void auxClearBlocking(int x, int y, int state)
+{
+	psBlockMap[0][x + y * mapWidth] &= ~state;
+}
 
 /**
  * Check if tile contains a structure or feature. Function is thread-safe,
@@ -161,24 +292,6 @@ static inline bool tileIsExplored(const MAPTILE *psTile)
 	return psTile->tileExploredBits & (1 << selectedPlayer);
 }
 
-/** Check if tile is highlighted by the user. Function is thread-safe. */
-static inline bool TileIsHighlighted(const MAPTILE* tile)
-{
-	return tile->texture & TILE_HILIGHT;
-}
-
-/** Check if tile is not blocking, even if structure or feature on it */
-static inline bool TileIsNotBlocking(const MAPTILE *tile)
-{
-	return tile->tileInfoBits & BITS_NOTBLOCKING;
-}
-
-/** Check if tile contains a tall structure. Function is thread-safe. */
-static inline WZ_DECL_PURE bool TileHasTallStructure(const MAPTILE* tile)
-{
-	return tile->tileInfoBits & BITS_TALLSTRUCTURE;
-}
-
 /** Check if tile contains a small structure. Function is NOT thread-safe. */
 static inline bool TileHasSmallStructure(const MAPTILE* tile)
 {
@@ -186,18 +299,9 @@ static inline bool TileHasSmallStructure(const MAPTILE* tile)
 	    && ((STRUCTURE*)tile->psObject)->pStructureType->height == 1;
 }
 
-#define SET_TILE_NOTBLOCKING(x)	((x)->tileInfoBits |= BITS_NOTBLOCKING)
-#define CLEAR_TILE_NOTBLOCKING(x)	((x)->tileInfoBits &= ~BITS_NOTBLOCKING)
-
 #define SET_TILE_DECAL(x)	((x)->tileInfoBits |= BITS_DECAL)
 #define CLEAR_TILE_DECAL(x)	((x)->tileInfoBits &= ~BITS_DECAL)
 #define TILE_HAS_DECAL(x)	((x)->tileInfoBits & BITS_DECAL)
-
-#define SET_TILE_HIGHLIGHT(x)	((x)->texture |= TILE_HILIGHT)
-#define CLEAR_TILE_HIGHLIGHT(x)	((x)->texture &= ~TILE_HILIGHT)
-
-#define SET_TILE_TALLSTRUCTURE(x)	((x)->tileInfoBits |= BITS_TALLSTRUCTURE)
-#define CLEAR_TILE_TALLSTRUCTURE(x)	((x)->tileInfoBits &= ~BITS_TALLSTRUCTURE)
 
 // Multiplier for the tile height
 #define	ELEVATION_SCALE	2
@@ -236,7 +340,6 @@ static inline unsigned char terrainType(const MAPTILE * tile)
 /* The size and contents of the map */
 extern SDWORD	mapWidth, mapHeight;
 extern MAPTILE *psMapTiles;
-extern float waterLevel;
 
 extern GROUND_TYPE *psGroundTypes;
 extern int numGroundTypes;
@@ -269,6 +372,22 @@ static inline int32_t map_coord(int32_t worldCoord)
 	return worldCoord >> TILE_SHIFT;
 }
 
+/// Only for graphics!
+static inline float map_coordf(int32_t worldCoord)
+{
+	return (float)worldCoord / TILE_UNITS;
+}
+
+static inline Vector2i world_coord(Vector2i const &mapCoord)
+{
+	return Vector2i(world_coord(mapCoord.x), world_coord(mapCoord.y));
+}
+
+static inline Vector2i map_coord(Vector2i const &worldCoord)
+{
+	return Vector2i(map_coord(worldCoord.x), map_coord(worldCoord.y));
+}
+
 /* Make sure world coordinates are inside the map */
 /** Clip world coordinates to make sure they're inside the map's boundaries
  *  \param worldX a pointer to a X coordinate inside the map
@@ -289,20 +408,16 @@ static inline void clip_world_offmap(int* worldX, int* worldY)
 #define map_round(coord) ((coord) & (TILE_UNITS - 1))
 
 /* Shutdown the map module */
-extern BOOL mapShutdown(void);
+extern bool mapShutdown(void);
 
 /* Create a new map of a specified size */
-extern BOOL mapNew(UDWORD width, UDWORD height);
+extern bool mapNew(UDWORD width, UDWORD height);
 
 /* Load the map data */
-extern BOOL mapLoad(char *filename);
+extern bool mapLoad(char *filename, bool preview);
 
 /* Save the map data */
-extern BOOL mapSave(char **ppFileData, UDWORD *pFileSize);
-
-/* New savegame format */
-BOOL mapSaveTagged(char *pFileName);
-BOOL mapLoadTagged(char *pFileName);
+extern bool mapSave(char **ppFileData, UDWORD *pFileSize);
 
 /** Return a pointer to the tile structure at x,y in map coordinates */
 static inline WZ_DECL_PURE MAPTILE *mapTile(int32_t x, int32_t y)
@@ -321,65 +436,73 @@ static inline WZ_DECL_PURE MAPTILE *mapTile(int32_t x, int32_t y)
 	return &psMapTiles[x + (y * mapWidth)];
 }
 
+static inline WZ_DECL_PURE MAPTILE *mapTile(Vector2i const &v) { return mapTile(v.x, v.y); }
+
 /** Return a pointer to the tile structure at x,y in world coordinates */
-#define worldTile(_x, _y) mapTile(map_coord(_x), map_coord(_y))
+static inline WZ_DECL_PURE MAPTILE *worldTile(int32_t x, int32_t y) { return mapTile(map_coord(x), map_coord(y)); }
+static inline WZ_DECL_PURE MAPTILE *worldTile(Vector2i const &v) { return mapTile(map_coord(v)); }
 
 /// Return ground height of top-left corner of tile at x,y
-static inline WZ_DECL_PURE float map_TileHeight(SDWORD x, SDWORD y)
+static inline WZ_DECL_PURE int32_t map_TileHeight(int32_t x, int32_t y)
 {
-	if ( x >= mapWidth || y >= mapHeight )
+	if ( x >= mapWidth || y >= mapHeight || x < 0 || y < 0 )
 	{
 		return 0;
 	}
-	return psMapTiles[x + (y * mapWidth)].height * ELEVATION_SCALE;
+	return psMapTiles[x + (y * mapWidth)].height;
 }
 
 /// Return water height of top-left corner of tile at x,y
-static inline WZ_DECL_PURE float map_WaterHeight(SDWORD x, SDWORD y)
+static inline WZ_DECL_PURE int32_t map_WaterHeight(int32_t x, int32_t y)
 {
-	if ( x >= mapWidth || y >= mapHeight )
+	if ( x >= mapWidth || y >= mapHeight || x < 0 || y < 0 )
 	{
 		return 0;
 	}
-	return psMapTiles[x + (y * mapWidth)].waterLevel * ELEVATION_SCALE;
+	return psMapTiles[x + (y * mapWidth)].waterLevel;
 }
 
 /// Return max(ground, water) height of top-left corner of tile at x,y
-static inline WZ_DECL_PURE float map_TileHeightSurface(SDWORD x, SDWORD y)
+static inline WZ_DECL_PURE int32_t map_TileHeightSurface(int32_t x, int32_t y)
 {
-	if ( x >= mapWidth || y >= mapHeight )
+	if ( x >= mapWidth || y >= mapHeight || x < 0 || y < 0 )
 	{
 		return 0;
 	}
-	return MAX(psMapTiles[x + (y * mapWidth)].height, psMapTiles[x + (y * mapWidth)].waterLevel) * ELEVATION_SCALE;
+	return MAX(psMapTiles[x + (y * mapWidth)].height, psMapTiles[x + (y * mapWidth)].waterLevel);
 }
 
 
 /*sets the tile height */
-static inline void setTileHeight(SDWORD x, SDWORD y, float height)
+static inline void setTileHeight(int32_t x, int32_t y, int32_t height)
 {
-	ASSERT_OR_RETURN( , x < mapWidth, "x coordinate %u bigger than map width %u", x, mapWidth);
-	ASSERT_OR_RETURN( , y < mapHeight, "y coordinate %u bigger than map height %u", y, mapHeight);
+	ASSERT_OR_RETURN( , x < mapWidth && x >= 0, "x coordinate %d bigger than map width %u", x, mapWidth);
+	ASSERT_OR_RETURN( , y < mapHeight && x >= 0, "y coordinate %d bigger than map height %u", y, mapHeight);
 
-	psMapTiles[x + (y * mapWidth)].height = height / (float)ELEVATION_SCALE;
+	psMapTiles[x + (y * mapWidth)].height = height;
 	markTileDirty(x, y);
 }
 
 /* Return whether a tile coordinate is on the map */
-static inline BOOL tileOnMap(SDWORD x, SDWORD y)
+WZ_DECL_ALWAYS_INLINE static inline bool tileOnMap(SDWORD x, SDWORD y)
 {
 	return (x >= 0) && (x < (SDWORD)mapWidth) && (y >= 0) && (y < (SDWORD)mapHeight);
 }
 
+WZ_DECL_ALWAYS_INLINE static inline bool tileOnMap(Vector2i pos)
+{
+	return tileOnMap(pos.x, pos.y);
+}
+
 /* Return true if a tile is not too near the map edge and not outside of the map */
-static inline BOOL tileInsideBuildRange(SDWORD x, SDWORD y)
+static inline bool tileInsideBuildRange(SDWORD x, SDWORD y)
 {
 	return (x >= TOO_NEAR_EDGE) && (x < ((SDWORD)mapWidth - TOO_NEAR_EDGE)) &&
 		(y >= TOO_NEAR_EDGE) && (y < ((SDWORD)mapHeight - TOO_NEAR_EDGE));
 }
 
 /* Return whether a world coordinate is on the map */
-static inline BOOL worldOnMap(int x, int y)
+WZ_DECL_ALWAYS_INLINE static inline bool worldOnMap(int x, int y)
 {
 	return (x >= 0) && (x < ((SDWORD)mapWidth << TILE_SHIFT)) &&
 		   (y >= 0) && (y < ((SDWORD)mapHeight << TILE_SHIFT));
@@ -387,38 +510,22 @@ static inline BOOL worldOnMap(int x, int y)
 
 
 /* Return whether a world coordinate is on the map */
-static inline bool worldOnMap2i(Vector2i pos)
+WZ_DECL_ALWAYS_INLINE static inline bool worldOnMap(Vector2i pos)
 {
 	return worldOnMap(pos.x, pos.y);
 }
 
 
-/* Return whether a world coordinate is on the map */
-static inline bool worldOnMap3i(Vector3i pos)
-{
-	return worldOnMap(pos.x, pos.y);
-}
-
-
-/* Return whether a world coordinate is on the map */
-static inline bool worldOnMap3f(Vector3f pos)
-{
-	return worldOnMap(pos.x, pos.y);
-}
-
-
-/* Store a map coordinate and it's associated tile */
-typedef struct _tile_coord
-{
-	UDWORD	x,y;
-	MAPTILE	*psTile;
-} TILE_COORD;
+/* Intersect a line with the map and report tile intersection points */
+bool map_Intersect(int *Cx, int *Cy, int *Vx, int* Vy, int *Sx, int *Sy);
 
 /// The max height of the terrain and water at the specified world coordinates
 extern int32_t map_Height(int x, int y);
 
+static inline int32_t map_Height(Vector2i const &v) { return map_Height(v.x, v.y); }
+
 /* returns true if object is above ground */
-extern BOOL mapObjIsAboveGround( BASE_OBJECT *psObj );
+bool mapObjIsAboveGround(const SIMPLE_OBJECT *psObj);
 
 /* returns the max and min height of a tile by looking at the four corners
    in tile coords */
@@ -443,15 +550,12 @@ extern bool fireOnLocation(unsigned int x, unsigned int y);
  * Transitive sensor check for tile. Has to be here rather than
  * visibility.h due to header include order issues. 
  */
-static inline bool hasSensorOnTile(MAPTILE *psTile, unsigned player)
+WZ_DECL_ALWAYS_INLINE static inline bool hasSensorOnTile(MAPTILE *psTile, unsigned player)
 {
 	return ((player == selectedPlayer && godMode) || (alliancebits[selectedPlayer] & (satuplinkbits | psTile->sensorBits)));
 }
 
+void mapInit(void);
 void mapUpdate(void);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_MAP_H__

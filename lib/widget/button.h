@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -26,12 +26,7 @@
 
 #include "widget.h"
 #include "widgbase.h"
-#include "lib/ivis_common/textdraw.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
+#include "lib/ivis_opengl/textdraw.h"
 
 /* Button states */
 #define WBUTS_NORMAL	0x0000
@@ -43,10 +38,14 @@ extern "C"
 #define WBUTS_FLASH		0x0020		// Button flashing is enabled
 #define WBUTS_FLASHON	0x0040		// Button is flashing
 
-typedef struct _w_button
+/* Respond to a mouse click */
+void buttonClicked(struct W_BUTTON *psWidget, UDWORD key);
+
+struct W_BUTTON : public WIDGET
 {
-	/* The common widget data */
-	WIDGET_BASE;
+	W_BUTTON(W_BUTINIT const *init);
+
+	void clicked(W_CONTEXT *, WIDGET_KEY key) { buttonClicked(this, key); }
 
 	UDWORD		state;				// The current button state
 	const char *pText;				// The text for the button
@@ -55,10 +54,10 @@ typedef struct _w_button
 	SWORD ClickedAudioID;				// Audio ID for form hilighted sound
 	WIDGET_AUDIOCALLBACK AudioCallback;	// Pointer to audio callback function
 	enum iV_fonts FontID;
-} W_BUTTON;
+};
 
 /* Initialise the button module */
-extern BOOL buttonStartUp(void);
+extern bool buttonStartUp(void);
 
 /* Create a button widget data structure */
 extern W_BUTTON* buttonCreate(const W_BUTINIT* psInit);
@@ -71,9 +70,6 @@ extern void buttonInitialise(W_BUTTON *psWidget);
 
 /* Run a button widget */
 extern void buttonRun(W_BUTTON *psWidget);
-
-/* Respond to a mouse click */
-extern void buttonClicked(W_BUTTON *psWidget, UDWORD key);
 
 /* Respond to a mouse button up */
 extern void buttonReleased(W_SCREEN* psScreen, W_BUTTON *psWidget, UDWORD key);
@@ -95,9 +91,5 @@ extern void buttonClearFlash(W_BUTTON *psButton);
 
 /* The button display function */
 extern void buttonDisplay(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, PIELIGHT *pColours);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_LIB_WIDGET_BUTTON_H__

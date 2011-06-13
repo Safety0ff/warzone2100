@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 */
 /** @file
- *  Link droids together into a group for AI etc.
+ *  Responsible for handling groups of droids.
  */
 
 #ifndef __INCLUDED_SRC_GROUP_H__
@@ -26,66 +26,47 @@
 
 #include "order.h"
 
-#ifdef __cplusplus
-extern "C"
+enum GROUP_TYPE
 {
-#endif //__cplusplus
+	GT_NORMAL,      // standard group
+	GT_COMMAND,     // command droid group
+	GT_TRANSPORTER, // transporter group
+};
 
-typedef enum _group_type
+class DROID_GROUP
 {
-	GT_NORMAL,			// standard group
-	GT_COMMAND,			// command droid group
-	GT_TRANSPORTER,		// transporter group
-} GROUP_TYPE;
+public: // TODO: c++ design to members become private.
+	DROID_GROUP();
 
-typedef struct _droid_group
-{
-	SWORD		type;
-	SWORD		refCount;
-	DROID		*psList;			// list of droids in the group
-	DROID		*psCommander;		// the command droid of a command group
-	RUN_DATA	sRunData;			// where the group should retreat to
-	struct _droid_group *psNext, *psPrev;	// keep linked to destroy all (a workaround hack)
-} DROID_GROUP;
+	void add(DROID *psDroid);     // Add a droid to group. Remove it from its group in case it already has group
+	void remove(DROID *psDroid);  // Remove droid from group. Free group in case RefCount<=0
+	void removeAll();             // Remove all droids from the group
+	unsigned int getNumMembers(); // Count the number of members of a group
+
+	void orderGroup(DROID_ORDER order);                     // give an order all the droids of the group
+	void orderGroup(DROID_ORDER order, UDWORD x, UDWORD y); // give an order all the droids of the group (using location)
+	void orderGroup(DROID_ORDER order, BASE_OBJECT *psObj); // give an order all the droids of the group (using object)
+
+	void setSecondary(SECONDARY_ORDER sec, SECONDARY_STATE state); // set the secondary state for a group of droids
+
+	SWORD		type;         // Type from the enum GROUP_TYPE above
+	SWORD		refCount;     // Number of objects in the group. Group is deleted if refCount<=0. Count number of droids+NULL pointers.
+	DROID		*psList;      // List of droids in the group
+	DROID		*psCommander; // The command droid of a command group
+	RUN_DATA	sRunData;   // Where the group should retreat to
+	int		id;	// unique group id
+};
 
 // initialise the group system
-BOOL grpInitialise(void);
+bool grpInitialise(void);
 
 // shutdown the group system
 void grpShutDown(void);
 
-// create a new group
-BOOL grpCreate(DROID_GROUP	**ppsGroup);
+/// create a new group, use -1 to generate a new ID. never use id != -1 unless loading from a savegame.
+DROID_GROUP *grpCreate(int id = -1);
 
-// add a droid to a group
-void grpJoin(DROID_GROUP *psGroup, DROID *psDroid);
-
-// add a droid to a group at the end of the list
-void grpJoinEnd(DROID_GROUP *psGroup, DROID *psDroid);
-
-// remove a droid from a group
-void grpLeave(DROID_GROUP *psGroup, DROID *psDroid);
-
-// count the members of a group
-unsigned int grpNumMembers(const DROID_GROUP* psGroup);
-
-// remove all droids from a group
-void grpReset(DROID_GROUP *psGroup);
-
-/* Give a group an order */
-void orderGroup(DROID_GROUP *psGroup, DROID_ORDER order);
-
-/* Give a group of droids an order */
-void orderGroupLoc(DROID_GROUP *psGroup, DROID_ORDER order, UDWORD x, UDWORD y);
-
-/* Give a group of droids an order */
-void orderGroupObj(DROID_GROUP *psGroup, DROID_ORDER order, BASE_OBJECT *psObj);
-
-/* set the secondary state for a group of droids */
-void grpSetSecondary(DROID_GROUP *psGroup, SECONDARY_ORDER sec, SECONDARY_STATE state);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+/// lookup group by its unique id, or create it if not found
+DROID_GROUP *grpFind(int id);
 
 #endif // __INCLUDED_SRC_GROUP_H__

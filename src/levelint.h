@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -23,11 +23,6 @@
 
 #ifndef __INCLUDED_SRC_LEVELINT_H__
 #define __INCLUDED_SRC_LEVELINT_H__
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
 
 // return values from the lexer
 enum _token_type
@@ -58,9 +53,5 @@ extern SDWORD levVal;
 
 // error report function for the level parser
 extern void lev_error(const char* msg);
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
 
 #endif // __INCLUDED_SRC_LEVELINT_H__

@@ -1,7 +1,7 @@
 /*
 	This file is part of Warzone 2100.
 	Copyright (C) 1999-2004  Eidos Interactive
-	Copyright (C) 2005-2010  Warzone 2100 Project
+	Copyright (C) 2005-2011  Warzone 2100 Project
 
 	Warzone 2100 is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -23,11 +23,6 @@
 
 #include "console.h"
 #include "lib/framework/fixedpoint.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif //__cplusplus
 
 // --------------- All those keyboard mappable functions */
 extern void	kf_HalveHeights( void );
@@ -57,7 +52,9 @@ extern void	kf_LowerTile( void );
 extern void	kf_MapCheck( void );
 extern void	kf_SystemClose( void );
 extern void	kf_ZoomOut( void );
+void            kf_ZoomOutStep();
 extern void	kf_ZoomIn( void );
+void            kf_ZoomInStep();
 extern void	kf_ShrinkScreen( void );
 extern void	kf_ExpandScreen( void );
 extern void	kf_RotateLeft( void );
@@ -167,7 +164,7 @@ extern void	kf_MoveToLastMessagePos( void );
 extern void	kf_SelectAllDamaged( void );
 extern void	kf_RightOrderMenu( void );
 
-extern BOOL	bAllowOtherKeyPresses;
+extern bool	bAllowOtherKeyPresses;
 
 extern void	kf_TriggerRayCast( void );
 extern void	kf_ToggleFormationSpeedLimiting( void );
@@ -256,9 +253,7 @@ bool runningMultiplayer(void);
 void	kf_ForceSync( void );
 void    kf_ForceDesync(void);
 void	kf_PowerInfo( void );
-
-#ifdef __cplusplus
-}
-#endif //__cplusplus
+void	kf_BuildNextPage( void );
+void	kf_BuildPrevPage( void );
 
 #endif // __INCLUDED_SRC_KEYBIND_H__
