@@ -46,4 +46,7 @@ static inline WZ_DECL_CONST float UNDEG(uint16_t angle) { return angle * (360 / 
 // 65536 / 360 = 8192 / 45, with a bit less overflow risk.
 #define DEG(degrees) ((degrees) * 8192 / 45)
 
+// fixed * pi / 2^15
+#define FP2RAD(fixed) ((fixed)* 0.00009587379924285258)
+
 #endif // FIXEDPOINT_H
