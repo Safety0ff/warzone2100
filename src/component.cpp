@@ -23,8 +23,10 @@
 */
 
 #include "lib/framework/frame.h"
+#include "lib/framework/opengl.h" // For temporary hack
 #include "lib/ivis_opengl/piestate.h"
 #include "lib/ivis_opengl/piematrix.h"
+#include "lib/ivis_opengl/piemode.h" // For temporary hack
 #include "lib/netplay/netplay.h"
 
 #include "action.h"
@@ -67,10 +69,15 @@ UBYTE getPlayerColour(UDWORD pl)
 
 static void setMatrix(Vector3i *Position, Vector3i *Rotation, bool RotXYZ)
 {
-	pie_PerspectiveBegin();
+	// TEMPORARY HACK!!
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.f, pie_GetVideoBufferWidth(), 0, pie_GetVideoBufferHeight(), -world_coord(3*2), 0);
+	glScalef(1,1,-1);
+	glMatrixMode(GL_MODELVIEW);
 	pie_MatBegin();
 
-	pie_TRANSLATE(Position->x,Position->y,Position->z);
+	pie_TRANSLATE(rendSurface.xcentre, pie_GetVideoBufferHeight()-rendSurface.ycentre,-world_coord(3));
 
 	if(RotXYZ) {
 		pie_MatRotX(DEG(Rotation->x));

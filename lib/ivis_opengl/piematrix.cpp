@@ -243,26 +243,25 @@ void pie_MatRotX(uint16_t x)
  */
 int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
 {
-	/*
-	 * v = curMatrix . v3d
-	 */
-	Vector3 v(v3d->x, v3d->y, v3d->z);
-	v = curMatrix * v;
-	const MatScalarType zz = v.z() * 4;
+	GLdouble screenX, screenY, depth;// arrays to hold matrix information
+	GLint viewport[4];
+	GLdouble projection[16];
 
-	if (zz < MIN_STRETCHED_Z)
-	{
-		v2d->x = LONG_WAY; //just along way off screen
-		v2d->y = LONG_WAY;
-	}
-	else
-	{
-		// HACK FIXME the FP12_MULTIPLIER multiplication is STOPGAP until this function is fixed
-		v2d->x = rendSurface.xcentre + (v.x()*FP12_MULTIPLIER / zz);
-		v2d->y = rendSurface.ycentre - (v.y()*FP12_MULTIPLIER / zz);
-	}
+	// TODO we don't actually need to query opengl for these...
+	// we also need to put a implementation of gluProject in here.
+	// Then we can cache the matrix product P*MV
 
-	return zz;
+	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+	glGetIntegerv(GL_VIEWPORT, viewport);   // get 3D coordinates based on window coordinates
+
+	gluProject(v3d->x, v3d->y, v3d->z,
+			   Eigen::Transform<double,3,  Eigen::Affine>(curMatrix).matrix().data(),
+			   projection, viewport, &screenX, &screenY, &depth);
+
+	v2d->x = screenX;
+	v2d->y = pie_GetVideoBufferHeight()-screenY; // I don't know why this is needed... yet
+
+	return depth;
 }
 
 void pie_PerspectiveBegin(void)
@@ -274,10 +273,6 @@ void pie_PerspectiveBegin(void)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glTranslatef(
-		(2 * rendSurface.xcentre-width) / width,
-		(height - 2 * rendSurface.ycentre) / height,
-		0);
 	glFrustum(-xangle, xangle, -yangle, yangle, 330, 100000);
 	glScalef(1, 1, -1);
 	glMatrixMode(GL_MODELVIEW);
