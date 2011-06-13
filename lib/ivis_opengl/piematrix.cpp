@@ -29,6 +29,16 @@
 #include "piematrix.h"
 #include "lib/ivis_opengl/piemode.h"
 
+#ifdef info
+// An Eigen class has an info() member function which this conflicts with this
+#undef info
+#endif
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <Eigen/StdVector>
+#include <stack>
+
 /***************************************************************************/
 /*
  *	Local Definitions
@@ -37,50 +47,43 @@
 
 #define MATRIX_MAX 8
 
-/*
- * Matrices are of this form:
- * [ a d g j ]
- * [ b e h k ]
- * [ c f i l ]
- * [ 0 0 0 1 ]
+/**
+ * 3x4 matrix, that's used as a 4x4 matrix with the last row containing
+ * [ 0 0 0 1 ].
  */
-struct SDMATRIX
-{
-	SDWORD a, b, c,
-	       d, e, f,
-	       g, h, i,
-	       j, k, l;
-};
-static SDMATRIX	aMatrixStack[MATRIX_MAX];
-static SDMATRIX *psMatrix = &aMatrixStack[0];
+typedef double MatScalarType;
+typedef Eigen::Transform<MatScalarType, 3, Eigen::AffineCompact> Affine3;
+typedef Affine3::VectorType Vector3;
+
+typedef std::vector<Affine3, Eigen::aligned_allocator<Affine3> > stdVectorAffine3;
+
+// Model View Matrix Stack
+static std::stack<Affine3, stdVectorAffine3> matrixStack;
+
+#define curMatrix matrixStack.top()
 
 bool drawing_interface = true;
 
 //*************************************************************************
 
-static const SDMATRIX Identitymatrix = {
-	FP12_MULTIPLIER,                  0,               0,
-	              0,    FP12_MULTIPLIER,               0,
-	              0,                  0, FP12_MULTIPLIER,
-	              0,                  0,               0,
-};
-static SDWORD _MATRIX_INDEX;
-
-//*************************************************************************
-//*** reset transformation matrix stack and make current identity
-//*
-//******
-
-static void pie_MatReset(void)
+/** Sets up transformation matrices
+ */
+void pie_MatInit(void)
 {
-	psMatrix = &aMatrixStack[0];
+	// init matrix stack
+	if (!matrixStack.empty())
+	{
+		while (matrixStack.size()>1)
+		{
+			matrixStack.pop();
+			glPopMatrix();
+		}
+		matrixStack.pop();
+	}
 
-	// make 1st matrix identity
-	*psMatrix = Identitymatrix;
-
+	matrixStack.push(Affine3::Identity());
 	glLoadIdentity();
 }
-
 
 //*************************************************************************
 //*** create new matrix from current transformation matrix and make current
@@ -89,12 +92,9 @@ static void pie_MatReset(void)
 
 void pie_MatBegin(void)
 {
-	_MATRIX_INDEX++;
-	ASSERT( _MATRIX_INDEX < MATRIX_MAX, "pie_MatBegin past top of the stack" );
+	ASSERT(matrixStack.size() < MATRIX_MAX, "past top of the stack" );
 
-	psMatrix++;
-	aMatrixStack[_MATRIX_INDEX] = aMatrixStack[_MATRIX_INDEX-1];
-
+	matrixStack.push(matrixStack.top());
 	glPushMatrix();
 }
 
@@ -106,14 +106,15 @@ void pie_MatBegin(void)
 
 void pie_MatEnd(void)
 {
-	_MATRIX_INDEX--;
-	ASSERT( _MATRIX_INDEX >= 0, "pie_MatEnd of the bottom of the stack" );
-
-	psMatrix--;
-
+	matrixStack.pop();
+	ASSERT(!matrixStack.empty(), "past the bottom of the stack" );
 	glPopMatrix();
 }
 
+void pie_MatIdentity(void)
+{
+	curMatrix = Affine3::Identity();
+}
 
 void pie_TRANSLATE(int32_t x, int32_t y, int32_t z)
 {
@@ -125,10 +126,7 @@ void pie_TRANSLATE(int32_t x, int32_t y, int32_t z)
 	 * curMatrix = curMatrix . [ 0 0 1 z ]
 	 *                         [ 0 0 0 1 ]
 	 */
-	psMatrix->j += x * psMatrix->a + y * psMatrix->d + z * psMatrix->g;
-	psMatrix->k += x * psMatrix->b + y * psMatrix->e + z * psMatrix->h;
-	psMatrix->l += x * psMatrix->c + y * psMatrix->f + z * psMatrix->i;
-
+	curMatrix.translate(Vector3(x,y,z));
 	glTranslatef(x, y, z);
 }
 
@@ -150,18 +148,7 @@ void pie_MatScale(float scale)
 	 * curMatrix = scale * curMatrix
 	 */
 
-	psMatrix->a = psMatrix->a * scale;
-	psMatrix->b = psMatrix->b * scale;
-	psMatrix->c = psMatrix->c * scale;
-
-	psMatrix->d = psMatrix->d * scale;
-	psMatrix->e = psMatrix->e * scale;
-	psMatrix->f = psMatrix->f * scale;
-
-	psMatrix->g = psMatrix->g * scale;
-	psMatrix->h = psMatrix->h * scale;
-	psMatrix->i = psMatrix->i * scale;
-
+	curMatrix.scale(scale);
 	glScalef(scale, scale, scale);
 }
 
@@ -187,21 +174,7 @@ void pie_MatRotY(uint16_t y)
 	 */
 	if (y != 0)
 	{
-		int t;
-		int64_t cra = iCos(y), sra = iSin(y);
-
-		t = (cra*psMatrix->a - sra*psMatrix->g)>>16;
-		psMatrix->g = (sra*psMatrix->a + cra*psMatrix->g)>>16;
-		psMatrix->a = t;
-
-		t = (cra*psMatrix->b - sra*psMatrix->h)>>16;
-		psMatrix->h = (sra*psMatrix->b + cra*psMatrix->h)>>16;
-		psMatrix->b = t;
-
-		t = (cra*psMatrix->c - sra*psMatrix->i)>>16;
-		psMatrix->i = (sra*psMatrix->c + cra*psMatrix->i)>>16;
-		psMatrix->c = t;
-
+		curMatrix.rotate(Eigen::AngleAxis<MatScalarType>(FP2RAD(y), Vector3::UnitY()));
 		glRotatef(UNDEG(y), 0.0f, 1.0f, 0.0f);
 	}
 }
@@ -228,21 +201,7 @@ void pie_MatRotZ(uint16_t z)
 	 */
 	if (z != 0)
 	{
-		int t;
-		int64_t cra = iCos(z), sra = iSin(z);
-
-		t = (cra*psMatrix->a + sra*psMatrix->d)>>16;
-		psMatrix->d = (cra*psMatrix->d - sra*psMatrix->a)>>16;
-		psMatrix->a = t;
-
-		t = (cra*psMatrix->b + sra*psMatrix->e)>>16;
-		psMatrix->e = (cra*psMatrix->e - sra*psMatrix->b)>>16;
-		psMatrix->b = t;
-
-		t = (cra*psMatrix->c + sra*psMatrix->f)>>16;
-		psMatrix->f = (cra*psMatrix->f - sra*psMatrix->c)>>16;
-		psMatrix->c = t;
-
+		curMatrix.rotate(Eigen::AngleAxis<MatScalarType>(FP2RAD(z), Vector3::UnitZ()));
 		glRotatef(UNDEG(z), 0.0f, 0.0f, 1.0f);
 	}
 }
@@ -269,21 +228,7 @@ void pie_MatRotX(uint16_t x)
 	 */
 	if (x != 0.f)
 	{
-		int t;
-		int64_t cra = iCos(x), sra = iSin(x);
-
-		t = (cra*psMatrix->d + sra*psMatrix->g)>>16;
-		psMatrix->g = (cra*psMatrix->g - sra*psMatrix->d)>>16;
-		psMatrix->d = t;
-
-		t = (cra*psMatrix->e + sra*psMatrix->h)>>16;
-		psMatrix->h = (cra*psMatrix->h - sra*psMatrix->e)>>16;
-		psMatrix->e = t;
-
-		t = (cra*psMatrix->f + sra*psMatrix->i)>>16;
-		psMatrix->i = (cra*psMatrix->i - sra*psMatrix->f)>>16;
-		psMatrix->f = t;
-
+		curMatrix.rotate(Eigen::AngleAxis<MatScalarType>(FP2RAD(x), Vector3::UnitX()));
 		glRotatef(UNDEG(x), 1.0f, 0.0f, 0.0f);
 	}
 }
@@ -301,13 +246,9 @@ int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
 	/*
 	 * v = curMatrix . v3d
 	 */
-	Vector3i v(
-		v3d->x * psMatrix->a + v3d->y * psMatrix->d + v3d->z * psMatrix->g + psMatrix->j,
-		v3d->x * psMatrix->b + v3d->y * psMatrix->e + v3d->z * psMatrix->h + psMatrix->k,
-		v3d->x * psMatrix->c + v3d->y * psMatrix->f + v3d->z * psMatrix->i + psMatrix->l
-	);
-
-	const int zz = v.z >> STRETCHED_Z_SHIFT;
+	Vector3 v(v3d->x, v3d->y, v3d->z);
+	v = curMatrix * v;
+	const MatScalarType zz = v.z() * 4;
 
 	if (zz < MIN_STRETCHED_Z)
 	{
@@ -316,8 +257,9 @@ int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
 	}
 	else
 	{
-		v2d->x = rendSurface.xcentre + (v.x / zz);
-		v2d->y = rendSurface.ycentre - (v.y / zz);
+		// HACK FIXME the FP12_MULTIPLIER multiplication is STOPGAP until this function is fixed
+		v2d->x = rendSurface.xcentre + (v.x()*FP12_MULTIPLIER / zz);
+		v2d->y = rendSurface.ycentre - (v.y()*FP12_MULTIPLIER / zz);
 	}
 
 	return zz;
@@ -365,13 +307,5 @@ void pie_SetGeometricOffset(int x, int y)
 {
 	rendSurface.xcentre = x;
 	rendSurface.ycentre = y;
-}
-
-/** Sets up transformation matrices/quaternions and trig tables
- */
-void pie_MatInit(void)
-{
-	// init matrix/quat stack
-	pie_MatReset();
 }
 
