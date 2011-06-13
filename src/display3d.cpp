@@ -167,6 +167,8 @@ static Vector3i tileScreenInfo[VISIBLE_YTILES+1][VISIBLE_XTILES+1];
 /// Records the present X and Y values for the current mouse tile (in tiles)
 SDWORD mouseTileX, mouseTileY;
 Vector2i mousePos(0, 0);
+QUAD mouseInQuad;
+bool posInQuadNeg;
 
 /// Do we want the radar to be rendered
 bool	radarOnScreen=false;
@@ -234,9 +236,6 @@ bool CauseCrash = false;
 /** tells us in realtime, what droid is doing (order / action)
 */
 char DROIDDOING[512];
-
-/// Geometric offset which will be passed to pie_SetGeometricOffset
-static const int geoOffset = 192;
 
 /// The average terrain height for the center of the area the camera is looking at
 static int averageCentreTerrainHeight;
@@ -643,11 +642,44 @@ void draw3DScene( void )
 	}
 
 	pie_Begin3DScene();
-	/* Set 3D world origins */
-	pie_SetGeometricOffset(rendSurface.width / 2, geoOffset);
 
 	// draw terrain
 	displayTerrain();
+
+	// BEGIN - DELETE ME DEBUG
+	pie_SetRendMode(REND_OPAQUE);
+	pie_SetTexturePage(TEXPAGE_NONE);
+	pie_SetAlphaTest(false);
+	glDisable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_OFF);
+	glColor3f(0.f, 1.f, 0.f);
+	for (int i = 0; i < visibleTiles.y; i++)
+	{
+		for (int j = 0; j < visibleTiles.x; j++)
+		{
+			glBegin(GL_QUADS);
+			glVertex2f(tileScreenInfo[i+0][j+0].x, tileScreenInfo[i+0][j+0].y);
+			glVertex2f(tileScreenInfo[i+0][j+1].x, tileScreenInfo[i+0][j+1].y);
+			glVertex2f(tileScreenInfo[i+1][j+1].x, tileScreenInfo[i+1][j+1].y);
+			glVertex2f(tileScreenInfo[i+1][j+0].x, tileScreenInfo[i+1][j+0].y);
+			glEnd();
+		}
+	}
+	if (posInQuadNeg)
+		glColor3f(1.f, 0.f, 0.f);
+	else
+		glColor3f(1.f, 1.f, 0.f);
+	glBegin(GL_QUADS);
+		glVertex2f(mouseInQuad.coords[0].x, mouseInQuad.coords[0].y);
+		glVertex2f(mouseInQuad.coords[1].x, mouseInQuad.coords[1].y);
+		glVertex2f(mouseInQuad.coords[2].x, mouseInQuad.coords[2].y);
+		glVertex2f(mouseInQuad.coords[3].x, mouseInQuad.coords[3].y);
+	glEnd();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
+	glEnable(GL_CULL_FACE);
+	// END - DELETE ME DEBUG
 
 	pie_BeginInterface();
 	drawDroidSelections();
@@ -999,6 +1031,19 @@ static void drawTiles(iView *player)
 	pie_TRANSLATE(-player->p.x, 0, player->p.z);
 
 	drawWater();
+
+	// BEGIN - DELETE ME DEBUG
+	glPointSize(10.f);
+	glColor3f(1.f, 1.f, 0.f);
+	pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_OFF);
+	pie_SetRendMode(REND_ALPHA);
+	glEnable(GL_POINT_SMOOTH);
+	glBegin(GL_POINTS);
+	glVertex3f(mousePos.x, 0.f, -mousePos.y);
+	glEnd();
+	glColor3f(1.f, 1.f, 1.f);
+	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
+	// END - DELETE ME DEBUG
 
 	// and to the warzone modelview transform
 	pie_MatEnd();
@@ -3505,9 +3550,11 @@ void calcScreenCoords(DROID *psDroid)
  */
 static void locateMouse(void)
 {
-	const Vector2i pt(mouseX(), mouseY());
+	Vector2i pt(mouseX(), mouseY());
 	int i, j;
 	unsigned idx, jdx;
+	Vector2i relativeTile;
+	QUAD match;
 	int nearestZ = INT_MAX;
 
 	// Intentionally not the same range as in drawTiles()
@@ -3517,7 +3564,7 @@ static void locateMouse(void)
 		{
 			int tileZ = tileScreenInfo[idx][jdx].z;
 
-			if(tileZ <= nearestZ)
+			if (tileZ >= 0 && tileZ <= nearestZ)
 			{
 				QUAD quad;
 
@@ -3536,28 +3583,29 @@ static void locateMouse(void)
 				/* We've got a match for our mouse coords */
 				if (inQuad(&pt, &quad))
 				{
-					mousePos.x = player.p.x + world_coord(j);
-					mousePos.y = player.p.z + world_coord(i);
-					mousePos += positionInQuad(pt, quad);
-
-					if (mousePos.x < 0)
-						mousePos.x = 0;
-					else if (mousePos.x > world_coord(mapWidth-1))
-						mousePos.x = world_coord(mapWidth-1);
-					if (mousePos.y < 0)
-						mousePos.y = 0;
-					else if (mousePos.y > world_coord(mapHeight-1))
-						mousePos.y = world_coord(mapHeight-1);
-
-					mouseTileX = map_coord(mousePos.x);
-					mouseTileY = map_coord(mousePos.y);
-
-					/* Store away z value */
+					/* Store away match */
 					nearestZ = tileZ;
+					match = quad;
+					relativeTile = Vector2i(j,i);
 				}
 			}
 		}
 	}
+	mouseInQuad = match;
+
+	mousePos = Vector2i(player.p.x, player.p.z) + world_coord(relativeTile) + positionInQuad(pt, match);
+
+	if (mousePos.x < 0)
+	mousePos.x = 0;
+	else if (mousePos.x > world_coord(mapWidth-1))
+	mousePos.x = world_coord(mapWidth-1);
+	if (mousePos.y < 0)
+	mousePos.y = 0;
+	else if (mousePos.y > world_coord(mapHeight-1))
+	mousePos.y = world_coord(mapHeight-1);
+
+	mouseTileX = map_coord(mousePos.x);
+	mouseTileY = map_coord(mousePos.y);
 }
 
 /// Render the sky and surroundings
