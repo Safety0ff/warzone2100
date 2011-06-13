@@ -220,20 +220,20 @@ public:
 	fixed_point()
 	{ }
 
-	template<
-		/// The numeric type. Must be integer.
-		typename T>
-	/// Converting constructor.
+	/// Converting constructors
 	//!
-	//! This constructor takes a numeric value of type T and converts it to
-	//! this fixed_point type.
-	fixed_point(
-		/// The value to convert.
-		T value)
-		: value_((B)value << F)
-	{
-		BOOST_CONCEPT_ASSERT((boost::Integer<T>));
-	}
+	//! These constructors take an integer value and
+	//! convert it to this fixed_point type.
+#define fixed_point_ctor(T) fixed_point(T value):value_((B)value << F)	{}
+	fixed_point_ctor(int8_t)
+	fixed_point_ctor(uint8_t)
+	fixed_point_ctor(int16_t)
+	fixed_point_ctor(uint16_t)
+	fixed_point_ctor(int32_t)
+	fixed_point_ctor(uint32_t)
+	fixed_point_ctor(int64_t)
+	fixed_point_ctor(uint64_t)
+#undef fixed_point_ctor
 
 	/// Converting constructor.
 	//!
@@ -1607,10 +1607,12 @@ template<
 struct NumTraits<fpml::fixed_point<B, I, F> >
 {
 	typedef fpml::fixed_point<B, I, F> Real;
-	typedef double FloatingPoint;
+//	typedef fpml::fixed_point<B, I, F> NonInteger;
+	typedef fpml::fixed_point<B, I, F> Nested;
 	enum {
 		IsComplex = 0,
-		HasFloatingPoint = 1,
+		IsInteger = 0,
+		IsSigned = std::numeric_limits<B>::is_signed,
 		ReadCost = 1,
 		AddCost = 1,
 		MulCost = 1,
@@ -1629,59 +1631,62 @@ inline fpml::fixed_point<B, I, F> machine_epsilon()
 	return std::numeric_limits< fpml::fixed_point<B, I, F> >::epsilon();
 }
 
+namespace internal {
+
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_real(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> real(fpml::fixed_point<B, I, F> const& x)
 {
 	return x;
 }
 
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_imag(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> imag(fpml::fixed_point<B, I, F> const& x)
 {
 	return 0;
 }
 
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_conj(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> conj(fpml::fixed_point<B, I, F> const& x)
 {
 	return x;
 }
 
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_abs(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> abs(fpml::fixed_point<B, I, F> const& x)
 {
 	return x < 0 ? -x : x;
 }
 
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_abs2(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> abs2(fpml::fixed_point<B, I, F> const& x)
 {
 	return x * x;
 }
 
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_sqrt(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> sqrt(fpml::fixed_point<B, I, F> const& x)
 {
 	return sqrt(x);
 }
 
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_exp(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> exp(fpml::fixed_point<B, I, F> const& x)
 {
 	return exp(x);
 }
 
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_sin(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> sin(fpml::fixed_point<B, I, F> const& x)
 {
 	return sin(x);
 }
 
 template <typename B, unsigned char I, unsigned char F>
-inline fpml::fixed_point<B, I, F> ei_cos(fpml::fixed_point<B, I, F> const& x)
+inline fpml::fixed_point<B, I, F> cos(fpml::fixed_point<B, I, F> const& x)
 {
 	return cos(x);
 }
+} // namespace internal
 } // namespace Eigen
 
 #ifdef __FPML_DEFINED_USE_MATH_DEFINES__

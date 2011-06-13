@@ -29,6 +29,11 @@
 #include "piematrix.h"
 #include "lib/ivis_opengl/piemode.h"
 
+#ifdef info
+// An Eigen class has an info() member function which this conflicts with this
+#undef info
+#endif
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <stack>
@@ -43,7 +48,7 @@
  * 3x4 matrix, that's used as a 4x4 matrix with the last row containing
  * [ 0 0 0 1 ].
  */
-typedef Eigen::Transform<Fixed, 3> Transform;
+typedef Eigen::Transform<Fixed, 3, Eigen::AffineCompact> Transform;
 typedef Eigen::Matrix<Fixed, 3, 1> Vector3;
 
 static std::stack<Transform> matrixStack;
