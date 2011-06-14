@@ -298,9 +298,3 @@ void pie_BeginInterface(void)
 	drawing_interface = true;
 }
 
-void pie_SetGeometricOffset(int x, int y)
-{
-	rendSurface.xcentre = x;
-	rendSurface.ycentre = y;
-}
-

@@ -51,8 +51,6 @@ void renderResearchToBuffer(RESEARCH *psResearch, UDWORD OriginX, UDWORD OriginY
 	// Set identity (present) context
 	pie_MatBegin();
 
-	pie_SetGeometricOffset(OriginX+10, OriginY+10);
-
 	// Pitch down a bit
 	//pie_MatRotX(-65536/12);
 
@@ -60,8 +58,8 @@ void renderResearchToBuffer(RESEARCH *psResearch, UDWORD OriginX, UDWORD OriginY
 	// full rotation once every 2 seconds..
 	angle = (gameTime2 % ROTATE_TIME) * 360 / ROTATE_TIME;
 
-	Position.x = 0;
-	Position.y = 0;
+	Position.x = OriginX+10;
+	Position.y = OriginY+10;
 	Position.z = BUTTON_DEPTH;
 
 	// Rotate round

@@ -77,7 +77,7 @@ static void setMatrix(Vector3i *Position, Vector3i *Rotation, bool RotXYZ)
 	glMatrixMode(GL_MODELVIEW);
 	pie_MatBegin();
 
-	pie_TRANSLATE(rendSurface.xcentre, pie_GetVideoBufferHeight()-rendSurface.ycentre,-world_coord(3));
+	pie_TRANSLATE(Position->x, pie_GetVideoBufferHeight()-Position->y,-world_coord(3));
 
 	if(RotXYZ) {
 		pie_MatRotX(DEG(Rotation->x));
@@ -207,7 +207,8 @@ void displayStructureButton(STRUCTURE *psStructure, Vector3i *rotation, Vector3i
 	if (psStructure->pStructureType->pIMD[0]->nconnectors && scale == SMALL_STRUCT_SCALE &&
 		getStructureHeight(psStructure) > TOWER_HEIGHT)
 	{
-		Position->y -= 20;
+		// Note this was -20, but as a temporary hack the sign is switched
+		Position->y += 20;
 	}
 
 	setMatrix(Position, rotation, RotXYZ);
@@ -303,7 +304,8 @@ void displayStructureStatButton(STRUCTURE_STATS *Stats, Vector3i *Rotation, Vect
 	if (Stats->pIMD[0]->nconnectors && scale == SMALL_STRUCT_SCALE &&
 	    getStructureStatHeight(Stats) > TOWER_HEIGHT)
 	{
-		Position->y -= 20;
+		// Note this was -20, but as a temporary hack the sign is switched
+		Position->y += 20;
 	}
 
 	setMatrix(Position, Rotation, RotXYZ);
