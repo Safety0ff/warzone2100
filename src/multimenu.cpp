@@ -1026,12 +1026,11 @@ static void displayMultiPlayer(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 	}
 	if (displayDroid)
 	{
-		pie_SetGeometricOffset( MULTIMENU_FORM_X+MULTIMENU_C1 ,y+MULTIMENU_PLAYER_H);
 		rotation.x = -15;
 		rotation.y = 45;
 		rotation.z = 0;
-		position.x = 0;
-		position.y = 0;
+		position.x = MULTIMENU_FORM_X+MULTIMENU_C1;
+		position.y = y+MULTIMENU_PLAYER_H;
 		position.z = BUTTON_DEPTH;		//scale them!
 
 		displayComponentButtonObject(displayDroid, &rotation, &position, false, 100);
