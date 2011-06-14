@@ -241,7 +241,7 @@ void pie_MatRotX(uint16_t x)
  * \param[out] v2d  resulting 2D vector
  * \return projected z component of v2d
  */
-int32_t pie_RotateProject(const Vector3i *v3d, Vector2i *v2d)
+int32_t pie_Project(const Vector3i *v3d, Vector2i *v2d)
 {
 	GLdouble screenX, screenY, depth;// arrays to hold matrix information
 	GLint viewport[4];
