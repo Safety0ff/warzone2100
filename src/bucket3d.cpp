@@ -81,7 +81,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
  			position.y = position.y;
 
 			/* 16 below is HACK!!! */
-			z = pie_RotateProject(&position,&pixel) - 16;
+			z = pie_Project(&position,&pixel) - 16;
 			if (z > 0)
 			{
 				//particle use the image radius
@@ -115,7 +115,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 				position.y = psSimpObj->pos.z;
 
-				z = pie_RotateProject(&position,&pixel);
+				z = pie_Project(&position,&pixel);
 
 				if (z > 0)
 				{
@@ -153,7 +153,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 				radius = (((STRUCTURE*)pObject)->sDisplay.imd->radius);
 			}
 
-			z = pie_RotateProject(&position,&pixel);
+			z = pie_Project(&position,&pixel);
 
 			if (z > 0)
 			{
@@ -174,7 +174,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 			position.y = psSimpObj->pos.z+2;
 
-			z = pie_RotateProject(&position,&pixel);
+			z = pie_Project(&position,&pixel);
 
 			if (z > 0)
 			{
@@ -212,7 +212,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			pie_MatRotZ(-psCompObj->orientation.y);
 			pie_MatRotX(-psCompObj->orientation.x);
 
-			z = pie_RotateProject(&position,&pixel);
+			z = pie_Project(&position,&pixel);
 
 			pie_MatEnd();
 
@@ -232,7 +232,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 			psBStats = asBodyStats + psDroid->asBits[COMP_BODY].nStat;
 			droidSize = psBStats->pIMD->radius;
-			z = pie_RotateProject(&position,&pixel) - (droidSize*2);
+			z = pie_Project(&position,&pixel) - (droidSize*2);
 
 			if (z > 0)
 			{
@@ -268,7 +268,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
  				position.y = ((BASE_OBJECT *)((PROXIMITY_DISPLAY *)pObject)->
 					psMessage->pViewData)->pos.z;
 			}
-			z = pie_RotateProject(&position,&pixel);
+			z = pie_Project(&position,&pixel);
 
 			if (z > 0)
 			{
@@ -290,7 +290,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
  			position.y = ((EFFECT*)pObject)->position.y;
 
 			/* 16 below is HACK!!! */
-			z = pie_RotateProject(&position,&pixel) - 16;
+			z = pie_Project(&position,&pixel) - 16;
 
 			if (z > 0)
 			{
@@ -317,7 +317,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 				coords.y - player.p.z);
  			position.y = ((FLAG_POSITION*)pObject)->coords.z;
 
-			z = pie_RotateProject(&position,&pixel);
+			z = pie_Project(&position,&pixel);
 
 			if (z > 0)
 			{
