@@ -4309,10 +4309,10 @@ void intRunDesign(void)
 
 static void intDisplayStatForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, WZ_DECL_UNUSED PIELIGHT *pColours)
 {
-	static UDWORD	iRY = 45;
-
+	Vector3i		Rotation, Position;
 	W_CLICKFORM		*Form = (W_CLICKFORM*)psWidget;
-	UWORD			x0 = xOffset+Form->x, y0 = yOffset+Form->y;
+	UWORD			x0 = xOffset+Form->x;
+	UWORD			y0 = yOffset+Form->y;
 
 	/* get stats from userdata pointer in widget stored in
 	 * intSetSystemStats, intSetBodyStats, intSetPropulsionStats
@@ -4320,8 +4320,6 @@ static void intDisplayStatForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 	BASE_STATS *psStats = (BASE_STATS *) Form->pUserData;
 
 	SWORD templateRadius = getComponentRadius(psStats);
-
-	Vector3i Rotation(-30, iRY, 0), Position(0, -templateRadius / 4, BUTTON_DEPTH /* templateRadius * 12 */);
 
 	//scale the object around the BUTTON_RADIUS so that half size objects are draw are draw 75% the size of normal objects
 	SDWORD falseScale = (DESIGN_COMPONENT_SCALE * COMPONENT_RADIUS) / templateRadius / 2 + (DESIGN_COMPONENT_SCALE / 2);
@@ -4335,8 +4333,13 @@ static void intDisplayStatForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 				x0+Form->width-iV_GetImageWidth(IntImages,(UWORD)(IMAGE_DES_STATBACKRIGHT)),y0);
 
 	/* display current component */
-	pie_SetGeometricOffset( (xOffset+psWidget->width/4),
-							(yOffset+psWidget->height/2) );
+	static UDWORD	iRY = 45;
+	Rotation.x = -30;
+	Rotation.y = iRY;
+	Rotation.z = 0;
+	Position.x = xOffset+psWidget->width/4;
+	Position.y = yOffset+psWidget->height/2; //-templateRadius / 4;
+	Position.z = BUTTON_DEPTH;  /* was templateRadius * 12 */
 
 	/* inc rotation if highlighted */
 	if ( Form->state & WCLICK_HILITE )
@@ -4369,9 +4372,6 @@ static void intDisplayViewForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 
 	if(CurrentStatsTemplate) {
 
-		pie_SetGeometricOffset(  (DES_CENTERFORMX+DES_3DVIEWX) + (DES_3DVIEWWIDTH/2),
-								(DES_CENTERFORMY+DES_3DVIEWY) + (DES_3DVIEWHEIGHT/4) + 32);
-
 		Rotation.x = -30;
 		Rotation.y = iRY;
 		Rotation.z = 0;
@@ -4381,8 +4381,8 @@ static void intDisplayViewForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 		iRY %= 360;
 
 		//fixed depth scale the pie
-		Position.x = 0;
-		Position.y = -100;
+		Position.x = (DES_CENTERFORMX+DES_3DVIEWX) + (DES_3DVIEWWIDTH/2);
+		Position.y = (DES_CENTERFORMY+DES_3DVIEWY) + (DES_3DVIEWHEIGHT/4) + 32; // -100;
 		Position.z = BUTTON_DEPTH;
 
 		templateRadius = (SWORD)(getComponentDroidTemplateRadius((DROID_TEMPLATE*)

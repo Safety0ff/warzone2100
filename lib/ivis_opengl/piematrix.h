@@ -69,9 +69,6 @@ extern void pie_PerspectiveBegin(void);
 extern void pie_PerspectiveEnd(void);
 
 //*************************************************************************
-
-extern void pie_SetGeometricOffset(int x, int y);
-
 extern void pie_Begin3DScene(void);
 extern void pie_BeginInterface(void);
 
