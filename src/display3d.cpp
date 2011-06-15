@@ -155,9 +155,6 @@ bool	selectAttempt = false;
 /// Vectors that hold the player and camera directions and positions
 iView	player;
 
-/// Temporary rotation vectors to store rotations for droids etc
-static Vector3i	imdRot,imdRot2;
-
 /// How far away are we from the terrain
 static UDWORD distance;
 
@@ -1122,9 +1119,6 @@ bool init3DView(void)
 	/* There are no drag boxes */
 	dragBox3D.status = DRAG_INACTIVE;
 
-	/* Make sure and change these to comply with map.c */
-	imdRot.x = -35;
-
 	/* Get all the init stuff out of here? */
 	initWarCam();
 
@@ -1137,11 +1131,6 @@ bool init3DView(void)
 	UpdateFogDistance(distance);
 
 	initDemoCamera();
-
-	/* No initial rotations */
-	imdRot2.x = 0;
-	imdRot.y = 0;
-	imdRot2.z = 0;
 
 	bRender3DOnly = false;
 
@@ -1297,12 +1286,10 @@ void	renderProjectile(PROJECTILE *psCurr)
 		pie_TRANSLATE(dv.x,dv.y,dv.z);
 
 		/* Rotate it to the direction it's facing */
-		imdRot2.y = st.rot.direction;
-		pie_MatRotY(-imdRot2.y);
+		pie_MatRotY(-st.rot.direction);
 
 		/* pitch it */
-		imdRot2.x = st.rot.pitch;
-		pie_MatRotX(imdRot2.x);
+		pie_MatRotX(st.rot.pitch);
 
 		if (psStats->weaponSubClass == WSC_ROCKET || psStats->weaponSubClass == WSC_MISSILE
 		    || psStats->weaponSubClass == WSC_SLOWROCKET || psStats->weaponSubClass == WSC_SLOWMISSILE)
@@ -1363,10 +1350,8 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 		pie_TRANSLATE(dv.x, dv.y, dv.z);
 
 		/* parent object rotations */
-		imdRot2.y = spacetime.rot.direction;
-		pie_MatRotY(-imdRot2.y);
-		imdRot2.x = spacetime.rot.pitch;
-		pie_MatRotX(imdRot2.x);
+		pie_MatRotY(-spacetime.rot.direction);
+		pie_MatRotX(spacetime.rot.pitch);
 
 		/* Set frame numbers - look into this later?? FIXME!!!!!!!! */
 		if( psParentObj->type == OBJ_DROID )
