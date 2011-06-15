@@ -168,7 +168,6 @@ static Vector3i tileScreenInfo[VISIBLE_YTILES+1][VISIBLE_XTILES+1];
 SDWORD mouseTileX, mouseTileY;
 Vector2i mousePos(0, 0);
 QUAD mouseInQuad;
-bool posInQuadNeg;
 
 /// Do we want the radar to be rendered
 bool	radarOnScreen=false;
@@ -685,7 +684,7 @@ void draw3DScene( void )
 	glDisable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_OFF);
-	glColor3f(0.f, 1.f, 0.f);
+	glColor3f(0.f, 0.5390625f, 0.f);
 	for (int i = 0; i < visibleTiles.y; i++)
 	{
 		for (int j = 0; j < visibleTiles.x; j++)
@@ -698,10 +697,7 @@ void draw3DScene( void )
 			glEnd();
 		}
 	}
-	if (posInQuadNeg)
-		glColor3f(1.f, 0.f, 0.f);
-	else
-		glColor3f(1.f, 1.f, 0.f);
+	glColor3f(0.707f, 0.707f, 0.f);
 	glBegin(GL_QUADS);
 		glVertex2f(mouseInQuad.coords[0].x, mouseInQuad.coords[0].y);
 		glVertex2f(mouseInQuad.coords[1].x, mouseInQuad.coords[1].y);
