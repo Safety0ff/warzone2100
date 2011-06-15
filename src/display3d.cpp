@@ -688,6 +688,7 @@ void draw3DScene( void )
 	displayTerrain();
 
 	// BEGIN - DELETE ME DEBUG
+#if 0
 	pie_SetRendMode(REND_OPAQUE);
 	pie_SetTexturePage(TEXPAGE_NONE);
 	pie_SetAlphaTest(false);
@@ -717,6 +718,7 @@ void draw3DScene( void )
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
 	glEnable(GL_CULL_FACE);
+#endif
 	// END - DELETE ME DEBUG
 
 	pie_BeginInterface();
@@ -1072,6 +1074,7 @@ static void drawTiles(iView *player)
 	drawWater();
 
 	// BEGIN - DELETE ME DEBUG
+#if 0
 	glPointSize(10.f);
 	glColor3f(1.f, 1.f, 0.f);
 	pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_OFF);
@@ -1082,6 +1085,7 @@ static void drawTiles(iView *player)
 	glEnd();
 	glColor3f(1.f, 1.f, 1.f);
 	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
+#endif
 	// END - DELETE ME DEBUG
 
 	// and to the warzone modelview transform
