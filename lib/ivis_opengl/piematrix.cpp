@@ -261,7 +261,12 @@ int32_t pie_Project(const Vector3i *v3d, Vector2i *v2d)
 	v2d->x = screenX;
 	v2d->y = pie_GetVideoBufferHeight()-screenY; // I don't know why this is needed... yet
 
-	return depth;
+	/*
+	 * Though the multiplication by MAX_Z is a workaround
+	 * it should be consistent with what people have assumed about the depth values.
+	 * This is so that the float->int conversion doesn't kill the depth values.
+	 */
+	return depth * MAX_Z;
 }
 
 void pie_PerspectiveBegin(void)
