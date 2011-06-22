@@ -40,10 +40,6 @@
 #define CLIP_RIGHT	((SDWORD)pie_GetVideoBufferWidth())
 #define CLIP_TOP	((SDWORD)0)
 #define CLIP_BOTTOM ((SDWORD)pie_GetVideoBufferHeight())
-//scale depth = 1<<FP12_SHIFT>>STRETCHED_Z_SHIFT<<xpshift
-// Gerard - HACK Multiplied by 7 to fix clipping
-// someone needs to take a good look at the radius calculation
-#define SCALE_DEPTH (FP12_MULTIPLIER*7)
 
 struct BUCKET_TAG
 {
@@ -59,33 +55,26 @@ static std::vector<BUCKET_TAG> bucketArray;
 static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 {
 	SDWORD				z = 0, radius;
-	Vector2i				pixel;
-	Vector3i				position;
-	UDWORD				droidSize;
+	Vector2i			pixel;
+	Vector3f			position;
 	DROID				*psDroid;
 	BODY_STATS			*psBStats;
 	SIMPLE_OBJECT		*psSimpObj;
 	COMPONENT_OBJECT	*psCompObj;
 	const iIMDShape		*pImd;
-	Spacetime               spacetime;
+	Spacetime			spacetime;
 
 	switch(objectType)
 	{
 		case RENDER_PARTICLE:
-			position.x = ((ATPART*)pObject)->position.x;
-			position.y = ((ATPART*)pObject)->position.y;
-			position.z = ((ATPART*)pObject)->position.z;
+			position = ((ATPART*)pObject)->position;
 
 			position.l_xz() -= player.p.r_xz();
 
-			/* 16 below is HACK!!! */
-			z = pie_Project(&position,&pixel) - 16;
+			radius = ((ATPART*)pObject)->imd->radius;
+			z = pie_ProjectSphere(position, radius, &pixel);
 			if (z > 0)
 			{
-				//particle use the image radius
-				radius = ((ATPART*)pObject)->imd->radius;
-				radius *= SCALE_DEPTH;
-				radius /= z;
 				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
 					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
 				{
@@ -106,20 +95,16 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 				//the weapon stats holds the reference to which graphic to use
 				pImd = ((PROJECTILE*)pObject)->psWStats->pInFlightGraphic;
-
 				psSimpObj = (SIMPLE_OBJECT*) pObject;
 
 				position = swapYZ(psSimpObj->pos);
 				position.l_xz() -= player.p.r_xz();
 
-				z = pie_Project(&position,&pixel);
+				radius = pImd->radius;
+				z = pie_ProjectSphere(position, radius, &pixel);
 
 				if (z > 0)
 				{
-					//particle use the image radius
-					radius = pImd->radius;
-					radius *= SCALE_DEPTH;
-					radius /= z;
 					if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
 						|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
 					{
@@ -150,13 +135,9 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 				radius = (((STRUCTURE*)pObject)->sDisplay.imd->radius);
 			}
 
-			z = pie_Project(&position,&pixel);
-
+			z = pie_ProjectSphere(position, radius, &pixel);
 			if (z > 0)
 			{
-				//particle use the image radius
-				radius *= SCALE_DEPTH;
-				radius /= z;
 				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
 					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
 				{
@@ -170,14 +151,11 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			position = swapYZ(psSimpObj->pos);
 			position.l_xz() -= player.p.r_xz();
 
-			z = pie_Project(&position,&pixel);
+			radius = ((FEATURE*)pObject)->sDisplay.imd->radius;
+			z = pie_ProjectSphere(position, radius, &pixel);
 
 			if (z > 0)
 			{
-				//particle use the image radius
-				radius = ((FEATURE*)pObject)->sDisplay.imd->radius;
-				radius *= SCALE_DEPTH;
-				radius /= z;
 				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
 					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
 				{
@@ -208,7 +186,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			pie_MatRotZ(-psCompObj->orientation.y);
 			pie_MatRotX(psCompObj->orientation.x);
 
-			z = pie_Project(&position,&pixel);
+			z = pie_Project(position,&pixel);
 
 			pie_MatEnd();
 
@@ -228,15 +206,11 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			}
 
 			psBStats = asBodyStats + psDroid->asBits[COMP_BODY].nStat;
-			droidSize = psBStats->pIMD->radius;
-			z = pie_Project(&position,&pixel) - (droidSize*2);
+			radius = psBStats->pIMD->radius;
+			z = pie_ProjectSphere(position, radius, &pixel);
 
 			if (z > 0)
 			{
-				//particle use the image radius
-				radius = droidSize;
-				radius *= SCALE_DEPTH;
-				radius /= z;
 				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
 					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
 				{
@@ -260,15 +234,12 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			}
 			position.l_xz() -= player.p.r_xz();
 
-			z = pie_Project(&position,&pixel);
+			pImd = getImdFromIndex(MI_BLIP_ENEMY);//use MI_BLIP_ENEMY as all are same radius
+			radius = pImd->radius;
+			z = pie_ProjectSphere(position, radius, &pixel);
 
 			if (z > 0)
 			{
-				//particle use the image radius
-				pImd = getImdFromIndex(MI_BLIP_ENEMY);//use MI_BLIP_ENEMY as all are same radius
-				radius = pImd->radius;
-				radius *= SCALE_DEPTH;
-				radius /= z;
 				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
 					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
 				{
@@ -280,23 +251,16 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			position = ((EFFECT*)pObject)->position;
 			position.l_xz() -= player.p.r_xz();
 
-			/* 16 below is HACK!!! */
-			z = pie_Project(&position,&pixel) - 16;
+			pImd = ((EFFECT*)pObject)->imd;
+			radius = pImd ? pImd->radius : 0;
+			z = pie_Project(position,&pixel);
 
-			if (z > 0)
+			if (z > 0 && pImd)
 			{
-				//particle use the image radius
-				pImd = ((EFFECT*)pObject)->imd;
-				if (pImd != NULL)
+				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
+					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
 				{
-					radius = pImd->radius;
-					radius *= SCALE_DEPTH;
-					radius /= z;
-					if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-						|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-					{
-						z = -1;
-					}
+					z = -1;
 				}
 			}
 
@@ -306,14 +270,11 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			position = swapYZ(((FLAG_POSITION *)pObject)->coords);
 			position.l_xz() -= player.p.r_xz();
 
-			z = pie_Project(&position,&pixel);
+			radius = pAssemblyPointIMDs[((FLAG_POSITION*)pObject)->factoryType][((FLAG_POSITION*)pObject)->factoryInc]->radius;
+			z = pie_ProjectSphere(position, radius, &pixel);
 
 			if (z > 0)
 			{
-				//particle use the image radius
-				radius = pAssemblyPointIMDs[((FLAG_POSITION*)pObject)->factoryType][((FLAG_POSITION*)pObject)->factoryInc]->radius;
-				radius *= SCALE_DEPTH;
-				radius /= z;
 				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
 					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
 				{

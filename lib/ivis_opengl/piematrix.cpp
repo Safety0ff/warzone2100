@@ -241,7 +241,7 @@ void pie_MatRotX(uint16_t x)
  * \param[out] v2d  resulting 2D vector
  * \return projected z component of v2d
  */
-int32_t pie_Project(const Vector3i *v3d, Vector2i *v2d)
+int32_t pie_Project(Vector3f const &v3d, Vector2i *v2d)
 {
 	GLdouble screenX, screenY, depth;// arrays to hold matrix information
 	GLint viewport[4];
@@ -254,7 +254,7 @@ int32_t pie_Project(const Vector3i *v3d, Vector2i *v2d)
 	glGetDoublev(GL_PROJECTION_MATRIX, projection);
 	glGetIntegerv(GL_VIEWPORT, viewport);   // get 3D coordinates based on window coordinates
 
-	gluProject(v3d->x, v3d->y, v3d->z,
+	gluProject(v3d.x, v3d.y, v3d.z,
 			   Eigen::Transform<double,3,  Eigen::Affine>(curMatrix).matrix().data(),
 			   projection, viewport, &screenX, &screenY, &depth);
 
@@ -267,6 +267,25 @@ int32_t pie_Project(const Vector3i *v3d, Vector2i *v2d)
 	 * This is so that the float->int conversion doesn't kill the depth values.
 	 */
 	return depth * MAX_Z;
+}
+
+int32_t pie_ProjectSphere(Vector3f const &src, int32_t &radius, Vector2i *dest)
+{
+	Vector3f ptOnSphere = src;
+	Vector2i ptOnSphereProj;
+	int32_t depth;
+
+	depth = pie_Project(src, dest);
+	if (depth >= 0)
+	{
+		/* For now just take the point on the bottom of the sphere
+		 * this can be changed later to be something more meaningful (such as the min or max radius)
+		 */
+		ptOnSphere.y = ptOnSphere.y - radius;
+		pie_Project(ptOnSphere, &ptOnSphereProj);
+		radius = iHypot(ptOnSphereProj - *dest);
+	}
+	return depth;
 }
 
 void pie_PerspectiveBegin(void)

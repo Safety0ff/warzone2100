@@ -61,7 +61,14 @@ extern void pie_MatRotX(uint16_t x);
 extern void pie_MatRotY(uint16_t y);
 extern void pie_MatRotZ(uint16_t z);
 extern void pie_MatIdentity(void);
-extern int32_t pie_Project(const Vector3i *src, Vector2i *dest);
+extern int32_t pie_Project(Vector3f const &src, Vector2i *dest);
+
+/** An approximation for the perspective projection of a sphere onto the screen
+ * This approximates the ellipse that would result to a circle.
+ * Note: the approximation will be somewhat arbitrary but it's better than using a hack
+ * Radius is a input and output parameter.
+ */
+extern int32_t pie_ProjectSphere(Vector3f const &src, int32_t &radius, Vector2i *dest);
 
 //*************************************************************************
 

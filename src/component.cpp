@@ -639,13 +639,6 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 		}
 	}
 
-	//don't change the screen coords of an object if drawing it in a button
-	if (!bButton)
-	{
-		/* set up all the screen coords stuff - need to REMOVE FROM THIS LOOP */
-		calcScreenCoords(psDroid);
-	}
-
 	/* set default components transparent */
 	if (psDroid->asWeaps[0].nStat              == 0 &&
 	    psDroid->asBits[COMP_SENSOR].nStat     == 0 &&
@@ -1060,6 +1053,9 @@ void displayComponentObject(DROID *psDroid)
 		int frame = gameTime/BLIP_ANIM_DURATION + psDroid->id % 8192; // de-sync the blip effect, but don't overflow the int
 		pie_Draw3DShape(getImdFromIndex(MI_BLIP), frame, 0, WZCOL_WHITE, pie_ADDITIVE, psDroid->visible[selectedPlayer] / 2);
 	}
+
+	calcScreenCoords(psDroid);
+
 	pie_MatEnd();
 }
 
