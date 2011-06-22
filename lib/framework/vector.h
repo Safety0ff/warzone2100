@@ -28,46 +28,80 @@
 #include "frame.h"
 #include "math_ext.h"
 
-struct Rotation;
-struct Vector3i;
-struct Vector2i
+template<typename T>
+struct tVector2
 {
-	Vector2i() {}
-	Vector2i(int x, int y) : x(x), y(y) {}
-	Vector2i(Vector3i const &r); // discards the z value
+	tVector2() {}
+	tVector2(T x, T y) : x(x), y(y) {}
+	tVector2(tVector2<int> const &v) : x(v.x), y(v.y) {}
 
-	int x, y;
+	T x, y;
 };
-struct Vector2f
+typedef tVector2<float> Vector2f;
+typedef tVector2<int> Vector2i;
+
+template <typename T> struct tVector3;
+template <typename T>
+class _tRefVec2 // Swizzling helper class
 {
-	Vector2f() {}
-	Vector2f(float x, float y) : x(x), y(y) {}
-	Vector2f(Vector2i const &v) : x(v.x), y(v.y) {}
-
-	float x, y;
+	T &a, &b;
+	friend struct tVector3<T>; // Control who can construct these
+	_tRefVec2(T &_a, T &_b):a(_a),b(_b) {}
+	const _tRefVec2& operator=( const _tRefVec2& ); //Don't allow this one (i.e. leave unimplemented)
+public:
+	_tRefVec2& operator= (tVector2<T> const &v) {a= v.x;b= v.y;return *this;}
+	_tRefVec2& operator+=(tVector2<T> const &v) {a+=v.x;b+=v.y;return *this;}
+	_tRefVec2& operator-=(tVector2<T> const &v) {a-=v.x;b-=v.y;return *this;}
+	_tRefVec2& operator*=(tVector2<T> const &v) {a*=v.x;b*=v.y;return *this;}
+	_tRefVec2& operator/=(tVector2<T> const &v) {a/=v.x;b/=v.y;return *this;}
 };
-struct Vector3i
+
+template<typename T>
+struct tVector3
+{
+	tVector3() {}
+	tVector3(T x, T y, T z) : x(x), y(y), z(z) {}
+	tVector3(tVector2<T> const &xy, T z) : x(xy.x), y(xy.y), z(z) {}
+	tVector3(T x, tVector2<T> const &yz) : x(x), y(yz.x), z(yz.y) {}
+
+	template<typename T2>  // Converts from any NOTE: might reintroduce gcc bug
+	tVector3(tVector3<T2> const &v) : x(v.x), y(v.y), z(v.z) {}
+
+	T x, y, z;
+
+	/// Read mask / Swizzle
+	const tVector2<T> r_xy() const {return tVector2<T>(x,y);}
+	const tVector2<T> r_xz() const {return tVector2<T>(x,z);}
+	const tVector2<T> r_yx() const {return tVector2<T>(y,x);}
+	const tVector2<T> r_yz() const {return tVector2<T>(y,z);}
+	const tVector2<T> r_zx() const {return tVector2<T>(z,x);}
+	const tVector2<T> r_zy() const {return tVector2<T>(z,y);}
+	/// Write mask / Swizzle
+	_tRefVec2<T> l_xy() {return _tRefVec2<T>(x,y);}
+	_tRefVec2<T> l_xz() {return _tRefVec2<T>(x,z);}
+	_tRefVec2<T> l_yx() {return _tRefVec2<T>(y,x);}
+	_tRefVec2<T> l_yz() {return _tRefVec2<T>(y,z);}
+	_tRefVec2<T> l_zx() {return _tRefVec2<T>(z,x);}
+	_tRefVec2<T> l_zy() {return _tRefVec2<T>(z,y);}
+};
+
+struct Vector3i : public tVector3<int>
 {
 	Vector3i() {}
-	Vector3i(int x, int y, int z) : x(x), y(y), z(z) {}
-	Vector3i(Vector2i const &xy, int z) : x(xy.x), y(xy.y), z(z) {}
-	Vector3i(Rotation const &r);
-	int x, y, z;
+	Vector3i(int x, int y, int z) : tVector3<int>(x,y,z) {}
+	Vector3i(tVector2<int> const &xy, int z) : tVector3<int>(xy,z) {}
+	Vector3i(int x, tVector2<int> const &yz) : tVector3<int>(x, yz) {}
+	// Don't convert from any to int
 };
-struct Vector3f
-{
-	Vector3f() {}
-	Vector3f(float x, float y, float z) : x(x), y(y), z(z) {}
-	Vector3f(Vector3i const &v) : x(v.x), y(v.y), z(v.z) {}
-	Vector3f(Vector2f const &xy, float z) : x(xy.x), y(xy.y), z(z) {}
 
-	float x, y, z;
-};
+typedef tVector3<float> Vector3f;
+
 struct Rotation
 {
 	Rotation() { direction = 0; pitch = 0; roll = 0; }
 	Rotation(int direction, int pitch, int roll) : direction(direction), pitch(pitch), roll(roll) {}
 	Rotation(Vector3i xyz) : direction(xyz.x), pitch(xyz.y), roll(xyz.z) {}
+	operator Vector3i() const { return Vector3i(direction, pitch, roll); }
 	uint16_t direction, pitch, roll;  ///< Object rotation in 0..64k range
 };
 typedef Vector3i Position;  ///< Map position in world coordinates
@@ -76,7 +110,7 @@ inline Vector3i::Vector3i(Rotation const &r) : x(r.direction), y(r.pitch), z(r.r
 inline Vector2i::Vector2i(Vector3i const &r) : x(r.x), y(r.y) {}
 
 // removeZ(3d_vector) -> 2d_vector
-static inline WZ_DECL_PURE Vector2i removeZ(Vector3i const &a) { return Vector2i(a.x, a.y); }
+static inline WZ_DECL_PURE Vector2i removeZ(Vector3i const &a) { return a.r_xy(); }
 static inline WZ_DECL_PURE Vector2f removeZ(Vector3f const &a) { return Vector2f(a.x, a.y); }
 
 
