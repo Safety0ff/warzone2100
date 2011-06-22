@@ -857,23 +857,32 @@ bool loadWeaponStats(const char *pWeaponData, UDWORD bufferSize)
 		}
 		psStats->rotate = (UBYTE)rotate;
 
-		//set the minElevation
-		if (minElevation > SBYTE_MAX || minElevation < SBYTE_MIN)
+		//validate the minElevation
+		if (minElevation > 90 || minElevation < -90)
 		{
 			ASSERT( false,"loadWeaponStats: minElevation is outside of limits for weapon %s",
 				getStatName(psStats) );
 			return false;
 		}
-		psStats->minElevation = (SBYTE)minElevation;
 
-		//set the maxElevation
-		if (maxElevation > UBYTE_MAX)
+		//validate the maxElevation
+		if (maxElevation > 90)
 		{
 			ASSERT( false,"loadWeaponStats: maxElevation is outside of limits for weapon %s",
 				getStatName(psStats) );
 			return false;
 		}
-		psStats->maxElevation = (UBYTE)maxElevation;
+
+		// Set minPitch and maxPitch
+		if (minElevation > (int)maxElevation)
+		{
+			ASSERT( false,"loadWeaponStats: minElevation (%d) is greater than maxElevation (%d) for weapon %s",
+					minElevation, maxElevation, getStatName(psStats) );
+			return false;
+		}
+		// Convert from elevation to our internal rotation format
+		psStats->minPitch = -maxElevation;
+		psStats->maxPitch = -minElevation;
 
 		//set the surfaceAir
 		if (surfaceToAir > UBYTE_MAX)

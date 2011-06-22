@@ -2799,17 +2799,16 @@ bool calcDroidMuzzleBaseLocation(DROID *psDroid, Vector3i *muzzle, int weapon_sl
 
 		Affine3F af;
 
-		af.Trans(psDroid->pos.x, -psDroid->pos.z, psDroid->pos.y);
+		af.Trans(psDroid->pos.x, psDroid->pos.z, psDroid->pos.y);
 
 		//matrix = the center of droid
 		af.RotY(psDroid->rot.direction);
 		af.RotX(psDroid->rot.pitch);
-		af.RotZ(-psDroid->rot.roll);
-		af.Trans(psBodyImd->connectors[weapon_slot].x, -psBodyImd->connectors[weapon_slot].z,
+		af.RotZ(psDroid->rot.roll);
+		af.Trans(psBodyImd->connectors[weapon_slot].x, psBodyImd->connectors[weapon_slot].z,
 					 -psBodyImd->connectors[weapon_slot].y);//note y and z flipped
 
 		*muzzle = swapYZ(af*barrel);
-		muzzle->z = -muzzle->z;
 	}
 	else
 	{
@@ -2845,13 +2844,13 @@ bool calcDroidMuzzleLocation(DROID *psDroid, Vector3i *muzzle, int weapon_slot)
 
 		Affine3F af;
 
-		af.Trans(psDroid->pos.x, -psDroid->pos.z, psDroid->pos.y);
+		af.Trans(psDroid->pos.x, psDroid->pos.z, psDroid->pos.y);
 
 		//matrix = the center of droid
 		af.RotY(psDroid->rot.direction);
 		af.RotX(psDroid->rot.pitch);
-		af.RotZ(-psDroid->rot.roll);
-		af.Trans(psBodyImd->connectors[weapon_slot].x, -psBodyImd->connectors[weapon_slot].z,
+		af.RotZ(psDroid->rot.roll);
+		af.Trans(psBodyImd->connectors[weapon_slot].x, psBodyImd->connectors[weapon_slot].z,
 					 -psBodyImd->connectors[weapon_slot].y);//note y and z flipped
 		debugLen += sprintf(debugStr + debugLen, "connect:body[%d]=(%d,%d,%d)", weapon_slot, psBodyImd->connectors[weapon_slot].x, -psBodyImd->connectors[weapon_slot].z, -psBodyImd->connectors[weapon_slot].y);
 
@@ -2861,12 +2860,12 @@ bool calcDroidMuzzleLocation(DROID *psDroid, Vector3i *muzzle, int weapon_slot)
 		// process turret mount
 		if (psMountImd && psMountImd->nconnectors)
 		{
-			af.Trans(psMountImd->connectors->x, -psMountImd->connectors->z, -psMountImd->connectors->y);
-			debugLen += sprintf(debugStr + debugLen, ",turret=(%d,%d,%d)", psMountImd->connectors->x, -psMountImd->connectors->z, -psMountImd->connectors->y);
+			af.Trans(psMountImd->connectors->x, psMountImd->connectors->z, -psMountImd->connectors->y);
+			debugLen += sprintf(debugStr + debugLen, ",turret=(%d,%d,%d)", psMountImd->connectors->x, psMountImd->connectors->z, -psMountImd->connectors->y);
 		}
 
 		//matrix = the turret connector for the gun
-		af.RotX(psDroid->asWeaps[weapon_slot].rot.pitch);      // +ve up
+		af.RotX(psDroid->asWeaps[weapon_slot].rot.pitch);
 
 		//process the gun
 		if (psWeaponImd && psWeaponImd->nconnectors)
@@ -2881,13 +2880,12 @@ bool calcDroidMuzzleLocation(DROID *psDroid, Vector3i *muzzle, int weapon_slot)
 			}
 			
 			barrel = Vector3i(psWeaponImd->connectors[connector_num].x,
-							  -psWeaponImd->connectors[connector_num].z,
+							  psWeaponImd->connectors[connector_num].z,
 							-psWeaponImd->connectors[connector_num].y);
-			debugLen += sprintf(debugStr + debugLen, ",barrel[%u]=(%d,%d,%d)", connector_num, psWeaponImd->connectors[connector_num].x, -psWeaponImd->connectors[connector_num].y, -psWeaponImd->connectors[connector_num].z);
+			debugLen += sprintf(debugStr + debugLen, ",barrel[%u]=(%d,%d,%d)", connector_num, psWeaponImd->connectors[connector_num].x, psWeaponImd->connectors[connector_num].y, -psWeaponImd->connectors[connector_num].z);
 		}
 
 		*muzzle = swapYZ(af*barrel);
-		muzzle->z = -muzzle->z;
 		debugLen += sprintf(debugStr + debugLen, ",muzzle=(%d,%d,%d)", muzzle->x, muzzle->y, muzzle->z);
 
 		syncDebug("%s", debugStr);

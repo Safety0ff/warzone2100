@@ -487,14 +487,17 @@ bool proj_SendProjectileAngled(WEAPON *psWeap, SIMPLE_OBJECT *psAttacker, int pl
 
 	if (proj_Direct(psStats) || (!proj_Direct(psStats) && dist <= psStats->minRange))
 	{
-		psProj->rot.pitch = iAtan2(deltaPos.z, dist);
+		// the +ve pitch axis points left and we want CCW rotation, so negate the y argument of atan2
+		psProj->rot.pitch = iAtan2(-deltaPos.z, dist);
 		psProj->state = PROJ_INFLIGHTDIRECT;
 	}
 	else
 	{
 		/* indirect */
 		projCalcIndirectVelocities(dist, deltaPos.z, psStats->flightSpeed, &psProj->vXY, &psProj->vZ, min_angle);
-		psProj->rot.pitch = iAtan2(psProj->vZ, psProj->vXY);
+
+		// the +ve pitch axis points left and we want CCW rotation, so negate the y argument of atan2
+		psProj->rot.pitch = iAtan2(-psProj->vZ, psProj->vXY);
 		psProj->state = PROJ_INFLIGHTINDIRECT;
 	}
 
@@ -792,7 +795,8 @@ static void proj_InFlightFunc(PROJECTILE *psProj, bool bIndirect)
 	if (bIndirect)
 	{
 		/* Update pitch */
-		psProj->rot.pitch = iAtan2(psProj->vZ - (timeSoFar * ACC_GRAVITY / GAME_TICKS_PER_SEC), psProj->vXY);
+		// the +ve pitch axis points left and we want CCW rotation, so negate the y argument of atan2
+		psProj->rot.pitch = iAtan2(-(psProj->vZ - (timeSoFar * ACC_GRAVITY / GAME_TICKS_PER_SEC)), psProj->vXY);
 	}
 
 	closestCollisionSpacetime.time = 0xFFFFFFFF;

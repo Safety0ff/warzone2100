@@ -447,8 +447,8 @@ struct WEAPON_STATS : public COMPONENT_STATS
 	WEAPON_EFFECT	weaponEffect;			///< which type of warhead is associated with the	weapon
 	UDWORD			recoilValue;			///< used to compare with	weight to see if recoils or not
 	UBYTE			rotate;					///< amount the weapon(turret) can rotate 0	= none
-	UBYTE			maxElevation;			///< max amount the	turret can be elevated up
-	SBYTE			minElevation;			///< min amount the	turret can be elevated down
+	SBYTE			maxPitch;				///< max pitch of the turret Range: [-90,90]
+	SBYTE			minPitch;				///< min pitch of the turret Range: [-90,90]
 	UBYTE			facePlayer;				///< flag to make the (explosion) effect face the	player when	drawn
 	UBYTE			faceInFlight;			///< flag to make the inflight effect	face the player when drawn
 	UBYTE			effectSize;				///< size of the effect 100 = normal,	50 = half etc
