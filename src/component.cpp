@@ -643,13 +643,6 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 		}
 	}
 
-	//don't change the screen coords of an object if drawing it in a button
-	if (!bButton)
-	{
-		/* set up all the screen coords stuff - need to REMOVE FROM THIS LOOP */
-		calcScreenCoords(psDroid);
-	}
-
 	/* set default components transparent */
 	if (psDroid->asWeaps[0].nStat              == 0 &&
 	    psDroid->asBits[COMP_SENSOR].nStat     == 0 &&
@@ -1076,6 +1069,9 @@ void displayComponentObject(DROID *psDroid)
 			}
 		}
 	}
+
+	calcScreenCoords(psDroid);
+
 	pie_MatEnd();
 }
 
