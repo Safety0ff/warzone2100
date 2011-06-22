@@ -4309,7 +4309,8 @@ void intRunDesign(void)
 
 static void intDisplayStatForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset, WZ_DECL_UNUSED PIELIGHT *pColours)
 {
-	Vector3i		Rotation, Position;
+	Vector3i		Position;
+	Vector2i		Rotation;
 	W_CLICKFORM		*Form = (W_CLICKFORM*)psWidget;
 	UWORD			x0 = xOffset+Form->x;
 	UWORD			y0 = yOffset+Form->y;
@@ -4318,11 +4319,6 @@ static void intDisplayStatForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 	 * intSetSystemStats, intSetBodyStats, intSetPropulsionStats
 	 */
 	BASE_STATS *psStats = (BASE_STATS *) Form->pUserData;
-
-	SWORD templateRadius = getComponentRadius(psStats);
-
-	//scale the object around the BUTTON_RADIUS so that half size objects are draw are draw 75% the size of normal objects
-	SDWORD falseScale = (DESIGN_COMPONENT_SCALE * COMPONENT_RADIUS) / templateRadius / 2 + (DESIGN_COMPONENT_SCALE / 2);
 
 	iV_DrawImage(IntImages,(UWORD)(IMAGE_DES_STATBACKLEFT),x0,y0);
 	iV_DrawImageRect(IntImages,IMAGE_DES_STATBACKMID,
@@ -4336,10 +4332,10 @@ static void intDisplayStatForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 	static UDWORD	iRY = 45;
 	Rotation.x = -30;
 	Rotation.y = iRY;
-	Rotation.z = 0;
 	Position.x = xOffset+psWidget->width/4;
-	Position.y = yOffset+psWidget->height/2; //-templateRadius / 4;
-	Position.z = BUTTON_DEPTH;  /* was templateRadius * 12 */
+	Position.y = yOffset+psWidget->height/2;
+	Position.z = BUTTON_DEPTH;
+	Vector2i bounds(psWidget->width/4,psWidget->height/2);
 
 	/* inc rotation if highlighted */
 	if ( Form->state & WCLICK_HILITE )
@@ -4349,7 +4345,7 @@ static void intDisplayStatForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 	}
 
 	//display component in bottom design screen window
-	displayComponentButton( psStats, &Rotation, &Position, true, falseScale);
+	displayComponentButton( psStats, Rotation, Position, bounds, true);
 }
 
 /* Displays the 3D view of the droid in a window on the design form */
@@ -4358,15 +4354,14 @@ static void intDisplayViewForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 	W_FORM			*Form = (W_FORM*)psWidget;
 	UDWORD			x0,y0,x1,y1;
 	static UDWORD	iRY = 45;
-	Vector3i			Rotation, Position;
-	SWORD			templateRadius;
-	SDWORD			falseScale;
+	Vector3i		Position;
+	Vector2i		Rotation;
+	Vector2i		bounds(Form->width/2, Form->height/2);
 
 	x0 = xOffset+Form->x;
 	y0 = yOffset+Form->y;
 	x1 = x0 + Form->width;
 	y1 = y0 + Form->height;
-
 
 	RenderWindowFrame(FRAME_NORMAL, x0, y0, x1 - x0, y1 - y0);
 
@@ -4374,7 +4369,6 @@ static void intDisplayViewForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 
 		Rotation.x = -30;
 		Rotation.y = iRY;
-		Rotation.z = 0;
 
 		/* inc rotation */
 		iRY += realTimeAdjustedIncrement(BUTTONOBJ_ROTSPEED);
@@ -4382,16 +4376,11 @@ static void intDisplayViewForm(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 
 		//fixed depth scale the pie
 		Position.x = (DES_CENTERFORMX+DES_3DVIEWX) + (DES_3DVIEWWIDTH/2);
-		Position.y = (DES_CENTERFORMY+DES_3DVIEWY) + (DES_3DVIEWHEIGHT/4) + 32; // -100;
+		Position.y = (DES_CENTERFORMY+DES_3DVIEWY) + (DES_3DVIEWHEIGHT/2)+32;
 		Position.z = BUTTON_DEPTH;
 
-		templateRadius = (SWORD)(getComponentDroidTemplateRadius((DROID_TEMPLATE*)
-			CurrentStatsTemplate));
-		//scale the object around the OBJECT_RADIUS so that half size objects are draw are draw 75% the size of normal objects
-		falseScale = (DESIGN_DROID_SCALE * OBJECT_RADIUS) / templateRadius;
-
 		//display large droid view in the design screen
-		displayComponentButtonTemplate((DROID_TEMPLATE*)&sCurrDesign,&Rotation,&Position,true, falseScale);
+		displayComponentButtonTemplate((DROID_TEMPLATE*)&sCurrDesign,Rotation,Position, bounds, true);
 	}
 }
 

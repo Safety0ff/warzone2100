@@ -2105,7 +2105,7 @@ void CloseButtonRender(void)
 
 // Clear a button bitmap. ( copy the button background ).
 //
-void ClearButton(bool Down,UDWORD Size, UDWORD buttonType)
+void ClearButton(bool Down, UDWORD buttonType)
 {
 	if(Down)
 	{
@@ -2121,206 +2121,61 @@ void ClearButton(bool Down,UDWORD Size, UDWORD buttonType)
 //
 void CreateIMDButton(IMAGEFILE *ImageFile, UWORD ImageID, void *Object, UDWORD Player, RENDERED_BUTTON *Buffer, bool Down, UDWORD IMDType, UDWORD buttonType)
 {
-	UDWORD Size;
-	Vector3i Rotation, Position;
+	Vector3i Position;
+	Vector2i Rotation;
+	Vector2i bounds;
 	UDWORD ox,oy;
-	UDWORD Radius;
-	UDWORD basePlateSize;
-	SDWORD scale;
+	int buttonHalfWidth, buttonHalfHeight;
 
 	Rotation.x = -30;
 	Rotation.y = (UDWORD) Buffer->ImdRotation;
-	Rotation.z = 0;
 
 	Position.z = BUTTON_DEPTH;
 
 	if(Down)
 	{
+		buttonHalfWidth = iV_GetImageWidth(IntImages,IMAGE_BUT0_DOWN)/2;
+		buttonHalfHeight = iV_GetImageHeight(IntImages,IMAGE_BUT0_DOWN)/2;
 		if (buttonType == TOPBUTTON)
 		{
-			Position.x = (ButXPos + iV_GetImageWidth(IntImages,IMAGE_BUT0_DOWN)/2) + ButtonDrawXOffset + 2;
-			Position.y = (ButYPos + iV_GetImageHeight(IntImages,IMAGE_BUT0_DOWN)/2) + 2 + 8 + ButtonDrawYOffset;
+			Position.x = (ButXPos + buttonHalfWidth) + ButtonDrawXOffset + 2;
+			Position.y = (ButYPos + buttonHalfHeight) + 2 + 8 + ButtonDrawYOffset;
 		}
 		else
 		{
-			Position.x = (ButXPos + iV_GetImageWidth(IntImages,IMAGE_BUTB0_DOWN)/2) + ButtonDrawXOffset + 2;
-			Position.y = (ButYPos + iV_GetImageHeight(IntImages,IMAGE_BUTB0_DOWN)/2) + 2 + 12 + ButtonDrawYOffset;
+
+			Position.x = (ButXPos + buttonHalfWidth) + ButtonDrawXOffset + 2;
+			Position.y = (ButYPos + buttonHalfHeight) + 2 + 12 + ButtonDrawYOffset;
 		}
 	}
 	else
 	{
+		buttonHalfWidth = iV_GetImageWidth(IntImages,IMAGE_BUT0_UP)/2;
+		buttonHalfHeight = iV_GetImageHeight(IntImages,IMAGE_BUT0_UP)/2;
 		if (buttonType == TOPBUTTON)
 		{
-			Position.x = (ButXPos + iV_GetImageWidth(IntImages,IMAGE_BUT0_UP)/2) + ButtonDrawXOffset;
-			Position.y = (ButYPos + iV_GetImageHeight(IntImages,IMAGE_BUT0_UP)/2) + 8  + ButtonDrawYOffset;
+			Position.x = (ButXPos + buttonHalfWidth) + ButtonDrawXOffset;
+			Position.y = (ButYPos + buttonHalfHeight) + 8  + ButtonDrawYOffset;
 		}
 		else
 		{
-			Position.x = (ButXPos + iV_GetImageWidth(IntImages,IMAGE_BUTB0_UP)/2) + ButtonDrawXOffset;
-			Position.y = (ButYPos + iV_GetImageHeight(IntImages,IMAGE_BUTB0_UP)/2) + 12  + ButtonDrawYOffset;
+			Position.x = (ButXPos + buttonHalfWidth) + ButtonDrawXOffset;
+			Position.y = (ButYPos + buttonHalfHeight) + 12  + ButtonDrawYOffset;
 		}
 	}
+	bounds = Vector2i(buttonHalfWidth, buttonHalfHeight);
 
-	if((IMDType == IMDTYPE_DROID) || (IMDType == IMDTYPE_DROIDTEMPLATE)) {	// The case where we have to render a composite droid.
+	ClearButton(Down, buttonType);
 
-		if(IMDType == IMDTYPE_DROID)
-		{
-			Radius = getComponentDroidRadius((DROID*)Object);
-		}
-		else
-		{
-			Radius = getComponentDroidTemplateRadius((DROID_TEMPLATE*)Object);
-		}
-
-		Size = 2;
-		scale = DROID_BUT_SCALE;
-		ASSERT( Radius <= 128,"create PIE button big component found" );
-
-		ClearButton(Down, Size, buttonType);
-
-		if(IMDType == IMDTYPE_DROID)
-		{
-			if(((DROID*)Object)->droidType == DROID_TRANSPORTER)
-			{
-				// Position.y =  BUT_TRANSPORTER_ALT;
-				if ((!strcmp("Cyborg Transport",((DROID*)Object)->aName)))
-				{
-					scale = DROID_BUT_SCALE/2;
-				}
-				else
-				{
-					scale = DROID_BUT_SCALE/3;
-				}
-			}
-		}
-		else//(IMDType == IMDTYPE_DROIDTEMPLATE)
-		{
-			if(((DROID_TEMPLATE*)Object)->droidType == DROID_TRANSPORTER)
-			{
-				// Position.y = BUT_TRANSPORTER_ALT;
-				if ((!strcmp("Cyborg Transport",((DROID_TEMPLATE*)Object)->aName)))
-				{
-					scale = DROID_BUT_SCALE/2;
-				}
-				else
-				{
-					scale = DROID_BUT_SCALE/3;
-				}
-			}
-		}
-
-		//lefthand display droid buttons
-		if(IMDType == IMDTYPE_DROID)
-		{
-			displayComponentButtonObject((DROID*)Object,&Rotation,&Position,true, scale);
-		}
-		else
-		{
-			displayComponentButtonTemplate((DROID_TEMPLATE*)Object,&Rotation,&Position,true, scale);
-		}
+	if (IMDType == IMDTYPE_DROID) {
+		displayComponentButtonObject((DROID*)Object, Rotation, Position, bounds, true);
+	}
+	else if (IMDType == IMDTYPE_DROIDTEMPLATE)
+	{
+		displayComponentButtonTemplate((DROID_TEMPLATE*)Object, Rotation, Position, bounds, true);
 	}
 	else
 	{	// Just drawing a single IMD.
-
-	// Decide which button grid size to use.
-		if(IMDType == IMDTYPE_COMPONENT)
-		{
-			Radius = getComponentRadius((BASE_STATS*)Object);
-			Size = 2;//small structure
-			scale = rescaleButtonObject(Radius, COMP_BUT_SCALE, COMPONENT_RADIUS);
-			//scale = COMP_BUT_SCALE;
-			//ASSERT( Radius <= OBJECT_RADIUS,"Object too big for button - %s",
-			//		((BASE_STATS*)Object)->pName );
-			// NOTE: The Super transport is huge, and is considered a component type, so refit it to inside the button.
-			if ((!strcmp("MP-SuperTransportBody",((BASE_STATS*)Object)->pName)))
-			{
-				scale /= 2;
-			}
-		}
-		else if(IMDType == IMDTYPE_RESEARCH)
-		{
-			Radius = getResearchRadius((BASE_STATS*)Object);
-			if(Radius <= 100)
-			{
-				Size = 2;//small structure
-				scale = rescaleButtonObject(Radius, COMP_BUT_SCALE, COMPONENT_RADIUS);
-				//scale = COMP_BUT_SCALE;
-			}
-			else if(Radius <= 128)
-			{
-				Size = 2;//small structure
-				scale = SMALL_STRUCT_SCALE;
-			}
-			else if(Radius <= 256)
-			{
-				Size = 1;//med structure
-				scale = MED_STRUCT_SCALE;
-			}
-			else
-			{
-				Size = 0;
-				scale = LARGE_STRUCT_SCALE;
-			}
-		}
-		else if(IMDType == IMDTYPE_STRUCTURE)
-		{
-			basePlateSize = getStructureSize((STRUCTURE*)Object);
-			if(basePlateSize == 1)
-			{
-				Size = 2;//small structure
-				scale = SMALL_STRUCT_SCALE;
-			}
-			else if(basePlateSize == 2)
-			{
-				Size = 1;//med structure
-				scale = MED_STRUCT_SCALE;
-			}
-			else
-			{
-				Size = 0;
-				scale = LARGE_STRUCT_SCALE;
-			}
-		}
-		else if(IMDType == IMDTYPE_STRUCTURESTAT)
-		{
-			basePlateSize= getStructureStatSize((STRUCTURE_STATS*)Object);
-			if(basePlateSize == 1)
-			{
-				Size = 2;//small structure
-				scale = SMALL_STRUCT_SCALE;
-			}
-			else if(basePlateSize == 2)
-			{
-				Size = 1;//med structure
-				scale = MED_STRUCT_SCALE;
-			}
-			else
-			{
-				Size = 0;
-				scale = LARGE_STRUCT_SCALE;
-			}
-		}
-		else
-		{
-
-			Radius = ((iIMDShape*)Object)->sradius;
-
-			if(Radius <= 128) {
-				Size = 2;//small structure
-				scale = SMALL_STRUCT_SCALE;
-			} else if(Radius <= 256) {
-				Size = 1;//med structure
-				scale = MED_STRUCT_SCALE;
-			} else {
-				Size = 0;
-				scale = LARGE_STRUCT_SCALE;
-			}
-		}
-
-		ClearButton(Down,Size, buttonType);
-
-		//was 		Position.z = Radius*30;
-
 		if(Down) {
 			ox = oy = 2;
 		} else {
@@ -2335,16 +2190,24 @@ void CreateIMDButton(IMAGEFILE *ImageFile, UWORD ImageID, void *Object, UDWORD P
 		pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
 
 		/* all non droid buttons */
-		if(IMDType == IMDTYPE_COMPONENT) {
-			displayComponentButton((BASE_STATS*)Object,&Rotation,&Position,true, scale);
-		} else if(IMDType == IMDTYPE_RESEARCH) {
-			displayResearchButton((BASE_STATS*)Object,&Rotation,&Position,true, scale);
-		} else if(IMDType == IMDTYPE_STRUCTURE) {
-			displayStructureButton((STRUCTURE*)Object,&Rotation,&Position,true, scale);
-		} else if(IMDType == IMDTYPE_STRUCTURESTAT) {
-			displayStructureStatButton((STRUCTURE_STATS*)Object, &Rotation, &Position, true, scale);
-		} else {
-			displayIMDButton((iIMDShape*)Object,&Rotation,&Position,true, scale);
+		if(IMDType == IMDTYPE_COMPONENT)
+		{
+			displayComponentButton((BASE_STATS*)Object, Rotation, Position, bounds, true);
+		}
+		else if(IMDType == IMDTYPE_RESEARCH)
+		{
+			displayResearchButton((BASE_STATS*)Object, Rotation, Position, bounds, true);
+		}
+		else if(IMDType == IMDTYPE_STRUCTURE)
+		{
+			displayStructureButton((STRUCTURE*)Object, Rotation, Position, bounds, true);
+		}
+		else if(IMDType == IMDTYPE_STRUCTURESTAT)
+		{
+			displayStructureStatButton((STRUCTURE_STATS*)Object, Rotation, Position, bounds, true);
+		}
+		else {
+			displayIMDButton((iIMDShape*)Object, Rotation, Position, bounds, true);
 		}
 
 		pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_ON);
@@ -2364,7 +2227,7 @@ void CreateImageButton(IMAGEFILE *ImageFile,UWORD ImageID,RENDERED_BUTTON *Buffe
 		ox = oy = 2;
 	} */
 
-	ClearButton(Down,0, buttonType);
+	ClearButton(Down, buttonType);
 
 	iV_DrawImage(ImageFile,ImageID,ButXPos+ox,ButYPos+oy);
 //	DrawTransImageSR(Image,ox,oy);
@@ -2383,7 +2246,7 @@ void CreateBlankButton(RENDERED_BUTTON *Buffer,bool Down, UDWORD buttonType)
 		ox = oy = 0;
 	}
 
-	ClearButton(Down,0, buttonType);
+	ClearButton(Down, buttonType);
 
 	// Draw a question mark, bit of quick hack this.
 	iV_DrawImage(IntImages,IMAGE_QUESTION_MARK,ButXPos+ox+10,ButYPos+oy+3);

@@ -42,8 +42,6 @@
 #include "projectile.h"
 #include "transporter.h"
 
-#define GetRadius(x) ((x)->sradius)
-
 #define BLIP_ANIM_DURATION			200
 #define	DEFAULT_COMPONENT_TRANSLUCENCY	128
 #define	DROID_EMP_SPREAD	(20 - rand()%40)
@@ -67,8 +65,287 @@ UBYTE getPlayerColour(UDWORD pl)
 	return NetPlay.players[pl].colour;
 }
 
+struct UISphere // Named to prevent misuse/name collision
+{
+	UISphere() : centre(Vector3f(0.f,0.f,0.f)), radius(0.f) {}
+	UISphere(Vector3f cntr, float rad) : centre(cntr), radius(rad) {}
+	/*
+	 * HACK-ish: we average between the maximum coordinate (radius) and the bounding sphere's radius (sradius)
+	 * to balance out the fact that the bounding sphere algo doesn't do a great job
+	 */
+	UISphere(const iIMDShape * const imd) : centre(imd->ocen), radius((imd->radius+imd->sradius)/2) {}
+// 	UISphere(const iIMDShape * const imd) : centre(imd->ocen), radius(imd->sradius) {}
 
-static void setMatrix(Vector3i *Position, Vector3i *Rotation, bool RotXYZ)
+	UISphere& mergeWith(UISphere const &s);
+	UISphere mergedWith(UISphere const &s) const { return UISphere(*this).mergeWith(s); }
+	Vector3f centre; // Note: in model coords (so x=left,z=back,y=up)
+	float radius;
+};
+
+UISphere& UISphere::mergeWith(const UISphere& s)
+{
+	Vector3f cntrDif = centre - s.centre;
+	float difMag = sqrt(cntrDif*cntrDif);
+	if (difMag + s.radius <= radius || s.radius<1.f) // IF this U s = this OR s is a point
+		return *this;
+	else if (difMag + radius <= s.radius || radius<1.f) // IF s U this = s OR this is a point
+		return this->operator=(s);
+
+	centre += cntrDif*(0.5 * (s.radius + difMag - radius)/difMag);
+	radius = 0.5 * (radius + s.radius + difMag);
+	return *this;
+}
+
+static inline  UISphere mergePrimaryImds(iIMDShape *mainImd, iIMDShape *mountImd, iIMDShape *miscImd, iIMDShape *extraImd)
+{
+	UISphere sphere;
+	if (mainImd)
+	{
+		sphere.mergeWith(mainImd);
+	}
+	if (mountImd && mainImd->connectors)
+	{
+		UISphere mntSphere(mountImd);
+		mntSphere.centre += Vector3f(mainImd->connectors->x,
+									mainImd->connectors->z,
+									mainImd->connectors->y);
+		sphere.mergeWith(mntSphere);
+		if (miscImd && mountImd->connectors)
+		{
+			UISphere miscSphere(miscImd);
+			miscSphere.centre += Vector3f(mountImd->connectors->x,
+										mountImd->connectors->z,
+										mountImd->connectors->y);
+			sphere.mergeWith(miscImd);
+		}
+	}
+	else if (miscImd)
+	{
+		sphere.mergeWith(miscImd);
+	}
+	if (extraImd)
+	{
+		sphere.mergeWith(extraImd);
+	}
+	return sphere;
+}
+
+static iIMDShape *getLeftPropulsionIMD(DROID *psDroid)
+{
+	UDWORD			bodyStat, propStat;
+	iIMDShape		**imd;
+	
+	bodyStat = psDroid->asBits[COMP_BODY].nStat;
+	propStat = psDroid->asBits[COMP_PROPULSION].nStat;
+	
+	imd = asBodyStats[bodyStat].ppIMDList;
+	imd += (propStat * NUM_PROP_SIDES + LEFT_PROP);
+	
+	return *imd;
+}
+
+/*
+ * FIXME: Some of the cyborg's legs are hidden somewhere else
+ * so we need to add it to these functions so that they scale properly
+ */
+static iIMDShape *getLeftPropulsionIMD(DROID_TEMPLATE *psDrTemp)
+{
+	UDWORD			bodyStat, propStat;
+	iIMDShape		**imd;
+	
+	bodyStat = psDrTemp->asParts[COMP_BODY];
+	propStat = psDrTemp->asParts[COMP_PROPULSION];
+	
+	imd = asBodyStats[bodyStat].ppIMDList;
+	imd += (propStat * NUM_PROP_SIDES + RIGHT_PROP);
+	
+	return *imd;
+}
+
+static iIMDShape *getRightPropulsionIMD(DROID *psDroid)
+{
+	UDWORD			bodyStat, propStat;
+	iIMDShape		**imd;
+	
+	bodyStat = psDroid->asBits[COMP_BODY].nStat;
+	propStat = psDroid->asBits[COMP_PROPULSION].nStat;
+	
+	imd = asBodyStats[bodyStat].ppIMDList;
+	imd += (propStat * NUM_PROP_SIDES + RIGHT_PROP);
+	
+	return *imd;
+}
+
+static iIMDShape *getRightPropulsionIMD(DROID_TEMPLATE *psDrTemp)
+{
+	UDWORD			bodyStat, propStat;
+	iIMDShape		**imd;
+
+	bodyStat = psDrTemp->asParts[COMP_BODY];
+	propStat = psDrTemp->asParts[COMP_PROPULSION];
+
+	imd = asBodyStats[bodyStat].ppIMDList;
+	imd += (propStat * NUM_PROP_SIDES + RIGHT_PROP);
+	
+	return *imd;
+}
+
+
+static inline  UISphere getComponentDroidSphere(DROID *psDroid)
+{
+	iIMDShape *bodyImd = BODY_IMD(psDroid,psDroid->player);
+	iIMDShape *mountImd = WEAPON_MOUNT_IMD(psDroid,0);
+	iIMDShape *weaponImd = WEAPON_IMD(psDroid,0);
+	iIMDShape *extraImd = getLeftPropulsionIMD(psDroid);
+	if (extraImd == NULL)
+		extraImd = getRightPropulsionIMD(psDroid);
+	return mergePrimaryImds(bodyImd, mountImd, weaponImd, extraImd);
+}
+
+static inline UISphere getStructureSphere(STRUCTURE *psStructure)
+{
+	iIMDShape *strImd = psStructure->sDisplay.imd;
+	iIMDShape *extraImd = psStructure->pStructureType->pBaseIMD;
+	iIMDShape *mountImd = NULL;
+	iIMDShape *miscImd = NULL;
+	// Weapon
+	if (psStructure->asWeaps[0].nStat > 0)
+	{
+		const int nWeaponStat = psStructure->asWeaps[0].nStat;
+		miscImd =  asWeaponStats[nWeaponStat].pIMD;
+		mountImd =  asWeaponStats[nWeaponStat].pMountGraphic;
+	}
+	// sensor (or repair turret)
+	if (miscImd == NULL && psStructure->pStructureType->pSensor != NULL)
+	{
+		miscImd =  psStructure->pStructureType->pSensor->pIMD;
+		mountImd  =  psStructure->pStructureType->pSensor->pMountGraphic;
+	}
+	return mergePrimaryImds(strImd, mountImd, miscImd, extraImd);
+}
+
+static inline UISphere getComponentDroidTemplateSphere(DROID_TEMPLATE *psDrTemp)
+{
+	iIMDShape *bodyImd = asBodyStats[(UBYTE)psDrTemp->asParts[COMP_BODY]].pIMD;
+	iIMDShape *mountImd = NULL;
+	iIMDShape *miscImd = NULL;
+	iIMDShape *extraImd = getLeftPropulsionIMD(psDrTemp);
+
+	switch (psDrTemp->droidType)
+	{
+		case DROID_COMMAND:
+			miscImd = asBrainStats[psDrTemp->asParts[COMP_BRAIN]].pIMD;
+			break;
+		case DROID_SENSOR:
+			mountImd = asSensorStats[psDrTemp->asParts[COMP_SENSOR]].pMountGraphic;
+			miscImd = asSensorStats[psDrTemp->asParts[COMP_SENSOR]].pIMD;
+			break;
+			/*
+			 * Note: at the time of this writing the default "Truck" template
+			 * has type "DROID_DEFAULT" so it'll look bigger than it should
+			 */
+		case DROID_CONSTRUCT:
+		case DROID_CYBORG_CONSTRUCT:
+			mountImd = asConstructStats[psDrTemp->asParts[COMP_CONSTRUCT]].pMountGraphic;
+			miscImd = asConstructStats[psDrTemp->asParts[COMP_CONSTRUCT]].pIMD;
+			break;
+		case DROID_REPAIR:
+		case DROID_CYBORG_REPAIR:
+			mountImd = asRepairStats[psDrTemp->asParts[COMP_REPAIRUNIT]].pMountGraphic;
+			miscImd = asRepairStats[psDrTemp->asParts[COMP_REPAIRUNIT]].pIMD;
+			break;
+		default:
+			if (psDrTemp->numWeaps)
+			{
+				mountImd = asWeaponStats[psDrTemp->asWeaps[0]].pIMD;
+				miscImd = asWeaponStats[psDrTemp->asWeaps[0]].pMountGraphic;
+			}
+			break;
+	}
+	if (extraImd == NULL)
+		extraImd = getRightPropulsionIMD(psDrTemp);
+	return mergePrimaryImds(bodyImd, mountImd, miscImd, extraImd);
+}
+
+static inline UISphere getComponentSphere(BASE_STATS *psComponent)
+{
+	UISphere sphere;
+	iIMDShape *ComponentIMD = NULL;
+	iIMDShape *MountIMD = NULL;
+	SDWORD compID;
+	
+	compID = StatIsComponent(psComponent);
+	if (compID <= 0)
+		return sphere;
+
+	StatGetComponentIMD(psComponent, compID,&ComponentIMD, &MountIMD);
+	if (MountIMD)
+	{
+		UISphere mntSphere(MountIMD);
+		UISphere compSphere;
+		sphere.mergeWith(mntSphere);
+		if (ComponentIMD)
+		{
+			compSphere = UISphere(ComponentIMD);
+		}
+		if (MountIMD->nconnectors)
+		{
+			compSphere.centre += Vector3f(MountIMD->connectors->x,
+										  MountIMD->connectors->z,
+										MountIMD->connectors->y);
+		}
+		sphere.mergeWith(compSphere);
+	}
+	else if (ComponentIMD)
+	{
+		return UISphere(ComponentIMD);
+	}
+	return sphere;
+}
+
+static inline UISphere getResearchSphere(BASE_STATS *Stat)
+{
+	iIMDShape *ResImd = ((RESEARCH *)Stat)->pIMD;
+	if (ResImd)
+	{
+		return UISphere(ResImd);
+	}
+	return UISphere();
+}
+
+static inline UISphere getStructureStatSphere(STRUCTURE_STATS *Stats)
+{
+	iIMDShape *strImd = ((STRUCTURE_STATS*)Stats)->pIMD;
+	iIMDShape *extraImd = ((STRUCTURE_STATS*)Stats)->pBaseIMD;
+	iIMDShape *mountImd = NULL;
+	iIMDShape *miscImd = NULL;
+	if (Stats->psWeapStat[0])
+	{
+		miscImd = Stats->psWeapStat[0]->pIMD;
+		mountImd= Stats->psWeapStat[0]->pIMD;
+	}
+	if (miscImd == NULL && Stats->pSensor) // This includes repair turrets
+	{
+		miscImd = Stats->pSensor->pIMD;
+		mountImd=  Stats->pSensor->pMountGraphic;
+	}
+	return mergePrimaryImds(strImd, mountImd, miscImd, extraImd);
+}
+
+// Returns the scale and adjusts the Position
+static inline float fitToBounds(UISphere const &sphere, Vector2i const& /*Rot*/, Vector2i const& bounds, Vector3i */*Pos*/)
+{
+	float scale = MIN(bounds.x,bounds.y) / (sphere.radius);
+	/*
+	 * The intention was to modify Pos according to sphere.centre and Rot,
+	 * (using the assumption that Rot.x is fixed for a given droid/struct/etc)
+	 * but it looks better without doing that.
+	 * The infrastructure has been left in place in case this becomes necessary.
+	 */
+	return scale;
+}
+
+static void setMatrix(Vector2i const &Rot, Vector3i const &Pos, bool RotXY)
 {
 	// TEMPORARY HACK!!
 	glMatrixMode(GL_PROJECTION);
@@ -82,16 +359,14 @@ static void setMatrix(Vector3i *Position, Vector3i *Rotation, bool RotXYZ)
 	 * mouse handling also seems to use top left as the origin
 	 * UI components seem to be specified with a top left origin.
 	 */
-	pie_TRANSLATE(Position->x,pie_GetVideoBufferHeight()-Position->y,0);
+	pie_TRANSLATE(Pos.x,pie_GetVideoBufferHeight()-Pos.y,0);
 
-	if(RotXYZ) {
-		pie_MatRotX(DEG(-Rotation->x));
-		pie_MatRotY(DEG(-Rotation->y));
-		pie_MatRotZ(DEG(Rotation->z));
+	if(RotXY) {
+		pie_MatRotX(DEG(-Rot.x));
+		pie_MatRotY(DEG(-Rot.y));
 	} else {
-		pie_MatRotY(DEG(-Rotation->y));
-		pie_MatRotX(DEG(-Rotation->x));
-		pie_MatRotZ(DEG(Rotation->z));
+		pie_MatRotY(DEG(-Rot.y));
+		pie_MatRotX(DEG(-Rot.x));
 	}
 }
 
@@ -102,94 +377,12 @@ static void unsetMatrix(void)
 	pie_PerspectiveEnd();
 }
 
-
-UDWORD getComponentDroidRadius(WZ_DECL_UNUSED DROID *psDroid)
+void displayIMDButton(iIMDShape *IMDShape, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
 {
-	return 100;
-}
-
-
-UDWORD getComponentDroidTemplateRadius(WZ_DECL_UNUSED DROID_TEMPLATE *psDroid)
-{
-	return 100;
-}
-
-
-UDWORD getComponentRadius(BASE_STATS *psComponent)
-{
-	iIMDShape *ComponentIMD = NULL;
-	iIMDShape *MountIMD = NULL;
-	SDWORD compID;
-
-	compID = StatIsComponent(psComponent);
-	if (compID > 0)
-	{
-		StatGetComponentIMD(psComponent, compID,&ComponentIMD, &MountIMD);
-		if(ComponentIMD)
-		{
-			return GetRadius(ComponentIMD);
-		}
-	}
-
-	/* VTOL bombs are only stats allowed to have NULL ComponentIMD */
-	if (StatIsComponent(psComponent) != COMP_WEAPON
-		|| (((WEAPON_STATS *)psComponent)->weaponSubClass != WSC_BOMB
-			&& ((WEAPON_STATS *)psComponent)->weaponSubClass != WSC_EMP))
-	{
-		ASSERT(ComponentIMD, "No ComponentIMD!");
-	}
-
-	return COMPONENT_RADIUS;
-}
-
-
-UDWORD getResearchRadius(BASE_STATS *Stat)
-{
-	iIMDShape *ResearchIMD = ((RESEARCH *)Stat)->pIMD;
-
-	if(ResearchIMD)
-	{
-		return GetRadius(ResearchIMD);
-	}
-
-	debug(LOG_ERROR, "ResearchPIE == NULL");
-
-	return 100;
-}
-
-
-UDWORD getStructureSize(STRUCTURE *psStructure)
-{
-	//radius based on base plate size
-	return MAX(psStructure->pStructureType->baseWidth, psStructure->pStructureType->baseBreadth);
-}
-
-UDWORD getStructureStatSize(STRUCTURE_STATS *Stats)
-{
-	//radius based on base plate size
-	return MAX(Stats->baseWidth, Stats->baseBreadth);
-}
-
-static UDWORD getStructureHeight(STRUCTURE *psStructure)
-{
-	return (getStructureStatHeight(psStructure->pStructureType));
-}
-
-UDWORD getStructureStatHeight(STRUCTURE_STATS *psStat)
-{
-	if (psStat->pIMD)
-	{
-		return (psStat->pIMD->max.y - psStat->pIMD->min.y);
-	}
-
-	return 0;
-}
-
-
-void displayIMDButton(iIMDShape *IMDShape, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale)
-{
-	setMatrix(Position, Rotation, RotXYZ);
-	pie_MatScale(scale / 100.f);
+	UISphere sphere(IMDShape);
+	float scale = fitToBounds(sphere, Rot, bounds, &Pos);
+	setMatrix(Rot, Pos, RotXY);
+	pie_MatScale(scale);
 
 	pie_SetFogStatus(false);
 	pie_Draw3DShape(IMDShape, 0, getPlayerColour(selectedPlayer), WZCOL_WHITE, pie_BUTTON, 0);
@@ -198,26 +391,18 @@ void displayIMDButton(iIMDShape *IMDShape, Vector3i *Rotation, Vector3i *Positio
 
 
 //changed it to loop thru and draw all weapons
-void displayStructureButton(STRUCTURE *psStructure, Vector3i *rotation, Vector3i *Position, bool RotXYZ, SDWORD scale)
+void displayStructureButton(STRUCTURE *psStructure, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
 {
 	iIMDShape *baseImd,*strImd;//*mountImd,*weaponImd;
 	iIMDShape *mountImd[STRUCT_MAXWEAPS];
 	iIMDShape *weaponImd[STRUCT_MAXWEAPS];
+	UISphere sphere = getStructureSphere(psStructure);
+	float scale = fitToBounds(sphere, Rot, bounds, &Pos);
 	UDWORD			nWeaponStat;
 	int		i;
 
-	/*HACK HACK HACK!
-	if its a 'tall thin (ie tower)' structure with something on the top - offset the
-	position to show the object on top*/
-	if (psStructure->pStructureType->pIMD->nconnectors && scale == SMALL_STRUCT_SCALE &&
-		getStructureHeight(psStructure) > TOWER_HEIGHT)
-	{
-		// Note this was -20, but as a temporary hack the sign is switched
-		Position->y += 20;
-	}
-
-	setMatrix(Position, rotation, RotXYZ);
-	pie_MatScale(scale / 100.f);
+	setMatrix(Rot, Pos, RotXY);
+	pie_MatScale(scale);
 
 	/* Draw the building's base first */
 	baseImd = psStructure->pStructureType->pBaseIMD;
@@ -296,25 +481,17 @@ void displayStructureButton(STRUCTURE *psStructure, Vector3i *rotation, Vector3i
 	unsetMatrix();
 }
 
-void displayStructureStatButton(STRUCTURE_STATS *Stats, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale)
+void displayStructureStatButton(STRUCTURE_STATS *Stats, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
 {
-	iIMDShape		*baseImd,*strImd;//*mountImd,*weaponImd;
+	iIMDShape		*baseImd,*strImd;
 	iIMDShape *mountImd[STRUCT_MAXWEAPS];
 	iIMDShape *weaponImd[STRUCT_MAXWEAPS];
+	UISphere sphere = getStructureStatSphere(Stats);
+	float scale = fitToBounds(sphere, Rot, bounds, &Pos);
 	UBYTE	i;
 
-	/*HACK HACK HACK!
-	if its a 'tall thin (ie tower)' structure stat with something on the top - offset the
-	position to show the object on top*/
-	if (Stats->pIMD->nconnectors && scale == SMALL_STRUCT_SCALE &&
-	    getStructureStatHeight(Stats) > TOWER_HEIGHT)
-	{
-		// Note this was -20, but as a temporary hack the sign is switched
-		Position->y += 20;
-	}
-
-	setMatrix(Position, Rotation, RotXYZ);
-	pie_MatScale(scale / 100.f);
+	setMatrix(Rot, Pos, RotXY);
+	pie_MatScale(scale);
 
 	/* Draw the building's base first */
 	baseImd = Stats->pBaseIMD;
@@ -404,15 +581,16 @@ void displayStructureStatButton(STRUCTURE_STATS *Stats, Vector3i *Rotation, Vect
 
 // Render a component given a BASE_STATS structure.
 //
-void displayComponentButton(BASE_STATS *Stat, Vector3i *Rotation, Vector3i *Position,
-                            bool RotXYZ, SDWORD scale)
+void displayComponentButton(BASE_STATS *Stat, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
 {
 	iIMDShape *ComponentIMD = NULL;
 	iIMDShape *MountIMD = NULL;
+	UISphere sphere = getComponentSphere(Stat);
+	float scale = fitToBounds(sphere, Rot, bounds, &Pos);
 	SDWORD compID;
 
-	setMatrix(Position, Rotation, RotXYZ);
-	pie_MatScale(scale / 100.f);
+	setMatrix(Rot, Pos, RotXY);
+	pie_MatScale(scale);
 
 	compID = StatIsComponent(Stat);
 	if (compID > 0)	{
@@ -425,7 +603,7 @@ void displayComponentButton(BASE_STATS *Stat, Vector3i *Rotation, Vector3i *Posi
 	}
 
 	/* VTOL bombs are only stats allowed to have NULL ComponentIMD */
-	if (StatIsComponent(Stat) != COMP_WEAPON
+	if (compID != COMP_WEAPON
 		|| (((WEAPON_STATS *)Stat)->weaponSubClass != WSC_BOMB
 			&& ((WEAPON_STATS *)Stat)->weaponSubClass != WSC_EMP))
 	{
@@ -453,15 +631,17 @@ void displayComponentButton(BASE_STATS *Stat, Vector3i *Rotation, Vector3i *Posi
 
 // Render a research item given a BASE_STATS structure.
 //
-void displayResearchButton(BASE_STATS *Stat, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale)
+void displayResearchButton(BASE_STATS *Stat, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
 {
 	iIMDShape *ResearchIMD = ((RESEARCH *)Stat)->pIMD;
 	iIMDShape *MountIMD = ((RESEARCH *)Stat)->pIMD2;
+	UISphere sphere = getResearchSphere(Stat);
+	float scale = fitToBounds(sphere, Rot, bounds, &Pos);
 
 	if(ResearchIMD)
 	{
-		setMatrix(Position, Rotation, RotXYZ);
-		pie_MatScale(scale / 100.f);
+		setMatrix(Rot, Pos, RotXY);
+		pie_MatScale(scale);
 
 		if(MountIMD) {
 			pie_Draw3DShape(MountIMD, 0, getPlayerColour(selectedPlayer), WZCOL_WHITE, pie_BUTTON, 0);
@@ -475,38 +655,6 @@ void displayResearchButton(BASE_STATS *Stat, Vector3i *Rotation, Vector3i *Posit
 		debug(LOG_ERROR, "ResearchIMD == NULL");
 	}
 }
-
-
-
-static iIMDShape *getLeftPropulsionIMD(DROID *psDroid)
-{
-	UDWORD			bodyStat, propStat;
-	iIMDShape		**imd;
-
-	bodyStat = psDroid->asBits[COMP_BODY].nStat;
-	propStat = psDroid->asBits[COMP_PROPULSION].nStat;
-
-	imd = asBodyStats[bodyStat].ppIMDList;
-	imd += (propStat * NUM_PROP_SIDES + LEFT_PROP);
-
-	return *imd;
-}
-
-
-static iIMDShape *getRightPropulsionIMD(DROID *psDroid)
-{
-	UDWORD			bodyStat, propStat;
-	iIMDShape		**imd;
-
-	bodyStat = psDroid->asBits[COMP_BODY].nStat;
-	propStat = psDroid->asBits[COMP_PROPULSION].nStat;
-
-	imd = asBodyStats[bodyStat].ppIMDList;
-	imd += (propStat * NUM_PROP_SIDES + RIGHT_PROP);
-
-	return *imd;
-}
-
 
 /* Assumes matrix context is already set */
 // this is able to handle multiple weapon graphics now
@@ -948,13 +1096,15 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 
 // Render a composite droid given a DROID_TEMPLATE structure.
 //
-void displayComponentButtonTemplate(DROID_TEMPLATE *psTemplate, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale)
+void displayComponentButtonTemplate(DROID_TEMPLATE *psTemplate, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
 {
-	setMatrix(Position, Rotation, RotXYZ);
-	pie_MatScale(scale / 100.f);
+	UISphere sphere = getComponentDroidTemplateSphere(psTemplate);
+	float scale = fitToBounds(sphere, Rot, bounds, &Pos);
+	setMatrix(Rot, Pos, RotXY);
+	pie_MatScale(scale);
 
 	// Decide how to sort it.
-	leftFirst = angleDelta(DEG(Rotation->y)) < 0;
+	leftFirst = angleDelta(DEG(Rot.y)) < 0;
 
 	DROID Droid(0, selectedPlayer);
 	memset(Droid.asBits, 0, sizeof(Droid.asBits));
@@ -971,15 +1121,17 @@ void displayComponentButtonTemplate(DROID_TEMPLATE *psTemplate, Vector3i *Rotati
 
 // Render a composite droid given a DROID structure.
 //
-void displayComponentButtonObject(DROID *psDroid, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale)
+void displayComponentButtonObject(DROID *psDroid, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
 {
+	UISphere sphere = getComponentDroidSphere(psDroid);
+	float scale = fitToBounds(sphere, Rot, bounds, &Pos);
 	SDWORD		difference;
 
-	setMatrix(Position, Rotation, RotXYZ);
-	pie_MatScale(scale / 100.f);
+	setMatrix(Rot, Pos, RotXY);
+	pie_MatScale(scale);
 
 // Decide how to sort it.
-	difference = Rotation->y%360;
+	difference = Rot.y%360;
 
 	leftFirst = !((difference > 0 && difference < 180) || difference < -180);
 
@@ -1185,16 +1337,3 @@ void	compPersonToBits(DROID *psDroid)
 	addEffect(&position,EFFECT_GRAVITON,GRAVITON_TYPE_GIBLET,true,bodyImd,col);
 }
 
-
-SDWORD	rescaleButtonObject(SDWORD radius, SDWORD baseScale,SDWORD baseRadius)
-{
-	SDWORD newScale;
-	newScale = 100 * baseRadius;
-	newScale /= radius;
-	if(baseScale > 0)
-	{
-		newScale += baseScale;
-		newScale /= 2;
-	}
-	return newScale;
-}

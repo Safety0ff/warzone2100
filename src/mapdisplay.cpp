@@ -38,18 +38,14 @@
 
 /* renders the Research IMDs into the surface - used by message display in
 Intelligence Map */
-void renderResearchToBuffer(RESEARCH *psResearch, UDWORD OriginX, UDWORD OriginY)
+void renderResearchToBuffer(RESEARCH *psResearch, UDWORD OriginX, UDWORD OriginY, int width, int height)
 {
 	UDWORD   angle = 0;
 
-	BASE_STATS      *psResGraphic;
-	UDWORD          compID, IMDType;
-	Vector3i Rotation,Position;
-	UDWORD          basePlateSize, Radius;
-	SDWORD          scale = 0;
-
-	// Pitch down a bit
-	//pie_MatRotX(-65536/12);
+	UDWORD          compID;
+	Vector3i		Position;
+	Vector2i		Rotation;
+	Vector2i		bounds(width/2, height/2);
 
 	// Rotate round
 	// full rotation once every 2 seconds..
@@ -62,7 +58,6 @@ void renderResearchToBuffer(RESEARCH *psResearch, UDWORD OriginX, UDWORD OriginY
 	// Rotate round
 	Rotation.x = -30;
 	Rotation.y = angle;
-	Rotation.z = 0;
 
 	//draw the IMD for the research
 	if (psResearch->psStat)
@@ -70,102 +65,25 @@ void renderResearchToBuffer(RESEARCH *psResearch, UDWORD OriginX, UDWORD OriginY
 		//we have a Stat associated with this research topic
 		if  (StatIsStructure(psResearch->psStat))
 		{
-			//this defines how the button is drawn
-			IMDType = IMDTYPE_STRUCTURESTAT;
-			psResGraphic = psResearch->psStat;
-			//set up the scale
-			basePlateSize= getStructureStatSize((STRUCTURE_STATS*)psResearch->psStat);
-			if(basePlateSize == 1)
-			{
-				scale = RESEARCH_COMPONENT_SCALE / 2;
-				/*HACK HACK HACK!
-				if its a 'tall thin (ie tower)' structure stat with something on
-				the top - offset the position to show the object on top*/
-				if (((STRUCTURE_STATS*)psResearch->psStat)->pIMD->nconnectors &&
-					getStructureStatHeight((STRUCTURE_STATS*)psResearch->psStat) > TOWER_HEIGHT)
-				{
-					Position.y -= 30;
-				}
-			}
-			else if(basePlateSize == 2)
-			{
-				scale = RESEARCH_COMPONENT_SCALE / 4;
-			}
-			else
-			{
-				scale = RESEARCH_COMPONENT_SCALE / 5;
-			}
+			displayStructureStatButton((STRUCTURE_STATS *)psResearch, Rotation, Position, bounds, true);
 		}
 		else
 		{
 			compID = StatIsComponent(psResearch->psStat);
 			if (compID != COMP_UNKNOWN)
 			{
-				//this defines how the button is drawn
-				IMDType = IMDTYPE_COMPONENT;
-				psResGraphic = psResearch->psStat;
-				// NOTE: Another kludge to deal with the superTransport to make it "fit" the display.
-				if (!strcmp("MP-SuperTransport", psResearch->pName))
-				{
-					scale = RESEARCH_COMPONENT_SCALE / 3;
-				}
-				else
-				{
-					scale = RESEARCH_COMPONENT_SCALE;
-				}
+				displayComponentButton((BASE_STATS *)psResearch, Rotation, Position, bounds, true);
 			}
 			else
 			{
 				ASSERT( false, "intDisplayMessageButton: invalid stat" );
-				IMDType = IMDTYPE_RESEARCH;
-				psResGraphic = (BASE_STATS *)psResearch;
+				displayResearchButton((BASE_STATS *)psResearch, Rotation, Position, bounds, true);
 			}
 		}
 	}
 	else
 	{
 		//no Stat for this research topic so use the research topic to define what is drawn
-		psResGraphic = (BASE_STATS *)psResearch;
-		IMDType = IMDTYPE_RESEARCH;
-	}
-
-	//scale the research according to size of IMD
-	if (IMDType == IMDTYPE_RESEARCH)
-	{
-		Radius = getResearchRadius((BASE_STATS*)psResGraphic);
-		if(Radius <= 100)
-		{
-			scale = RESEARCH_COMPONENT_SCALE / 2;
-		}
-		else if(Radius <= 128)
-		{
-			scale = RESEARCH_COMPONENT_SCALE / 3;
-		}
-		else if(Radius <= 256)
-		{
-			scale = RESEARCH_COMPONENT_SCALE / 4;
-		}
-		else
-		{
-			scale = RESEARCH_COMPONENT_SCALE / 5;
-		}
-	}
-
-	/* display the IMDs */
-	if(IMDType == IMDTYPE_COMPONENT)
-	{
-		displayComponentButton(psResGraphic, &Rotation, &Position, true, scale);
-	}
-	else if(IMDType == IMDTYPE_RESEARCH)
-	{
-		displayResearchButton(psResGraphic, &Rotation, &Position, true, scale);
-	}
-	else if(IMDType == IMDTYPE_STRUCTURESTAT)
-	{
-		displayStructureStatButton((STRUCTURE_STATS *)psResGraphic, &Rotation, &Position, true, scale);
-	}
-	else
-	{
-		ASSERT( false, "Unknown PIEType" );
+		displayResearchButton((BASE_STATS *)psResearch, Rotation, Position, bounds, true);
 	}
 }
