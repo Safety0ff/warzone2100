@@ -1288,7 +1288,7 @@ static Vector2i moveGetObstacleVector(DROID *psDroid, Vector2i dest)
 		// Velocity guess 1: Guess the velocity the droid is actually moving at.
 		Vector2i obstVelocityGuess1 = iSinCosR(psObstacle->sMove.moveDir, psObstacle->sMove.speed);
 		// Velocity guess 2: Guess the velocity the droid wants to move at.
-		Vector2i obstTargetDiff = psObstacle->sMove.target - psObstacle->pos;
+		Vector2i obstTargetDiff = psObstacle->sMove.target - psObstacle->pos.r_xy();
 		Vector2i obstVelocityGuess2 = iSinCosR(iAtan2(obstTargetDiff), obstacleMaxSpeed * std::min(iHypot(obstTargetDiff), AVOID_DIST)/AVOID_DIST);
 		if (moveBlocked(psObstacle))
 		{

@@ -32,40 +32,20 @@
 bool setPlayerColour(UDWORD player, UDWORD col);
 UBYTE getPlayerColour(UDWORD pl);
 
-UDWORD getComponentDroidRadius(DROID *psDroid);
-UDWORD getComponentDroidTemplateRadius(DROID_TEMPLATE *psDroid);
-UDWORD getComponentRadius(BASE_STATS *psComponent);
-UDWORD getResearchRadius(BASE_STATS *Stat);
-UDWORD getStructureSizeMax(STRUCTURE *psStructure);
-UDWORD getStructureStatSizeMax(STRUCTURE_STATS *Stats);
+#define BLIP_ANIM_DURATION (200)
 
-#define BLIP_ANIM_DURATION			(200)
-#define OBJECT_RADIUS				(128)
-#define COMPONENT_RADIUS			(64)
-#define DESIGN_DROID_SCALE			(200)
-#define DESIGN_COMPONENT_SCALE		(150)
-#define RESEARCH_COMPONENT_SCALE	(300)
-#define COMP_BUT_SCALE				(100)
-#define DROID_BUT_SCALE				(72)
-#define SMALL_STRUCT_SCALE			(55)
-#define MED_STRUCT_SCALE			(25)//reduced from 30 to fit command centre in window
-#define LARGE_STRUCT_SCALE			(25)
+void displayIMDButton(iIMDShape *IMDShape, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY);
+void displayStructureButton(STRUCTURE *psStructure, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY);
+void displayStructureStatButton(STRUCTURE_STATS *Stats, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY);
+void displayComponentButton(BASE_STATS *Stat, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY);
+void displayResearchButton(BASE_STATS *Stat, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY);
+void displayComponentButtonTemplate(DROID_TEMPLATE *psTemplate, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY);
+void displayComponentButtonObject(DROID *psDroid, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY);
 
-#define TOWER_HEIGHT    100
-UDWORD getStructureStatHeight(STRUCTURE_STATS *psStat);
-
-void displayIMDButton(iIMDShape *IMDShape, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale);
-void displayStructureButton(STRUCTURE *psStructure, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale);
-void displayStructureStatButton(STRUCTURE_STATS *Stats, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale);
-void displayComponentButton(BASE_STATS *Stat, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale);
-void displayResearchButton(BASE_STATS *Stat, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale);
-void displayComponentButtonTemplate(DROID_TEMPLATE *psTemplate, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale);
-void displayComponentButtonObject(DROID *psDroid, Vector3i *Rotation, Vector3i *Position, bool RotXYZ, SDWORD scale);
 void displayComponentObject(DROID *psDroid);
 
 void compPersonToBits(DROID *psDroid);
 
-SDWORD rescaleButtonObject(SDWORD radius, SDWORD baseScale,SDWORD baseRadius);
 void destroyFXDroid(DROID *psDroid);
 
 /* Pass in the stats you're interested in and the COMPONENT - double reference, but works. NOTE: Unused!*/

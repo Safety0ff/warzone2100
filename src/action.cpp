@@ -1270,7 +1270,7 @@ void actionUpdateDroid(DROID *psDroid)
 		}
 
 		/* circle around target if hovering and not cyborg */
-		Vector2i attackRunDelta = psDroid->pos - psDroid->sMove.destination;
+		Vector2i attackRunDelta = psDroid->pos.r_xy() - psDroid->sMove.destination;
 		if (DROID_STOPPED(psDroid) || attackRunDelta*attackRunDelta < TILE_UNITS*TILE_UNITS)
 		{
 			actionAddVtolAttackRun( psDroid );

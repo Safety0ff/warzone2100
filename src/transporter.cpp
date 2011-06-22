@@ -1303,7 +1303,7 @@ void transporterRemoveDroid(DROID *psTransport, DROID *psDroid, QUEUE_MODE mode)
 		if (bMultiPlayer)
 		{
 			//set the units next to the transporter's current location
-			droidPos = map_coord(psTransport->pos);
+			droidPos = map_coord(psTransport->pos.r_xy());
 		}
 		else
 		{
@@ -1314,7 +1314,7 @@ void transporterRemoveDroid(DROID *psTransport, DROID *psDroid, QUEUE_MODE mode)
 		{
 			ASSERT(false, "Unable to find a valid location");
 		}
-		psDroid->pos = Vector3i(world_coord(droidPos), map_Height(psDroid->pos));
+		psDroid->pos = Vector3i(world_coord(droidPos), map_Height(psDroid->pos.r_xy()));
 	}
 
 	// remove it from the transporter group
