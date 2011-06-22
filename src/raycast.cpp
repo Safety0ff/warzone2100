@@ -72,8 +72,8 @@ void rayCast(Vector3i src, uint16_t direction, uint32_t length, RAY_CALLBACK cal
 		return;  // Callback gave up after the first point, or there are no other points.
 	}
 
-	Vector2i srcM = map_coord(src);
-	Vector2i dstM = map_coord(dst);
+	Vector2i srcM = map_coord(src.r_xy());
+	Vector2i dstM = map_coord(dst.r_xy());
 
 	Vector2i step, tile, cur, end;
 	initSteps(srcM.x, dstM.x, tile.x, step.x, cur.x, end.x);
@@ -120,7 +120,7 @@ void rayCast(Vector3i src, uint16_t direction, uint32_t length, RAY_CALLBACK cal
 	}
 
 	// Include the endpoint.
-	if (!worldOnMap(dst))
+	if (!worldOnMap(dst.r_xy()))
 	{
 		return;  // Stop, since reached the edge of the map.
 	}

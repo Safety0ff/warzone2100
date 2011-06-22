@@ -824,7 +824,7 @@ static void displayMultiPlayer(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 	UDWORD			y					= yOffset+psWidget->y;
 	UDWORD			player = psWidget->UserData; //get the in game player number.
 	Position		position;
-	Vector3i 		rotation;
+	Vector2i 		rotation;
 
 	if( responsibleFor(player,0) )
 	{
@@ -1014,14 +1014,14 @@ static void displayMultiPlayer(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset,
 	}
 	if (displayDroid)
 	{
+		Vector2i  bounds(MULTIMENU_C1, MULTIMENU_PLAYER_H); // Just a guess
 		rotation.x = -15;
 		rotation.y = 45;
-		rotation.z = 0;
 		position.x = MULTIMENU_FORM_X+MULTIMENU_C1;
 		position.y = y+MULTIMENU_PLAYER_H;
 		position.z = BUTTON_DEPTH;		//scale them!
 
-		displayComponentButtonObject(displayDroid, &rotation, &position, false, 100);
+		displayComponentButtonObject(displayDroid, rotation, position, bounds, false);
 	}
 	else if(apsDroidLists[player])
 	{

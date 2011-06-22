@@ -423,42 +423,31 @@ static void displayStructureBar(WIDGET *psWidget, UDWORD xOffset, UDWORD yOffset
 	UDWORD	h = psWidget->height;
 	STRUCTURE_STATS	*stat = asStructureStats + psWidget->UserData;
 	Position position;
-	Vector3i rotation;
+	Vector2i rotation;
 	char str[20];
-
-	UDWORD scale,Radius;
 
 	drawBlueBox(x,y,w,h);
 
 	// draw image
 	rotation.x = -15;
-	rotation.y = ((gameTime2/45)%360) ; //45
-	rotation.z = 0;
+	rotation.y = ((gameTime2/45)%360);
 	position.x = x+35;
-	position.y = y+(psWidget->height/2)+9;
-	position.z = BUTTON_DEPTH*2;//getStructureStatSize(stat)  * 38 * OBJECT_RADIUS;
-
-	Radius = getStructureStatSizeMax(stat);
-	if(Radius <= 128) {
-		scale = SMALL_STRUCT_SCALE;
-	} else if(Radius <= 256) {
-		scale = MED_STRUCT_SCALE;
-	} else {
-		scale = LARGE_STRUCT_SCALE;
-	}
+	Vector2i bounds(35,h/2); // Magic numbers taken from surrounding code
+	position.y = y+h/2+9;
+	position.z = BUTTON_DEPTH*2;
 
 	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
-	displayStructureStatButton(stat, &rotation, &position, true, scale);
+	displayStructureStatButton(stat, rotation, position, bounds, true);
 	pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_ON);
 
 	// draw name
 	iV_SetFont(font_regular);											// font
 	iV_SetTextColour(WZCOL_TEXT_BRIGHT);
-	iV_DrawText(_(getName(stat->pName)), x + 80, y + (psWidget->height / 2) + 3);
+	iV_DrawText(_(getName(stat->pName)), x + 80, y + h/2 + 3);
 
 	// draw limit
 	ssprintf(str, "%d", ((W_SLIDER *)widgGetFromID(psWScreen, psWidget->id + 1))->pos);
-	iV_DrawText(str, x+270, y+(psWidget->height/2)+3);
+	iV_DrawText(str, x+270, y+h/2+3);
 
 	return;
 }
