@@ -259,7 +259,13 @@ int32_t pie_Project(Vector3f const &v3d, Vector2i *v2d)
 			   projection, viewport, &screenX, &screenY, &depth);
 
 	v2d->x = screenX;
-	v2d->y = pie_GetVideoBufferHeight()-screenY; // I don't know why this is needed... yet
+	/*
+	 * This seems to be another vestige of Warzone's DirectX past
+	 * mouse handling also seems to use top left as the origin
+	 * Code somewhere might be interpreting these values with a top-left origin
+	 * Figure this out and FIXME?
+	 */
+	v2d->y = pie_GetVideoBufferHeight()-screenY;
 
 	/*
 	 * Though the multiplication by MAX_Z is a workaround
