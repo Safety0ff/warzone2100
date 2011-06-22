@@ -106,9 +106,6 @@ struct Rotation
 };
 typedef Vector3i Position;  ///< Map position in world coordinates
 
-inline Vector3i::Vector3i(Rotation const &r) : x(r.direction), y(r.pitch), z(r.roll) {}
-inline Vector2i::Vector2i(Vector3i const &r) : x(r.x), y(r.y) {}
-
 // removeZ(3d_vector) -> 2d_vector
 static inline WZ_DECL_PURE Vector2i removeZ(Vector3i const &a) { return a.r_xy(); }
 static inline WZ_DECL_PURE Vector2f removeZ(Vector3f const &a) { return Vector2f(a.x, a.y); }
