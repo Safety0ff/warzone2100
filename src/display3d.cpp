@@ -948,6 +948,7 @@ static void drawTiles(iView *player)
 	theSun = getTheSun();
 	pie_BeginLighting(&theSun, getDrawShadows());
 
+	// Project some tiles onto screen for mouse picking and
 	// update the fog of war... FIXME: Remove this
 	for (i = -visibleTiles.y/2, idx=0; i <= visibleTiles.y/2; i++,++idx)
 	{
