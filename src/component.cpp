@@ -72,20 +72,24 @@ static void setMatrix(Vector3i *Position, Vector3i *Rotation, bool RotXYZ)
 	// TEMPORARY HACK!!
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0.f, pie_GetVideoBufferWidth(), 0, pie_GetVideoBufferHeight(), -world_coord(3*2), 0);
-	glScalef(1,1,-1);
+	glOrtho(0.f, pie_GetVideoBufferWidth(), 0, pie_GetVideoBufferHeight(), -world_coord(3*2), world_coord(3*2));
 	glMatrixMode(GL_MODELVIEW);
 	pie_MatBegin();
 
-	pie_TRANSLATE(Position->x, pie_GetVideoBufferHeight()-Position->y,-world_coord(3));
+	/*
+	 * This seems to be another vestige of Warzone's DirectX past
+	 * mouse handling also seems to use top left as the origin
+	 * UI components seem to be specified with a top left origin.
+	 */
+	pie_TRANSLATE(Position->x,pie_GetVideoBufferHeight()-Position->y,0);
 
 	if(RotXYZ) {
-		pie_MatRotX(DEG(Rotation->x));
-		pie_MatRotY(DEG(Rotation->y));
+		pie_MatRotX(DEG(-Rotation->x));
+		pie_MatRotY(DEG(-Rotation->y));
 		pie_MatRotZ(DEG(Rotation->z));
 	} else {
-		pie_MatRotY(DEG(Rotation->y));
-		pie_MatRotX(DEG(Rotation->x));
+		pie_MatRotY(DEG(-Rotation->y));
+		pie_MatRotX(DEG(-Rotation->x));
 		pie_MatRotZ(DEG(Rotation->z));
 	}
 }
@@ -705,27 +709,27 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 							{
 								pie_TRANSLATE(psShapeTemp->connectors[i].x,
 								              psShapeTemp->connectors[i].z,
-								              psShapeTemp->connectors[i].y);
+								              -psShapeTemp->connectors[i].y);
 							}
 							else
 							{
 								pie_TRANSLATE( psShapeTemp->connectors[iConnector + i].x,
 											   psShapeTemp->connectors[iConnector + i].z,
-											   psShapeTemp->connectors[iConnector + i].y  );
+											   -psShapeTemp->connectors[iConnector + i].y  );
 							}
 
-							pie_MatRotY(-rot.direction);
+							pie_MatRotY(rot.direction);
 
 							/* vtol weapons inverted */
 							if ( iConnector >= VTOL_CONNECTOR_START )
 							{
-								pie_MatRotZ(65536/2);  //this might affect gun rotation
+								pie_MatRotZ(DEG(180));  //this might affect gun rotation
 							}
 
 							/* Get the mount graphic */
 							psShape = WEAPON_MOUNT_IMD(psDroid, i);
 							
-							pie_TRANSLATE(0,0,psDroid->asWeaps[i].recoilValue/3);
+							pie_TRANSLATE(0,0,-psDroid->asWeaps[i].recoilValue/3);
 
 							/* Draw it */
 							if(psShape)
@@ -733,12 +737,12 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 								pie_Draw3DShape(psShape, 0, colour, brightness, pieFlag, iPieData);
 							}
 							
-							pie_TRANSLATE(0,0,psDroid->asWeaps[i].recoilValue);
+							pie_TRANSLATE(0,0,-psDroid->asWeaps[i].recoilValue);
 
 							/* translate for weapon mount point */
 							if (psShape && psShape->nconnectors)
 							{
-								pie_TRANSLATE(psShape->connectors->x, psShape->connectors->z, psShape->connectors->y);
+								pie_TRANSLATE(psShape->connectors->x, psShape->connectors->z, -psShape->connectors->y);
 							}
 
 							/* vtol weapons inverted */
@@ -775,7 +779,7 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 									/* Now we need to move to the end of the firing barrel (there maybe multiple barrels) */
 									pie_TRANSLATE( psShape->connectors[connector_num].x,
 												   psShape->connectors[connector_num].z,
-												   psShape->connectors[connector_num].y);
+												   -psShape->connectors[connector_num].y);
 									
 									//and draw the muzzle flash
 									psShape = MUZZLE_FLASH_PIE(psDroid, i);
@@ -853,14 +857,14 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 				/* vtol weapons inverted */
 				if ( iConnector >= VTOL_CONNECTOR_START )
 				{
-					pie_MatRotZ(65536/2);  //this might affect gun rotation
+					pie_MatRotZ(DEG(180));  //this might affect gun rotation
 				}
 
 				pie_TRANSLATE( psShapeTemp->connectors[0].x,
 							   psShapeTemp->connectors[0].z,
-							   psShapeTemp->connectors[0].y  );
+							   -psShapeTemp->connectors[0].y  );
 
-				pie_MatRotY(-rot.direction);
+				pie_MatRotY(rot.direction);
 				/* Draw it */
 				if (psMountShape)
 				{
@@ -872,7 +876,7 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 				{
 					pie_TRANSLATE(psMountShape->connectors[0].x,
 					              psMountShape->connectors[0].z,
-					              psMountShape->connectors[0].y);
+					              -psMountShape->connectors[0].y);
 				}
 
 				/* Draw it */
@@ -889,25 +893,25 @@ static void displayCompObj(DROID *psDroid, bool bButton)
 
 						pie_TRANSLATE( psShape->connectors[0].x,
 									   psShape->connectors[0].z,
-									   psShape->connectors[0].y  );
+									   -psShape->connectors[0].y  );
 						pie_TRANSLATE(0,-20,0);
 
 						psShape = getImdFromIndex(MI_FLAME);
 
 						/* Rotate for droid */
-						pie_MatRotY(st.rot.direction);
+						pie_MatRotY(-st.rot.direction);
 						pie_MatRotX(-st.rot.pitch);
 						pie_MatRotZ(-st.rot.roll);
 						//rotate Y
-						pie_MatRotY(rot.direction);
+						pie_MatRotY(-rot.direction);
 
-						pie_MatRotY(-player.r.y);
-						pie_MatRotX(-player.r.x);
+						pie_MatRotY(player.r.y);
+						pie_MatRotX(player.r.x);
 
 						pie_Draw3DShape(psShape, getModularScaledGraphicsTime(100, psShape->numFrames), 0, brightness, pie_ADDITIVE, 140);
 
-						pie_MatRotX(player.r.x);
-						pie_MatRotY(player.r.y);
+						pie_MatRotX(-player.r.x);
+						pie_MatRotY(-player.r.y);
 					}
 				}
 				/* Pop Matrix */
@@ -1007,7 +1011,7 @@ void displayComponentObject(DROID *psDroid)
 
 	/* Get the real position */
 	position.x = st.pos.x - player.p.x;
-	position.z = -(st.pos.y - player.p.z);
+	position.z = st.pos.y - player.p.z;
 	position.y = st.pos.z;
 
 	if(psDroid->droidType == DROID_TRANSPORTER)
@@ -1016,7 +1020,7 @@ void displayComponentObject(DROID *psDroid)
 	}
 
 	/* Get all the pitch,roll,yaw info */
-	rotation.y = -st.rot.direction;
+	rotation.y = st.rot.direction;
 	rotation.x = st.rot.pitch;
 	rotation.z = st.rot.roll;
 

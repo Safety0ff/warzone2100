@@ -345,14 +345,15 @@ void	renderParticle( ATPART *psPart )
 	/* Transform it */
 	dv.x = psPart->position.x - player.p.x;
 	dv.y = psPart->position.y;
-	dv.z = -(psPart->position.z - player.p.z);
+	dv.z = psPart->position.z - player.p.z;
 	pie_MatBegin();					/* Push the current matrix */
 	pie_TRANSLATE(dv.x,dv.y,dv.z);
 	/* Make it face camera */
-	pie_MatRotY(-player.r.y);
-	pie_MatRotY(-player.r.x);
+	pie_MatRotY(player.r.y);
+	pie_MatRotY(player.r.x);
 	/* Scale it... */
 	pie_MatScale(psPart->size / 100.f);
+
 	/* Draw it... */
 	pie_Draw3DShape(psPart->imd, 0, 0, WZCOL_WHITE, 0, 0);
 	pie_MatEnd();

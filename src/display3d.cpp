@@ -963,15 +963,15 @@ static void drawTiles(iView *player)
 	pie_MatBegin();
 
 	/* Set the camera position */
-	pie_TRANSLATE(0, 0, distance);
+	pie_TRANSLATE(0, 0, -distance);
 
 	// Now, scale the world according to what resolution we're running in
 	pie_MatScale(pie_GetResScalingFactor() / 100.f);
 
 	/* Rotate for the player */
-	pie_MatRotZ(player->r.z);
-	pie_MatRotX(player->r.x);
-	pie_MatRotY(player->r.y);
+	pie_MatRotZ(-player->r.z);
+	pie_MatRotX(-player->r.x);
+	pie_MatRotY(-player->r.y);
 
 	/* Translate */
 	pie_TRANSLATE(0, -player->p.y, 0);
@@ -990,7 +990,7 @@ static void drawTiles(iView *player)
 			Position pos;
 
 			pos.x = world_coord(j);
-			pos.z = -world_coord(i);
+			pos.z = world_coord(i);
 			pos.y = 0;
 
 			if (tileOnMap(playerXTile + j, playerZTile + i))
@@ -1017,7 +1017,7 @@ static void drawTiles(iView *player)
 
 	pie_MatBegin();
 	// also, make sure we can use world coordinates directly
-	pie_TRANSLATE(-player->p.x, 0, player->p.z);
+	pie_TRANSLATE(-player->p.x, 0, -player->p.z);
 
 	// and draw it
 	drawTerrain();
@@ -1053,7 +1053,7 @@ static void drawTiles(iView *player)
 
 	pie_MatBegin();
 	// also, make sure we can use world coordinates directly
-	pie_TRANSLATE(-player->p.x, 0, player->p.z);
+	pie_TRANSLATE(-player->p.x, 0, -player->p.z);
 
 	drawWater();
 
@@ -1064,7 +1064,7 @@ static void drawTiles(iView *player)
 	pie_SetRendMode(REND_ALPHA);
 	glEnable(GL_POINT_SMOOTH);
 	glBegin(GL_POINTS);
-	glVertex3f(mousePos.x, 0.f, -mousePos.y);
+	glVertex3f(mousePos.x, 0.f, mousePos.y);
 	glEnd();
 	glColor3f(1.f, 1.f, 1.f);
 	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
@@ -1283,7 +1283,7 @@ void	renderProjectile(PROJECTILE *psCurr)
 		dv.x = st.pos.x - player.p.x;
 
 		/* Get it's y coord (z coord in the 3d world */
-		dv.z = -(st.pos.y - player.p.z);
+		dv.z = st.pos.y - player.p.z;
 
 		/* What's the present height of the bullet? */
 		dv.y = st.pos.z;
@@ -1294,7 +1294,7 @@ void	renderProjectile(PROJECTILE *psCurr)
 		pie_TRANSLATE(dv.x,dv.y,dv.z);
 
 		/* Rotate it to the direction it's facing */
-		pie_MatRotY(-st.rot.direction);
+		pie_MatRotY(st.rot.direction);
 
 		/* pitch it */
 		pie_MatRotX(st.rot.pitch);
@@ -1338,7 +1338,7 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 		const Vector3i dv(
 			spacetime.pos.x - player.p.x,
 			spacetime.pos.z,
-			-(spacetime.pos.y - player.p.z)
+			spacetime.pos.y - player.p.z
 		);
 		int iPlayer, pieFlag = pie_STATIC_SHADOW;
 		PIELIGHT brightness;
@@ -1358,7 +1358,7 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 		pie_TRANSLATE(dv.x, dv.y, dv.z);
 
 		/* parent object rotations */
-		pie_MatRotY(-spacetime.rot.direction);
+		pie_MatRotY(spacetime.rot.direction);
 		pie_MatRotX(spacetime.rot.pitch);
 
 		/* Set frame numbers - look into this later?? FIXME!!!!!!!! */
@@ -1407,11 +1407,11 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 
 		// Do translation and rotation after setting sDisplay.screen[XY], so that the health bars for animated objects (such as oil derricks and cyborgs) will show on the stationary part.
 		// object (animation) translations - ivis z and y flipped
-		pie_TRANSLATE(psObj->position.x, psObj->position.z, psObj->position.y);
+		pie_TRANSLATE(psObj->position.x, psObj->position.z, -psObj->position.y);
 		// object (animation) rotations
-		pie_MatRotY(-psObj->orientation.z);
+		pie_MatRotY(psObj->orientation.z);
 		pie_MatRotZ(-psObj->orientation.y);
-		pie_MatRotX(-psObj->orientation.x);
+		pie_MatRotX(psObj->orientation.x);
 
 		pie_Draw3DShape(psObj->psShape, 0, iPlayer, brightness, pieFlag, 0);
 
@@ -1924,7 +1924,7 @@ void	renderFeature(FEATURE *psFeature)
 	dv = Vector3i(
 		psFeature->pos.x - player.p.x,
 		psFeature->pos.z, // features sits at the height of the tile it's centre is on
-		-(psFeature->pos.y - player.p.z)
+		psFeature->pos.y - player.p.z
 	);
 
 	/* Push the indentity matrix */
@@ -1936,7 +1936,7 @@ void	renderFeature(FEATURE *psFeature)
 
 	rotation = psFeature->rot.direction;
 
-	pie_MatRotY(-rotation);
+	pie_MatRotY(rotation);
 
 	brightness = pal_SetBrightness(200); //? HUH?
 
@@ -2025,7 +2025,7 @@ void renderProximityMsg(PROXIMITY_DISPLAY *psProxDisp)
 	}
 
 	dv.x = msgX - player.p.x;
-	dv.z = -(msgY - player.p.z);
+	dv.z = msgY - player.p.z;
 
 	/* Push the indentity matrix */
 	pie_MatBegin();
@@ -2069,8 +2069,8 @@ void renderProximityMsg(PROXIMITY_DISPLAY *psProxDisp)
 		}
 	}
 
-	pie_MatRotY(-player.r.y);
-	pie_MatRotX(-player.r.x);
+	pie_MatRotY(player.r.y);
+	pie_MatRotX(player.r.x);
 
 	pie_Draw3DShape(proxImd, getModularScaledGraphicsTime(1000, 4), 0, WZCOL_WHITE, pie_ADDITIVE, 192);
 
@@ -2166,7 +2166,7 @@ void	renderStructure(STRUCTURE *psStructure)
 	structY = psStructure->pos.y;
 
 	dv.x = structX - player.p.x;
-	dv.z = -(structY - player.p.z);
+	dv.z = structY - player.p.z;
 	if (defensive || structureIsBlueprint(psStructure))
 	{
 		dv.y = psStructure->pos.z;
@@ -2184,7 +2184,8 @@ void	renderStructure(STRUCTURE *psStructure)
 	* buildings in other words are NOT made up of components - much quicker! */
 
 	rotation = psStructure->rot.direction;
-	pie_MatRotY(-rotation);
+	pie_MatRotY(rotation);
+
 	if (!defensive
 	    && gameTime2-psStructure->timeLastHit < ELEC_DAMAGE_DURATION
 	    && psStructure->lastHitWeapon == WSC_ELECTRONIC )
@@ -2317,20 +2318,21 @@ void	renderStructure(STRUCTURE *psStructure)
 				if (weaponImd[i] != NULL)
 				{
 					pie_MatBegin();
-					pie_TRANSLATE(strImd->connectors[i].x, strImd->connectors[i].z, strImd->connectors[i].y);
-					pie_MatRotY(-rot.direction);
+					pie_TRANSLATE(strImd->connectors[i].x, strImd->connectors[i].z, -strImd->connectors[i].y);
+					pie_MatRotY(rot.direction);
 					if (mountImd[i] != NULL)
 					{
-						pie_TRANSLATE(0, 0, psStructure->asWeaps[i].recoilValue / 3);
+						pie_TRANSLATE(0, 0, -psStructure->asWeaps[i].recoilValue / 3);
 
 						pie_Draw3DShape(mountImd[i], animFrame, colour, buildingBrightness, pieFlag, pieFlagData);
+
 						if(mountImd[i]->nconnectors)
 						{
-							pie_TRANSLATE(mountImd[i]->connectors->x, mountImd[i]->connectors->z, mountImd[i]->connectors->y);
+							pie_TRANSLATE(mountImd[i]->connectors->x, mountImd[i]->connectors->z, -mountImd[i]->connectors->y);
 						}
 					}
 					pie_MatRotX(rot.pitch);
-					pie_TRANSLATE(0, 0, psStructure->asWeaps[i].recoilValue);
+					pie_TRANSLATE(0, 0, -psStructure->asWeaps[i].recoilValue);
 
 					pie_Draw3DShape(weaponImd[i], 0, colour, buildingBrightness, pieFlag, pieFlagData);
 					if (psStructure->status == SS_BUILT && psStructure->visible[selectedPlayer] > (UBYTE_MAX / 2))
@@ -2350,18 +2352,18 @@ void	renderStructure(STRUCTURE *psStructure)
 								{
 									iIMDShape	*pRepImd;
 
-									pie_TRANSLATE(weaponImd[i]->connectors->x,weaponImd[i]->connectors->z-12,weaponImd[i]->connectors->y);
+									pie_TRANSLATE(weaponImd[i]->connectors->x,weaponImd[i]->connectors->z-12, -weaponImd[i]->connectors->y);
 									pRepImd = getImdFromIndex(MI_FLAME);
 
 									pie_MatRotY(rot.direction);
 
-									pie_MatRotY(-player.r.y);
-									pie_MatRotX(-player.r.x);
+									pie_MatRotY(player.r.y);
+									pie_MatRotX(player.r.x);
 									pie_Draw3DShape(pRepImd, getModularScaledGraphicsTime(100, pRepImd->numFrames), colour, buildingBrightness, pie_ADDITIVE, 192);
 
-									pie_MatRotX(player.r.x);
-									pie_MatRotY(player.r.y);
-									pie_MatRotY(rot.direction);
+									pie_MatRotX(-player.r.x);
+									pie_MatRotY(-player.r.y);
+									pie_MatRotY(-rot.direction);
 								}
 							}
 						}
@@ -2380,7 +2382,7 @@ void	renderStructure(STRUCTURE *psStructure)
 							/* Now we need to move to the end of the firing barrel */
 							pie_TRANSLATE(weaponImd[i]->connectors[connector_num].x,
 											weaponImd[i]->connectors[connector_num].z,
-											weaponImd[i]->connectors[connector_num].y);
+											-weaponImd[i]->connectors[connector_num].y);
 
 							// assume no clan colours for muzzle effects
 							if (flashImd[i]->numFrames == 0 || flashImd[i]->animInterval <= 0)
@@ -2422,14 +2424,14 @@ void	renderStructure(STRUCTURE *psStructure)
 							if (strImd->max.y > 80) // babatower
 							{
 								pie_TRANSLATE(0, 80, 0);
-								pie_MatRotY(-rot.direction);
-								pie_TRANSLATE(0, 0, -20);
+								pie_MatRotY(rot.direction);
+								pie_TRANSLATE(0, 0, 20);
 							}
 							else//baba bunker
 							{
 								pie_TRANSLATE(0, 10, 0);
-								pie_MatRotY(-rot.direction);
-								pie_TRANSLATE(0, 0, -40);
+								pie_MatRotY(rot.direction);
+								pie_TRANSLATE(0, 0, 40);
 							}
 							pie_MatRotX(rot.pitch);
 							// draw the muzzle flash?
@@ -2467,7 +2469,7 @@ void	renderStructure(STRUCTURE *psStructure)
 
 						pie_MatBegin();
 						pie_TRANSLATE(psStructure->sDisplay.imd->connectors->x, psStructure->sDisplay.imd->connectors->z,
-						             psStructure->sDisplay.imd->connectors->y);
+						             -psStructure->sDisplay.imd->connectors->y);
 						lImd = getImdFromIndex(MI_LANDING);
 						pie_Draw3DShape(lImd, getModularScaledGraphicsTime(1024, lImd->numFrames), colour, buildingBrightness, 0, 0);
 						pie_MatEnd();
@@ -2501,7 +2503,7 @@ void	renderDeliveryPoint(FLAG_POSITION *psPosition, bool blueprint)
 	psPosition->frameNumber = currentGameFrame;
 
 	dv.x = psPosition->coords.x - player.p.x;
-	dv.z = -(psPosition->coords.y - player.p.z);
+	dv.z = psPosition->coords.y - player.p.z;
 	dv.y = psPosition->coords.z;
 
 	/* Push the indentity matrix */
@@ -2578,7 +2580,7 @@ static bool	renderWallSection(STRUCTURE *psStructure)
 
 		/* Establish where it is in the world */
 		dv.x = structX - player.p.x;
-		dv.z = -(structY - player.p.z);
+		dv.z = structY - player.p.z;
 		dv.y = map_Height(structX, structY);
 
 		if (psStructure->pStructureType->type == REF_GATE && psStructure->state == SAS_OPEN)
@@ -2601,7 +2603,7 @@ static bool	renderWallSection(STRUCTURE *psStructure)
 		pie_TRANSLATE(dv.x,dv.y,dv.z);
 
 		rotation = psStructure->rot.direction;
-		pie_MatRotY(-rotation);
+		pie_MatRotY(rotation);
 
 		/* Actually render it */
 		if ( (psStructure->status == SS_BEING_BUILT ) ||
@@ -2661,7 +2663,7 @@ void renderShadow( DROID *psDroid, iIMDShape *psShadowIMD )
 	{
 		dv.x -= bobTransporterHeight()/2;
 	}
-	dv.z = -(psDroid->pos.y - player.p.z);
+	dv.z = psDroid->pos.y - player.p.z;
 	dv.y = map_Height(psDroid->pos.x, psDroid->pos.y);
 
 	/* Push the indentity matrix */
@@ -2669,7 +2671,7 @@ void renderShadow( DROID *psDroid, iIMDShape *psShadowIMD )
 
 	pie_TRANSLATE(dv.x,dv.y,dv.z);
 
-	pie_MatRotY(-psDroid->rot.direction);
+	pie_MatRotY(psDroid->rot.direction);
 	pie_MatRotX(psDroid->rot.pitch);
 	pie_MatRotZ(psDroid->rot.roll);
 
@@ -4275,7 +4277,7 @@ static void addConstructionLine(DROID *psDroid, STRUCTURE *psStructure)
 	each.y = psDroid->pos.z + 24;
 
 	vec.x = each.x - player.p.x;
-	vec.z = -(each.z - player.p.z);
+	vec.z = each.z - player.p.z;
 	vec.y = each.y;
 
 	pts[0] = vec;
@@ -4295,7 +4297,7 @@ static void addConstructionLine(DROID *psDroid, STRUCTURE *psStructure)
 	}
 
 	vec.x = each.x - player.p.x;
-	vec.z = -(each.z - player.p.z);
+	vec.z = each.z - player.p.z;
 	vec.y = each.y;
 
 	pts[1] = vec;
@@ -4309,7 +4311,7 @@ static void addConstructionLine(DROID *psDroid, STRUCTURE *psStructure)
 	each.z = psStructure->pos.y - point->z;
 
 	vec.x = each.x - player.p.x;
-	vec.z = -(each.z - player.p.z);
+	vec.z = each.z - player.p.z;
 	vec.y = each.y;
 
 	pts[2] = vec;

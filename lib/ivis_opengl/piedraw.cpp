@@ -465,6 +465,13 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int
 		frame = team;
 	}
 
+	/*
+	 * Switch to left handed coordinates
+	 * Note: We don't bother duplicating the current matrix
+	 * since Scale(1,1,-1)*Scale(1,1,-1)= Identity
+	 */
+	glScalef(1.f,1.f,-1.f);
+
 	if (drawing_interface || !shadows)
 	{
 		pie_Draw3DShape2(shape, frame, colour, teamcolour, pieFlag, pieFlagData);
@@ -550,6 +557,9 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int
 			pie_Draw3DShape2(shape, frame, colour, teamcolour, pieFlag, pieFlagData);
 		}
 	}
+
+	// Return the matrix to state it was prior to calling this
+	glScalef(1.f,1.f,-1.f);
 }
 
 static void pie_ShadowDrawLoop(void)

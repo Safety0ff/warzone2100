@@ -279,7 +279,6 @@ void pie_PerspectiveBegin(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glFrustum(-xangle, xangle, -yangle, yangle, 330, 100000);
-	glScalef(1, 1, -1);
 	glMatrixMode(GL_MODELVIEW);
 }
 

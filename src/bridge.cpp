@@ -124,7 +124,7 @@ bool	renderBridgeSection(STRUCTURE *psStructure)
 
 	/* Establish where it is in the world */
 	dv.x = psStructure->pos.x - player.p.x;
-	dv.z = -(psStructure->pos.y - player.p.z);
+	dv.z = psStructure->pos.y - player.p.z;
 	dv.y = psStructure->pos.z;
 
 	/* Push the indentity matrix */
