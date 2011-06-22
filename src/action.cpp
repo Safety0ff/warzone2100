@@ -2117,7 +2117,7 @@ void actionUpdateDroid(DROID *psDroid)
 		if (DROID_STOPPED(psDroid))
 		{
 			// Couldn't reach destination - try and find a new one
-			psDroid->actionPos = psDroid->psActionTarget[0]->pos;
+			psDroid->actionPos = removeZ(psDroid->psActionTarget[0]->pos);
 			moveDroidTo(psDroid, psDroid->actionPos.x, psDroid->actionPos.y);
 		}
 		break;
@@ -2178,7 +2178,7 @@ void actionUpdateDroid(DROID *psDroid)
 					}
 				}*/
 				// damaged droid has moved off - follow if we're not holding position!
-				psDroid->actionPos = psDroid->psActionTarget[0]->pos;
+				psDroid->actionPos = removeZ(psDroid->psActionTarget[0]->pos);
 				psDroid->action = DACTION_MOVETODROIDREPAIR;
 				moveDroidTo(psDroid, psDroid->actionPos.x, psDroid->actionPos.y);
 			}
@@ -2392,7 +2392,7 @@ static void actionDroidBase(DROID *psDroid, DROID_ACTION_DATA *psAction)
 		// note the droid's current pos so that scout & patrol orders know how far the
 		// droid has gone during an attack
 		// slightly strange place to store this I know, but I didn't want to add any more to the droid
-		psDroid->actionPos = psDroid->pos;
+		psDroid->actionPos = removeZ(psDroid->pos);
 		setDroidActionTarget(psDroid, psAction->psObj, 0);
 
 		if (((psDroid->order == DORDER_ATTACKTARGET
@@ -2442,7 +2442,7 @@ static void actionDroidBase(DROID *psDroid, DROID_ACTION_DATA *psAction)
 
 	case DACTION_MOVETOREARM:
 		psDroid->action = DACTION_MOVETOREARM;
-		psDroid->actionPos = psAction->psObj->pos;
+		psDroid->actionPos = removeZ(psAction->psObj->pos);
 		psDroid->actionStarted = gameTime;
 		setDroidActionTarget(psDroid, psAction->psObj, 0);
 		droidX = psDroid->psActionTarget[0]->pos.x;
