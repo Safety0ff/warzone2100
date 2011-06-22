@@ -2466,12 +2466,15 @@ static void effectStructureUpdates(void)
 						{
 							if (psStructure->sDisplay.imd->nconnectors == 1)
 							{
-								Vector3i eventPos = swapYZ(psStructure->pos) + Vector3i(
-									psStructure->sDisplay.imd->connectors->x,
-									psStructure->sDisplay.imd->connectors->z,
-									-psStructure->sDisplay.imd->connectors->y
-								);
-
+								Vector3i eventPos = swapYZ(psStructure->pos);
+								Vector3i puffOffset(
+									iCosR(psStructure->rot.direction, psStructure->sDisplay.imd->connectors->x)
+									+iSinR(psStructure->rot.direction, -psStructure->sDisplay.imd->connectors->y),
+										psStructure->sDisplay.imd->connectors->z,
+									-iSinR(psStructure->rot.direction, psStructure->sDisplay.imd->connectors->x)
+									+iCosR(psStructure->rot.direction, -psStructure->sDisplay.imd->connectors->y)
+									);
+								eventPos += puffOffset;
 								addEffect(&eventPos, EFFECT_SMOKE, SMOKE_TYPE_STEAM, false, NULL, 0);
 
 								if (selectedPlayer == psStructure->player)
