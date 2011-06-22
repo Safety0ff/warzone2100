@@ -399,8 +399,8 @@ bool actionTargetTurret(BASE_OBJECT *psAttacker, BASE_OBJECT *psTarget, WEAPON *
 	pitchLowerLimit = pitchUpperLimit = 0;
 	if (psAttacker->type == OBJ_STRUCTURE)
 	{
-		pitchLowerLimit = DEG(psWeapStats->minElevation);
-		pitchUpperLimit = DEG(psWeapStats->maxElevation);
+		pitchLowerLimit = DEG(psWeapStats->minPitch);
+		pitchUpperLimit = DEG(psWeapStats->maxPitch);
 	}
 	else if (psAttacker->type == OBJ_DROID)
 	{
@@ -410,8 +410,8 @@ bool actionTargetTurret(BASE_OBJECT *psAttacker, BASE_OBJECT *psTarget, WEAPON *
 			|| psDroid->droidType == DROID_COMMAND || psDroid->droidType == DROID_CYBORG
 			|| psDroid->droidType == DROID_CYBORG_SUPER)
 		{
-			pitchLowerLimit = DEG(psWeapStats->minElevation);
-			pitchUpperLimit = DEG(psWeapStats->maxElevation);
+			pitchLowerLimit = DEG(psWeapStats->minPitch);
+			pitchUpperLimit = DEG(psWeapStats->maxPitch);
 		}
 		else if ( psDroid->droidType == DROID_REPAIR )
 		{
@@ -458,6 +458,7 @@ bool actionTargetTurret(BASE_OBJECT *psAttacker, BASE_OBJECT *psTarget, WEAPON *
 		/* get target distance */
 		dxy = iHypot(dx, dy);
 
+		dz = -dz; // the +ve pitch axis points left and we want CCW rotation
 		targetPitch = iAtan2(dz, dxy);
 
 		/* invert calculations for bottom-mounted weapons (i.e. for vtols) */

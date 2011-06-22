@@ -5089,18 +5089,17 @@ bool calcStructureMuzzleBaseLocation(STRUCTURE *psStructure, Vector3i *muzzle, i
 
 		Affine3F af;
 
-		af.Trans(psStructure->pos.x, -psStructure->pos.z, psStructure->pos.y);
+		af.Trans(psStructure->pos.x, psStructure->pos.z, psStructure->pos.y);
 
 		//matrix = the center of droid
 		af.RotY(psStructure->rot.direction);
 		af.RotX(psStructure->rot.pitch);
-		af.RotZ(-psStructure->rot.roll);
-		af.Trans( psShape->connectors[weapon_slot].x, -psShape->connectors[weapon_slot].z,
+		af.RotZ(psStructure->rot.roll);
+		af.Trans( psShape->connectors[weapon_slot].x, psShape->connectors[weapon_slot].z,
 					-psShape->connectors[weapon_slot].y);//note y and z flipped
 
 		
 		*muzzle = swapYZ(af*barrel);
-		muzzle->z = -muzzle->z;
 	}
 	else
 	{
@@ -5131,13 +5130,13 @@ bool calcStructureMuzzleLocation(STRUCTURE *psStructure, Vector3i *muzzle, int w
 
 		Affine3F af;
 
-		af.Trans(psStructure->pos.x, -psStructure->pos.z, psStructure->pos.y);
+		af.Trans(psStructure->pos.x, psStructure->pos.z, psStructure->pos.y);
 
 		//matrix = the center of droid
 		af.RotY(psStructure->rot.direction);
 		af.RotX(psStructure->rot.pitch);
 		af.RotZ(-psStructure->rot.roll);
-		af.Trans( psShape->connectors[weapon_slot].x, -psShape->connectors[weapon_slot].z,
+		af.Trans( psShape->connectors[weapon_slot].x, psShape->connectors[weapon_slot].z,
 					-psShape->connectors[weapon_slot].y);//note y and z flipped
 
 		//matrix = the weapon[slot] mount on the body
@@ -5146,11 +5145,11 @@ bool calcStructureMuzzleLocation(STRUCTURE *psStructure, Vector3i *muzzle, int w
 		// process turret mount
 		if (psMountImd && psMountImd->nconnectors)
 		{
-			af.Trans(psMountImd->connectors->x, -psMountImd->connectors->z, -psMountImd->connectors->y);
+			af.Trans(psMountImd->connectors->x, psMountImd->connectors->z, -psMountImd->connectors->y);
 		}
 
 		//matrix = the turret connector for the gun
-		af.RotX(psStructure->asWeaps[weapon_slot].rot.pitch);      // +ve up
+		af.RotX(psStructure->asWeaps[weapon_slot].rot.pitch);
 
 		//process the gun
 		if (psWeaponImd && psWeaponImd->nconnectors)
@@ -5164,11 +5163,10 @@ bool calcStructureMuzzleLocation(STRUCTURE *psStructure, Vector3i *muzzle, int w
 				connector_num = (psStructure->asWeaps[weapon_slot].shotsFired - 1) % (psWeaponImd->nconnectors);
 			}
 			
-			barrel = Vector3i(psWeaponImd->connectors[connector_num].x, -psWeaponImd->connectors[connector_num].z, -psWeaponImd->connectors[connector_num].y);
+			barrel = Vector3i(psWeaponImd->connectors[connector_num].x, psWeaponImd->connectors[connector_num].z, -psWeaponImd->connectors[connector_num].y);
 		}
 
 		*muzzle = swapYZ(af*barrel);
-		muzzle->z = -muzzle->z;
 	}
 	else
 	{

@@ -516,12 +516,13 @@ void updateDroidOrientation(DROID *psDroid)
 	dzdy = hy1 - hy0;                                    // 2*d*∂z(x, y)/∂y       of ground
 	dzdv = dzdx*vX + dzdy*vY;                            // 2*d*∂z(x, y)/∂v << 16 of ground, where v is the direction the droid is facing.
 	newPitch = iAtan2(dzdv, (2*d) << 16);                // pitch = atan(∂z(x, y)/∂v)/2π << 16
+	newPitch = -newPitch;								 // the +ve pitch axis points left and we want CCW rotation
 
 	deltaPitch = angleDelta(newPitch - psDroid->rot.pitch);
 
 	// Limit the rate the front comes down to simulate momentum
 	pitchLimit = gameTimeAdjustedIncrement(DEG(PITCH_LIMIT));
-	deltaPitch = MAX(deltaPitch, -pitchLimit);
+	deltaPitch = MIN(deltaPitch, pitchLimit);
 
 	// Update pitch.
 	psDroid->rot.pitch += deltaPitch;
@@ -1392,7 +1393,7 @@ static bool moveReachedWayPoint(DROID *psDroid)
 	return droid*droid < sqprecision;
 }
 
-#define MAX_SPEED_PITCH  60
+#define MAX_SPEED_PITCH  -60
 
 /** Calculate the new speed for a droid based on factors like pitch.
  *  @todo Remove hack for steep slopes not properly marked as blocking on some maps.
@@ -1412,7 +1413,7 @@ SDWORD moveCalcDroidSpeed(DROID *psDroid)
 							  psDroid->asBits[COMP_PROPULSION].nStat,
 							  getDroidEffectiveLevel(psDroid));
 
-	// now offset the speed for the slope of the droid
+	// now offset the speed for the pitch of the droid
 	pitch = angleDelta(psDroid->rot.pitch);
 	speed = (maxPitch - pitch) * speed / maxPitch;
 	if (speed <= 10)

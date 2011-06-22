@@ -48,11 +48,12 @@ struct TILEPOS
 
 /*
  Coordinate system used for objects in Warzone 2100:
-  x - "right"
+  x - "left"
   y - "forward"
   z - "up"
 
   For explanation of yaw/pitch/roll look for "flight dynamics" in your encyclopedia.
+  All rotations are counterclockwise... watch out for pitch, it was converted from CW
 */
 
 /// NEXTOBJ is an ugly hack to avoid having to fix all occurences of psNext and psNextFunc. The use of the original NEXTOBJ(pointerType) hack wasn't valid C, so in that sense, it's an improvement.

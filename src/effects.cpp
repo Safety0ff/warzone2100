@@ -432,7 +432,7 @@ static void positionEffect(const EFFECT *psEffect)
 	Vector3i dv(
 		psEffect->position.x - player.p.x,
 		psEffect->position.y,
-		-(psEffect->position.z - player.p.z)
+		psEffect->position.z - player.p.z
 	);
 
 	/* Push the indentity matrix */
@@ -1624,11 +1624,12 @@ static void renderFirework(const EFFECT *psEffect)
 
 	positionEffect(psEffect);
 
-	pie_MatRotY(-player.r.y);
-	pie_MatRotX(-player.r.x);
+	pie_MatRotY(player.r.y);
+	pie_MatRotX(player.r.x);
 
 	pie_MatScale(psEffect->size / 100.f);
- 	pie_Draw3DShape(psEffect->imd, psEffect->frameNumber, 0, WZCOL_WHITE, pie_ADDITIVE, EFFECT_EXPLOSION_ADDITIVE);
+
+	pie_Draw3DShape(psEffect->imd, psEffect->frameNumber, 0, WZCOL_WHITE, pie_ADDITIVE, EFFECT_EXPLOSION_ADDITIVE);
 	pie_MatEnd();
 }
 
@@ -1637,8 +1638,8 @@ static void renderBloodEffect(const EFFECT *psEffect)
 {
 	positionEffect(psEffect);
 
-	pie_MatRotY(-player.r.y);
-	pie_MatRotX(-player.r.x);
+	pie_MatRotY(player.r.y);
+	pie_MatRotX(player.r.x);
 	pie_MatScale(psEffect->size / 100.f);
 
 	pie_Draw3DShape(getImdFromIndex(MI_BLOOD), psEffect->frameNumber, 0, WZCOL_WHITE, pie_TRANSLUCENT, EFFECT_BLOOD_TRANSPARENCY);
@@ -1670,7 +1671,8 @@ static void renderDestructionEffect(const EFFECT *psEffect)
 		pie_MatRotY(SKY_SHIMMY);
 		pie_MatRotZ(SKY_SHIMMY);
 	}
- 	pie_Draw3DShape(psEffect->imd, 0, 0, WZCOL_WHITE, pie_RAISE, percent);
+
+	pie_Draw3DShape(psEffect->imd, 0, 0, WZCOL_WHITE, pie_RAISE, percent);
 
 	pie_MatEnd();
 }
@@ -1720,8 +1722,8 @@ static void renderExplosionEffect(const EFFECT *psEffect)
 	if(TEST_FACING(psEffect))
 	{
 		/* Always face the viewer! */
-		pie_MatRotY(-player.r.y);
-		pie_MatRotX(-player.r.x);
+		pie_MatRotY(player.r.y);
+		pie_MatRotX(player.r.x);
 	}
 
 	/* Tesla explosions diminish in size */
@@ -1797,8 +1799,8 @@ static void renderConstructionEffect(const EFFECT *psEffect)
 	/* Bit in comments doesn't quite work yet? */
 	if(TEST_FACING(psEffect))
 	{
-		pie_MatRotY(-player.r.y);
-		pie_MatRotX(-player.r.x);
+		pie_MatRotY(player.r.y);
+		pie_MatRotX(player.r.x);
 	}
 
 	/* Scale size according to age */
@@ -1837,8 +1839,8 @@ static void renderSmokeEffect(const EFFECT *psEffect)
 	if(TEST_FACING(psEffect))
 	{
  		/* Always face the viewer! */
-		pie_MatRotY(-player.r.y);
-		pie_MatRotX(-player.r.x);
+		pie_MatRotY(player.r.y);
+		pie_MatRotX(player.r.x);
 	}
 
 	if(TEST_SCALED(psEffect))
