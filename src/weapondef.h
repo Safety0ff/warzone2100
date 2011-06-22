@@ -30,7 +30,7 @@ struct WEAPON
 	uint32_t        ammo;
 	uint32_t        lastFired;	///< The gametime when this weapon last fired
 	uint32_t        shotsFired;
-	uint32_t        recoilValue;
+	int32_t			recoilValue;
 	Rotation	rot;
 	Rotation	prevRot;
 };
