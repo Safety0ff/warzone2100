@@ -186,11 +186,11 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 
 	if (pieFlag & pie_HEIGHT_SCALED)	// construct
 	{
-		glScalef(1.0f, (float)pieFlagData / (float)pie_RAISE_SCALE, 1.0f);
+		pie_MatScale(1.0f, (float)pieFlagData / (float)pie_RAISE_SCALE, 1.0f);
 	}
 	if (pieFlag & pie_RAISE)		// collapse
 	{
-		glTranslatef(1.0f, (-shape->max.y * (pie_RAISE_SCALE - pieFlagData)) * (1.0f / pie_RAISE_SCALE), 1.0f);
+		pie_TRANSLATE(1.0f, (-shape->max.y * (pie_RAISE_SCALE - pieFlagData)) * (1.0f / pie_RAISE_SCALE), 1.0f);
 	}
 
 	glColor4ubv(colour.vector);	// Only need to set once for entire model
@@ -487,7 +487,7 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int
 	 * Note: We don't bother duplicating the current matrix
 	 * since Scale(1,1,-1)*Scale(1,1,-1)= Identity
 	 */
-	glScalef(1.f,1.f,-1.f);
+	pie_MatScale(1.f,1.f,-1.f);
 
 	if (drawing_interface || !shadows)
 	{
@@ -513,7 +513,7 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int
 					memset( &tshapes[old_size], 0, (tshapes_size-old_size)*sizeof(transluscent_shape_t) );
 				}
 			}
-			glGetFloatv(GL_MODELVIEW_MATRIX, tshapes[nb_tshapes].matrix);
+			pie_GetModelViewMatrix(tshapes[nb_tshapes].matrix);
 			tshapes[nb_tshapes].shape = shape;
 			tshapes[nb_tshapes].frame = frame;
 			tshapes[nb_tshapes].colour = colour;
@@ -576,7 +576,7 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int
 	}
 
 	// Return the matrix to state it was prior to calling this
-	glScalef(1.f,1.f,-1.f);
+	pie_MatScale(1.f,1.f,-1.f);
 }
 
 static void pie_ShadowDrawLoop(void)
@@ -669,7 +669,7 @@ static void pie_DrawShadows(void)
 	glStencilFunc(GL_LESS, 0, ~0);
 	glColor4f(0, 0, 0, 0.5);
 
-	pie_PerspectiveEnd();
+	pie_SetOrthoProj(true);
 	glLoadIdentity();
 	glDisable(GL_DEPTH_TEST);
 	glBegin(GL_TRIANGLE_STRIP);
@@ -678,7 +678,7 @@ static void pie_DrawShadows(void)
 		glVertex2f(0, height);
 		glVertex2f(width, height);
 	glEnd();
-	pie_PerspectiveBegin();
+	pie_SetPerspectiveProj();
 
 	pie_SetRendMode(REND_OPAQUE);
 	glDisable(GL_STENCIL_TEST);
