@@ -62,7 +62,6 @@ static std::stack<Affine3, stdVectorAffine3> matrixStack;
 
 #define curMatrix matrixStack.top()
 
-bool drawing_interface = true;
 
 //*************************************************************************
 
@@ -313,17 +312,5 @@ void pie_PerspectiveEnd(void)
 	glLoadIdentity();
 	glOrtho(0.0f, (double) pie_GetVideoBufferWidth(), (double) pie_GetVideoBufferHeight(), 0.0f, 1.0f, -1.0f);
 	glMatrixMode(GL_MODELVIEW);
-}
-
-void pie_Begin3DScene(void)
-{
-	glDepthRange(0.1, 1);
-	drawing_interface = false;
-}
-
-void pie_BeginInterface(void)
-{
-	glDepthRange(0, 0.1);
-	drawing_interface = true;
 }
 
