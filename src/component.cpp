@@ -65,6 +65,13 @@ UBYTE getPlayerColour(UDWORD pl)
 	return NetPlay.players[pl].colour;
 }
 
+/* TODO: We should be computing the bounding sphere
+ * when we create the template, load the structures, etc
+ * rather than computing it per ui object, per frame.
+ * This allows us to us those bounding volumes for
+ * view frustum culling as well.
+ */
+
 struct UISphere // Named to prevent misuse/name collision
 {
 	UISphere() : centre(Vector3f(0.f,0.f,0.f)), radius(0.f) {}
