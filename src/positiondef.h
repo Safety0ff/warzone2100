@@ -38,9 +38,9 @@ struct OBJECT_POSITION
 {
 	POSITION_TYPE   type;                   ///< the type of position obj - FlagPos or ProxDisp
 	UDWORD          frameNumber;            ///< when the Position was last drawn
-	UDWORD          screenX;                ///< screen coords and radius of Position imd
-	UDWORD          screenY;
-	UDWORD          screenR;
+	int32_t         screenX;                ///< screen coords and radius of Position imd
+	int32_t         screenY;
+	int32_t         screenR;
 	UDWORD          player;                 ///< which player the Position belongs to
 	bool            selected;               ///< flag to indicate whether the Position is to be highlighted
 };
