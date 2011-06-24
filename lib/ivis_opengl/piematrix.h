@@ -75,8 +75,4 @@ extern int32_t pie_ProjectSphere(Vector3f const &src, int32_t &radius, Vector2i 
 extern void pie_PerspectiveBegin(void);
 extern void pie_PerspectiveEnd(void);
 
-//*************************************************************************
-extern void pie_Begin3DScene(void);
-extern void pie_BeginInterface(void);
-
 #endif

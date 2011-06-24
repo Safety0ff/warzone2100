@@ -46,6 +46,8 @@ static RENDER_STATE rendStates;
 static GLint ecmState = 0;
 static GLfloat timeState = 0.0f;
 
+bool drawing_interface = true;
+
 void rendStatesRendModeHack()
 {
 	rendStates.rendMode = REND_ALPHA;
@@ -642,6 +644,18 @@ void pie_SetRendMode(REND_MODE rendMode)
 		}
 	}
 	return;
+}
+
+void pie_Begin3DScene(void)
+{
+	glDepthRange(0.1, 1);
+	drawing_interface = false;
+}
+
+void pie_BeginInterface(void)
+{
+	glDepthRange(0, 0.1);
+	drawing_interface = true;
 }
 
 bool _glerrors(const char *function, const char *file, int line)
