@@ -54,8 +54,8 @@ static std::vector<BUCKET_TAG> bucketArray;
 
 static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 {
-	SDWORD				z = 0, radius;
-	Vector2i			pixel;
+	SDWORD				radius;
+	Vector3i			pixel;
 	Vector3f			position;
 	DROID				*psDroid;
 	BODY_STATS			*psBStats;
@@ -63,6 +63,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 	COMPONENT_OBJECT	*psCompObj;
 	const iIMDShape		*pImd;
 	Spacetime			spacetime;
+	bool 				clipped = true;
 
 	switch(objectType)
 	{
@@ -72,15 +73,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			position.l_xz() -= player.p.r_xz();
 
 			radius = ((ATPART*)pObject)->imd->radius;
-			z = pie_ProjectSphere(position, radius, &pixel);
-			if (z > 0)
-			{
-				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-				{
-					z = -1;
-				}
-			}
+			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
 		case RENDER_PROJECTILE:
 			if(((PROJECTILE*)pObject)->psWStats->weaponSubClass == WSC_FLAME ||
@@ -88,7 +81,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
                 ((PROJECTILE*)pObject)->psWStats->weaponSubClass == WSC_EMP)
 			{
 				/* We don't do projectiles from these guys, cos there's an effect instead */
-				z = -1;
+				clipped = true;
 			}
 			else
 			{
@@ -101,16 +94,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 				position.l_xz() -= player.p.r_xz();
 
 				radius = pImd->radius;
-				z = pie_ProjectSphere(position, radius, &pixel);
-
-				if (z > 0)
-				{
-					if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-						|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-					{
-						z = -1;
-					}
-				}
+				clipped = pie_ProjectSphere(position, radius, &pixel);
 			}
 			break;
 		case RENDER_STRUCTURE://not depth sorted
@@ -135,15 +119,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 				radius = (((STRUCTURE*)pObject)->sDisplay.imd->radius);
 			}
 
-			z = pie_ProjectSphere(position, radius, &pixel);
-			if (z > 0)
-			{
-				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-				{
-					z = -1;
-				}
-			}
+			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
 		case RENDER_FEATURE://not depth sorted
 			psSimpObj = (SIMPLE_OBJECT*) pObject;
@@ -152,30 +128,21 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			position.l_xz() -= player.p.r_xz();
 
 			radius = ((FEATURE*)pObject)->sDisplay.imd->radius;
-			z = pie_ProjectSphere(position, radius, &pixel);
-
-			if (z > 0)
-			{
-				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-				{
-					z = -1;
-				}
-			}
+			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
 		case RENDER_ANIMATION://not depth sorted
 			psCompObj = (COMPONENT_OBJECT *) pObject;
 			spacetime = interpolateObjectSpacetime((SIMPLE_OBJECT *)psCompObj->psParent, graphicsTime);
 
+			pie_MatBegin();
+
 			position = swapYZ(spacetime.pos);
 			position.l_xz() -= player.p.r_xz();
+			pie_TRANSLATE(position.x, position.y, position.z);
 
-			/* object offset translation */
-			position.x += psCompObj->psShape->ocen.x;
-			position.y += psCompObj->psShape->ocen.z;
-			position.z -= psCompObj->psShape->ocen.y;
-
-			pie_MatBegin();
+			/* parent object rotations */
+			pie_MatRotY(spacetime.rot.direction);
+			pie_MatRotX(spacetime.rot.pitch);
 
 			/* object (animation) translations - ivis z and y flipped */
 			pie_TRANSLATE( psCompObj->position.x, psCompObj->position.z,
@@ -186,7 +153,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			pie_MatRotZ(-psCompObj->orientation.y);
 			pie_MatRotX(psCompObj->orientation.x);
 
-			z = pie_Project(position,&pixel);
+			clipped = pie_Project(Vector3f(0,0,0) ,&pixel);
 
 			pie_MatEnd();
 
@@ -207,16 +174,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 			psBStats = asBodyStats + psDroid->asBits[COMP_BODY].nStat;
 			radius = psBStats->pIMD->radius;
-			z = pie_ProjectSphere(position, radius, &pixel);
-
-			if (z > 0)
-			{
-				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-				{
-					z = -1;
-				}
-			}
+			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
 		case RENDER_PROXMSG:
 			if (((PROXIMITY_DISPLAY *)pObject)->type == POS_PROXDATA)
@@ -236,16 +194,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 			pImd = getImdFromIndex(MI_BLIP_ENEMY);//use MI_BLIP_ENEMY as all are same radius
 			radius = pImd->radius;
-			z = pie_ProjectSphere(position, radius, &pixel);
-
-			if (z > 0)
-			{
-				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-				{
-					z = -1;
-				}
-			}
+			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
 		case RENDER_EFFECT:
 			position = ((EFFECT*)pObject)->position;
@@ -253,17 +202,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 			pImd = ((EFFECT*)pObject)->imd;
 			radius = pImd ? pImd->radius : 0;
-			z = pie_Project(position,&pixel);
-
-			if (z > 0 && pImd)
-			{
-				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-				{
-					z = -1;
-				}
-			}
-
+			clipped = pie_Project(position,&pixel);
 			break;
 
 		case RENDER_DELIVPOINT:
@@ -271,24 +210,15 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			position.l_xz() -= player.p.r_xz();
 
 			radius = pAssemblyPointIMDs[((FLAG_POSITION*)pObject)->factoryType][((FLAG_POSITION*)pObject)->factoryInc]->radius;
-			z = pie_ProjectSphere(position, radius, &pixel);
-
-			if (z > 0)
-			{
-				if ((pixel.x + radius < CLIP_LEFT) || (pixel.x - radius > CLIP_RIGHT)
-					|| (pixel.y + radius < CLIP_TOP) || (pixel.y - radius > CLIP_BOTTOM))
-				{
-					z = -1;
-				}
-			}
-
+			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
-
 		default:
 		break;
 	}
 
-	return z;
+	if (clipped)
+		return -1;
+	return pixel.z;
 }
 
 /* add an object to the current render list */

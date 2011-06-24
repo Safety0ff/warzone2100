@@ -347,17 +347,16 @@ static inline float fitToBounds(UISphere const &sphere, Vector2i const& /*Rot*/,
 	 * (using the assumption that Rot.x is fixed for a given droid/struct/etc)
 	 * but it looks better without doing that.
 	 * The infrastructure has been left in place in case this becomes necessary.
+	 * Note: You'd want to use the assumption that Rot.x is fixed per object, and
+	 * only adjust/scale based on it and the sphere (so that it doesn't rescale while
+	 * on the screen).
 	 */
 	return scale;
 }
 
-static void setMatrix(Vector2i const &Rot, Vector3i const &Pos, bool RotXY)
+static inline void setMatrix(Vector2i const &Rot, Vector3i const &Pos, bool RotXY)
 {
-	// TEMPORARY HACK!!
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.f, pie_GetVideoBufferWidth(), 0, pie_GetVideoBufferHeight(), -world_coord(3*2), world_coord(3*2));
-	glMatrixMode(GL_MODELVIEW);
+	pie_SetOrthoProj(false);
 	pie_MatBegin();
 
 	/*
@@ -380,7 +379,7 @@ static void setMatrix(Vector2i const &Rot, Vector3i const &Pos, bool RotXY)
 static void unsetMatrix(void)
 {
 	pie_MatEnd();
-	pie_PerspectiveEnd();
+	pie_SetOrthoProj(true);
 }
 
 void displayIMDButton(iIMDShape *IMDShape, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
