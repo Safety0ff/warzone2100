@@ -47,9 +47,14 @@ static inline WZ_DECL_CONST WZ_DECL_WARN_UNUSED_RESULT
 
 //*************************************************************************
 
-
 extern void pie_MatInit(void);
 
+// Note: Can be called before pie_MatInit
+extern void pie_SetViewport(int x, int y, int width, int height);
+
+//*************************************************************************
+
+extern void pie_GetModelViewMatrix(float * const mat);
 
 //*************************************************************************
 
@@ -57,22 +62,41 @@ extern void pie_MatBegin(void);
 extern void pie_MatEnd(void);
 extern void pie_TRANSLATE(int32_t x, int32_t y, int32_t z);
 extern void pie_MatScale(float scale);
+extern void pie_MatScale(float x, float y, float z);
 extern void pie_MatRotX(uint16_t x);
 extern void pie_MatRotY(uint16_t y);
 extern void pie_MatRotZ(uint16_t z);
 extern void pie_MatIdentity(void);
-extern int32_t pie_Project(Vector3f const &src, Vector2i *dest);
+
+//*************************************************************************
+// Functions for projecting geometry onto the screen
+// Note: They are only for use with perspective projection!
+// The y coordinate of the screen position is given in terms of a top left origin
+
+extern bool pie_Project(Vector3f const &obj, Vector3i *proj);
 
 /** An approximation for the perspective projection of a sphere onto the screen
  * This approximates the ellipse that would result to a circle.
  * Note: the approximation will be somewhat arbitrary but it's better than using a hack
  * Radius is a input and output parameter.
  */
-extern int32_t pie_ProjectSphere(Vector3f const &src, int32_t &radius, Vector2i *dest);
+extern bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3i *proj);
 
 //*************************************************************************
-
-extern void pie_PerspectiveBegin(void);
-extern void pie_PerspectiveEnd(void);
+// Projection matrix functions
+/*
+ * Set the projection matrix to a
+ * bottom left origin orthographic projection
+ * (currently used mostly for the 3D scene)
+ */
+extern void pie_SetPerspectiveProj(void);
+/*
+ * Set the projection matrix to a orthographic projection
+ * The argument chooses between an upper left origin and
+ * a bottom left origin.
+ * The former is currently used mostly for the UI/widgets
+ * The latter is currently used mostly for the droids/structures in the UI
+ */
+extern void pie_SetOrthoProj(bool originAtTheTop);
 
 #endif

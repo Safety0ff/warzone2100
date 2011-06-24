@@ -61,7 +61,12 @@ typedef std::vector<Affine3, Eigen::aligned_allocator<Affine3> > stdVectorAffine
 static std::stack<Affine3, stdVectorAffine3> matrixStack;
 
 #define curMatrix matrixStack.top()
+#define curMatrixAs4x4 Eigen::Transform<MatScalarType,3, Eigen::Affine>(curMatrix).matrix()
 
+static int viewport[2][2];
+
+static Eigen::Transform<MatScalarType, 3, Eigen::Projective> Proj;
+typedef Eigen::Vector4d Vector4;
 
 //*************************************************************************
 
@@ -82,6 +87,14 @@ void pie_MatInit(void)
 
 	matrixStack.push(Affine3::Identity());
 	glLoadIdentity();
+}
+
+void pie_SetViewport(int x, int y, int width, int height)
+{
+	viewport[0][0] = x;
+	viewport[0][1] = width;
+	viewport[1][0] = y;
+	viewport[1][1] = height;
 }
 
 //*************************************************************************
@@ -151,6 +164,26 @@ void pie_MatScale(float scale)
 	glScalef(scale, scale, scale);
 }
 
+//*************************************************************************
+//*** matrix scale current transformation matrix
+//*
+//******
+void pie_MatScale(float x, float y, float z)
+{
+	/*
+	 * curMatrix = curMatrix . scaleMatrix(x, y, z)
+	 *
+	 *                         [ x 0 0 0 ]
+	 *                         [ 0 y 0 0 ]
+	 * curMatrix = curMatrix . [ 0 0 z 0 ]
+	 *                         [ 0 0 0 1 ]
+	 *
+	 * curMatrix = scale * curMatrix
+	 */
+
+	curMatrix.scale(Vector3(x, y, z));
+	glScalef(x, y, z);
+}
 
 //*************************************************************************
 //*** matrix rotate y (yaw) current transformation matrix
@@ -237,80 +270,135 @@ void pie_MatRotX(uint16_t x)
  * 3D vector perspective projection
  * Projects 3D vector into 2D screen space
  * \param v3d       3D vector to project
- * \param[out] v2d  resulting 2D vector
- * \return projected z component of v2d
+ * \param[out] v3d  resulting 2D vector + depth in a 3D vector
+ * \return Whether the vertice is outside the clipping planes.
  */
-int32_t pie_Project(Vector3f const &v3d, Vector2i *v2d)
+bool pie_Project(Vector3f const &obj, Vector3i *proj)
 {
-	GLdouble screenX, screenY, depth;// arrays to hold matrix information
-	GLint viewport[4];
-	GLdouble projection[16];
+	// v = Proj * ( ModelView * obj)
+	// I tried computing and caching Proj*Modelview, it wasn't worth it.
+	// optimizing for the sparseness of Proj would be the next step.
+	Vector4 v(Proj*(curMatrix*Vector4(obj.x, obj.y, obj.z, 1)));
+	// v in clip coords.
 
-	// TODO we don't actually need to query opengl for these...
-	// we also need to put a implementation of gluProject in here.
-	// Then we can cache the matrix product P*MV
+	if (std::abs(v.w()) <= 0.000001) // At infinity (magic number = made up epsilon)
+	{
+		*proj = Vector3i(-1,-1,-1);
+		return true;
+	}
 
-	glGetDoublev(GL_PROJECTION_MATRIX, projection);
-	glGetIntegerv(GL_VIEWPORT, viewport);   // get 3D coordinates based on window coordinates
+	v *= 1/v.w(); // Perpective division
+	// v now in normalized device coords.
 
-	gluProject(v3d.x, v3d.y, v3d.z,
-			   Eigen::Transform<double,3,  Eigen::Affine>(curMatrix).matrix().data(),
-			   projection, viewport, &screenX, &screenY, &depth);
+	// Most calling code needs this anyways, that's why we do it here
+	// while it is clean and cheap
+	bool clipped = std::abs(v.x()) > 1 || std::abs(v.y()) > 1 || std::abs(v.z()) > 1;
 
-	v2d->x = screenX;
 	/*
-	 * This seems to be another vestige of Warzone's DirectX past
-	 * mouse handling also seems to use top left as the origin
-	 * Code somewhere might be interpreting these values with a top-left origin
-	 * Figure this out and FIXME?
+	 * The following contains another vestige of Warzone's DirectX past:
+	 * Mouse coords and UI positioning assume a top left origin
+	 * So for the sake of consistency we use this convention everywhere,
+	 * and there is no point swiching it until the UI is rewritten.
+	 * The commented out line is the bottom left version.
 	 */
-	v2d->y = pie_GetVideoBufferHeight()-screenY;
+	// Map x, y and z to range [0,1]
+	v.x() = v.x() * 0.5 + 0.5;
+// 	v.y() = v.y() * 0.5 + 0.5;
+	v.y() = 0.5 - v.y() * 0.5;
+	v.z() = v.z() * 0.5 + 0.5;
 
+	// Map to window coords
+	proj->x = v.x() * viewport[0][1] + viewport[0][0];
+	proj->y = v.y() * viewport[1][1] + viewport[1][0];
+	proj->z = v.z() * MAX_Z;
 	/*
 	 * Though the multiplication by MAX_Z is a workaround
 	 * it should be consistent with what people have assumed about the depth values.
-	 * This is so that the float->int conversion doesn't kill the depth values.
+	 * This is so that the float->int conversion doesn't kill the [0-1] depth.
 	 */
-	return depth * MAX_Z;
+
+	return clipped;
 }
 
-int32_t pie_ProjectSphere(Vector3f const &src, int32_t &radius, Vector2i *dest)
+bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3i *proj)
 {
-	Vector3f ptOnSphere = src;
-	Vector2i ptOnSphereProj;
-	int32_t depth;
+	Vector3f ptOnSphere = obj;
+	Vector3i ptOnSphereProj;
+	bool clipped;
 
-	depth = pie_Project(src, dest);
-	if (depth >= 0)
+	ptOnSphere.y += radius;
+	clipped = pie_Project(ptOnSphere, proj);
+	if (!clipped)
 	{
 		/* For now just take the point on the bottom of the sphere
 		 * this can be changed later to be something more meaningful (such as the min or max radius)
 		 */
-		ptOnSphere.y = ptOnSphere.y - radius;
-		pie_Project(ptOnSphere, &ptOnSphereProj);
-		radius = iHypot(ptOnSphereProj - *dest);
+		pie_Project(obj, &ptOnSphereProj);
+		radius = iHypot(ptOnSphereProj.r_xy() - proj->r_xy());
 	}
-	return depth;
+	else
+	{
+		radius = 0;
+	}
+	return clipped;
 }
 
-void pie_PerspectiveBegin(void)
+void pie_SetPerspectiveProj(void)
 {
 	const float width = pie_GetVideoBufferWidth();
 	const float height = pie_GetVideoBufferHeight();
-	const float xangle = width/6.0f;
-	const float yangle = height/6.0f;
+	const float left = -width/6.0f;
+	const float right = width/6.0f;
+	const float bottom = -height/6.0f;
+	const float top = height/6.f;
+	const int nearVal = 330;
+	const int farVal = 49152;
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glFrustum(-xangle, xangle, -yangle, yangle, 330, 100000);
+	glFrustum(left, right, bottom, top, 330, 49152);
 	glMatrixMode(GL_MODELVIEW);
+
+	/*
+	 * This is the simplified version of the perspective projection matrix
+	 * left = -right and bottom = -top, i.e. symmetric frustum
+	 * the general form is shown at the bottom.
+	 */
+	Proj.matrix() << nearVal/right, 0, 0, 0,
+			0, nearVal/top, 0, 0,
+			0, 0, -(farVal+nearVal)/(farVal-nearVal), -2*farVal*nearVal/(farVal-nearVal),
+			0, 0, -1, 0;
+#if 0
+	Proj << 2*nearVal/(right-left), 0, (right+left)/(right-left), 0,
+			0, 2*nearVal/(top-bottom), (top+bottom)/(top-bottom), 0,
+			0, 0, -(farVal+nearVal)/(farVal-nearVal), -2*farVal*nearVal/(farVal-nearVal),
+			0, 0, -1, 0;
+#endif
 }
 
-void pie_PerspectiveEnd(void)
+void pie_SetOrthoProj(bool originAtTheTop)
 {
+	const double left = 0.0;
+	const double right = pie_GetVideoBufferWidth();
+	const double bottom = originAtTheTop ? pie_GetVideoBufferHeight() : 0.0;
+	const double top = originAtTheTop ? 0.0 : pie_GetVideoBufferHeight();
+	// Magic numbers is a guess for the upper bound of the depth of an object rendered at the origin
+	// in this mode. i.e. +-world_coord(3), 3 because of base width of the big buildings
+	const float nearVal = -128*(3);
+	const float farVal = 128*(3);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0.0f, (double) pie_GetVideoBufferWidth(), (double) pie_GetVideoBufferHeight(), 0.0f, 1.0f, -1.0f);
+	glOrtho(left, right, bottom, top, nearVal, farVal);
 	glMatrixMode(GL_MODELVIEW);
+	Proj.matrix() << 2/(right-left), 0, 0, -(right+left)/(right-left),
+					0, 2/(top-bottom), 0, -(top+bottom)/(top-bottom),
+					0, 0, -2/(farVal-nearVal), -(farVal+nearVal)/(farVal-nearVal),
+					0, 0, 0, 1;
 }
 
+void pie_GetModelViewMatrix(float * const mat)
+{
+	const Eigen::Transform<float,3, Eigen::Affine>::MatrixType
+	MV (curMatrixAs4x4.cast<float>());
+	memcpy(mat, MV.data(), 16*sizeof(float));
+}

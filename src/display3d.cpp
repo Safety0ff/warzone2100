@@ -104,7 +104,7 @@ static void	renderSurroundings(void);
 static void	locateMouse(void);
 static bool	renderWallSection(STRUCTURE *psStructure);
 static void	drawDragBox(void);
-static void	calcFlagPosScreenCoords(SDWORD *pX, SDWORD *pY, SDWORD *pR);
+static void	calcFlagPosScreenCoords(Vector3i * const screenPos, int32_t &radius);
 static void	displayTerrain(void);
 static iIMDShape *flattenImd(iIMDShape *imd, UDWORD structX, UDWORD structY, UDWORD direction, bool allPoints = false);
 static void	drawTiles(iView *player);
@@ -160,6 +160,7 @@ static UDWORD distance;
 
 /// Stores the screen coordinates of the transformed terrain tiles
 static Vector3i tileScreenInfo[VISIBLE_YTILES+1][VISIBLE_XTILES+1];
+static bool tileClippingInfo[VISIBLE_YTILES+1][VISIBLE_XTILES+1];
 
 /// Records the present X and Y values for the current mouse tile (in tiles)
 SDWORD mouseTileX, mouseTileY;
@@ -180,6 +181,7 @@ static int playerXTile, playerZTile;
 
 /// The cached value of frameGetFrameNumber()
 static UDWORD currentGameFrame;
+
 /// The box used for multiple selection - present screen coordinates
 static QUAD dragQuad;
 
@@ -680,6 +682,12 @@ void draw3DScene( void )
 	{
 		for (int j = 0; j < visibleTiles.x; j++)
 		{
+			if (tileClippingInfo[i+0][j+0]
+				&& tileClippingInfo[i+0][j+1]
+				&& tileClippingInfo[i+1][j+1]
+				&& tileClippingInfo[i+1][j+0]
+				)
+				continue;
 			glBegin(GL_QUADS);
 			glVertex2f(tileScreenInfo[i+0][j+0].x, tileScreenInfo[i+0][j+0].y);
 			glVertex2f(tileScreenInfo[i+0][j+1].x, tileScreenInfo[i+0][j+1].y);
@@ -862,12 +870,12 @@ void draw3DScene( void )
 /// Draws the 3D textured terrain
 static void displayTerrain(void)
 {
-	pie_PerspectiveBegin();
+	pie_SetPerspectiveProj();
 
 	/* Now, draw the terrain */
 	drawTiles(&player);
 
-	pie_PerspectiveEnd();
+	pie_SetOrthoProj(true);
 
 	/* Show the drag Box if necessary */
 	drawDragBox();
@@ -972,14 +980,14 @@ static void drawTiles(iView *player)
 	theSun = getTheSun();
 	pie_BeginLighting(&theSun, getDrawShadows());
 
-	// Project some tiles onto screen for mouse picking and
-	// update the fog of war... FIXME: Remove this
+	// Project some tiles onto screen for the following mouse picking call
+	// and update the fog of war... FIXME: Remove this
 	for (i = -visibleTiles.y/2, idx=0; i <= visibleTiles.y/2; i++,++idx)
 	{
 		/* Go through the x's */
 		for (j = -visibleTiles.x/2, jdx=0; j <= visibleTiles.x/2; j++,++jdx)
 		{
-			Vector2i screen(0, 0);
+			Vector3i screen;
 			Position pos;
 
 			pos.x = world_coord(j);
@@ -990,14 +998,15 @@ static void drawTiles(iView *player)
 			{
 				MAPTILE *psTile = mapTile(playerXTile + j, playerZTile + i);
 
-				pos.y = map_TileHeight(playerXTile + j, playerZTile + i);
+				pos.y = psTile->height;
 				setTileColour(playerXTile + j, playerZTile + i, pal_SetBrightness(psTile->level));
 			}
-			tileScreenInfo[idx][jdx].z = pie_Project(pos, &screen);
-			tileScreenInfo[idx][jdx].x = screen.x;
-			tileScreenInfo[idx][jdx].y = screen.y;
+			tileClippingInfo[idx][jdx] = pie_Project(pos, &tileScreenInfo[idx][jdx]);
+
 		}
 	}
+
+	locateMouse();
 
 	/* This is done here as effects can light the terrain - pause mode problems though */
 	processEffects();
@@ -1083,7 +1092,6 @@ static void drawTiles(iView *player)
 
 	/* Clear the matrix stack */
 	pie_MatEnd();
-	locateMouse();
 }
 
 /// Initialise the fog, skybox and some other stuff
@@ -1164,23 +1172,16 @@ bool clipXY(SDWORD x, SDWORD y)
 
 /** Get the screen coordinates for the current transform matrix.
  * This function is used to determine the area the user can click for the
- * intelligence screen buttons. The radius parameter is always set to the same value.
+ * intelligence screen buttons.
+ * Radius is an input and output argument.
  */
-static void	calcFlagPosScreenCoords(SDWORD *pX, SDWORD *pY, SDWORD *pR)
+static void calcFlagPosScreenCoords(Vector3i * const screenPos, int32_t &radius)
 {
 	/* Get it's absolute dimensions */
 	Vector3i center3d(0, 0, 0);
-	Vector2i center2d(0, 0);
-	/* How big a box do we want - will ultimately be calculated using xmax, ymax, zmax etc */
-	UDWORD	radius = 22;
 
-	/* Pop matrices and get the screen coordinates for last point*/
-	pie_Project(center3d, &center2d );
-
-	/*store the coords*/
-	*pX = center2d.x;
-	*pY = center2d.y;
-	*pR = radius;
+	/* Get the screen coordinates for last point*/
+	pie_ProjectSphere(center3d, radius, screenPos);
 }
 
 /// Decide whether to render a projectile, and make sure it will be drawn
@@ -1321,7 +1322,7 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 
 		psParentObj->sDisplay.frameNumber = currentGameFrame;
 
-		/* Push the indentity matrix */
+		/* Push the current matrix */
 		pie_MatBegin();
 
 		/* parent object translation */
@@ -1357,12 +1358,12 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 		if (psParentObj->type == OBJ_STRUCTURE)
 		{
 			const Vector3i zero(0, 0, 0);
-			Vector2i s(0, 0);
+			Vector3i s;
 			STRUCTURE *psStructure = (STRUCTURE*)psParentObj;
 
 			brightness = structureBrightness(psStructure);
 
-			pie_Project(zero, &s );
+			pie_Project(zero, &s);
 			psStructure->sDisplay.screenX = s.x;
 			psStructure->sDisplay.screenY = s.y;
 		}
@@ -1929,8 +1930,7 @@ void	renderFeature(FEATURE *psFeature)
 
 	pie_Draw3DShape(psFeature->sDisplay.imd, 0, 0, brightness, shadowFlags, 0);
 
-	Vector3i zero(0, 0, 0);
-	Vector2i s(0, 0);
+	Vector3i zero(0, 0, 0), s;
 	pie_Project(zero, &s);
 	psFeature->sDisplay.screenX = s.x;
 	psFeature->sDisplay.screenY = s.y;
@@ -1941,10 +1941,10 @@ void	renderFeature(FEATURE *psFeature)
 /// 
 void renderProximityMsg(PROXIMITY_DISPLAY *psProxDisp)
 {
-	UDWORD			msgX = 0, msgY = 0;
-	Vector3i                dv(0, 0, 0);
+	Vector3i		dv(0,0,0);
 	VIEW_PROXIMITY	*pViewProximity = NULL;
-	SDWORD			x, y, r;
+	Vector3i		screenPos;
+	int32_t			radius;
 	iIMDShape		*proxImd = NULL;
 
 	//store the frame number for when deciding what has been clicked on
@@ -1957,15 +1957,15 @@ void renderProximityMsg(PROXIMITY_DISPLAY *psProxDisp)
 			pViewData)->pData;
 		if (pViewProximity)
 		{
-			msgX = pViewProximity->x;
-			msgY = pViewProximity->y;
+			dv.x = pViewProximity->x;
+			dv.z = pViewProximity->y;
 			/* message sits at the height specified at input*/
 			dv.y = pViewProximity->z + 64;
 
 			/* in case of a beacon message put above objects */
 			if(((VIEWDATA *)psProxDisp->psMessage->pViewData)->type == VIEW_BEACON)
 			{
-				if(TileIsOccupied(mapTile(msgX / TILE_UNITS,msgY / TILE_UNITS)))
+				if (TileIsOccupied(mapTile(map_coord(dv.r_xz()))))
 					dv.y = pViewProximity->z + 150;
 			}
 
@@ -1973,8 +1973,8 @@ void renderProximityMsg(PROXIMITY_DISPLAY *psProxDisp)
 	}
 	else if (psProxDisp->type == POS_PROXOBJ)
 	{
-		msgX = ((BASE_OBJECT *)psProxDisp->psMessage->pViewData)->pos.x;
-		msgY = ((BASE_OBJECT *)psProxDisp->psMessage->pViewData)->pos.y;
+		dv.x = ((BASE_OBJECT *)psProxDisp->psMessage->pViewData)->pos.x;
+		dv.z = ((BASE_OBJECT *)psProxDisp->psMessage->pViewData)->pos.y;
 		/* message sits at the height specified at input*/
 		dv.y = ((BASE_OBJECT *)psProxDisp->psMessage->pViewData)->pos.z + 64;
 	}
@@ -1983,8 +1983,7 @@ void renderProximityMsg(PROXIMITY_DISPLAY *psProxDisp)
 		ASSERT(!"unknown proximity display message type", "Buggered proximity message type");
 	}
 
-	dv.x = msgX - player.p.x;
-	dv.z = msgY - player.p.z;
+	dv.l_xz() -= player.p.r_xz();
 
 	/* Push the indentity matrix */
 	pie_MatBegin();
@@ -2034,10 +2033,11 @@ void renderProximityMsg(PROXIMITY_DISPLAY *psProxDisp)
 	pie_Draw3DShape(proxImd, getModularScaledGraphicsTime(1000, 4), 0, WZCOL_WHITE, pie_ADDITIVE, 192);
 
 	//get the screen coords for determining when clicked on
-	calcFlagPosScreenCoords(&x, &y, &r);
-	psProxDisp->screenX = x;
-	psProxDisp->screenY = y;
-	psProxDisp->screenR = r;
+	radius = proxImd->sradius;
+	calcFlagPosScreenCoords(&screenPos, radius);
+	psProxDisp->screenX = screenPos.x;
+	psProxDisp->screenY = screenPos.y;
+	psProxDisp->screenR = radius;
 
 	pie_MatEnd();
 }
@@ -2440,8 +2440,7 @@ void	renderStructure(STRUCTURE *psStructure)
 		}
 	}
 
-	Vector3i zero(0, 0, 0);
-	Vector2i s(0, 0);
+	Vector3i zero(0, 0, 0), s;
 
 	pie_Project(zero, &s);
 	psStructure->sDisplay.screenX = s.x;
@@ -2453,17 +2452,16 @@ void	renderStructure(STRUCTURE *psStructure)
 /// draw the delivery points
 void	renderDeliveryPoint(FLAG_POSITION *psPosition, bool blueprint)
 {
-	Vector3i	dv;
-	SDWORD		x, y, r;
+	Vector3i	dv = swapYZ(psPosition->coords);
+	Vector3i	screenPos;
+	int32_t		radius;
 	Vector3f*	temp = NULL;
 	int pieFlag, pieFlagData;
 	PIELIGHT colour;
 	//store the frame number for when deciding what has been clicked on
 	psPosition->frameNumber = currentGameFrame;
 
-	dv.x = psPosition->coords.x - player.p.x;
-	dv.z = psPosition->coords.y - player.p.z;
-	dv.y = psPosition->coords.z;
+	dv.l_xz() -= player.p.r_xz();
 
 	/* Push the indentity matrix */
 	pie_MatBegin();
@@ -2502,11 +2500,14 @@ void	renderDeliveryPoint(FLAG_POSITION *psPosition, bool blueprint)
 		pAssemblyPointIMDs[psPosition->factoryType][psPosition->factoryInc]->points = temp;
 	}
 
+	// Division by two to match scaling above
+	radius = pAssemblyPointIMDs[psPosition->factoryType][psPosition->factoryInc]->sradius/2;
+
 	//get the screen coords for the DP
-	calcFlagPosScreenCoords(&x, &y, &r);
-	psPosition->screenX = x;
-	psPosition->screenY = y;
-	psPosition->screenR = r;
+	calcFlagPosScreenCoords(&screenPos, radius);
+	psPosition->screenX = screenPos.x;
+	psPosition->screenY = screenPos.y;
+	psPosition->screenR = radius;
 
 	pie_MatEnd();
 }
@@ -2596,8 +2597,7 @@ static bool	renderWallSection(STRUCTURE *psStructure)
 		}
 
 		{
-			Vector3i zero(0, 0, 0);
-			Vector2i s(0, 0);
+			Vector3i zero(0, 0, 0), s;
 
 			pie_Project( zero, &s );
 			psStructure->sDisplay.screenX = s.x;
@@ -3480,17 +3480,21 @@ void calcScreenCoords(DROID *psDroid)
 {
 	/* Get it's absolute dimensions */
 	iIMDShape *psBodyImd = BODY_IMD(psDroid, psDroid->player);
-	const Vector3i origin(0, 0, 0);
-	Vector2i center(0, 0);
-	int radius = psBodyImd? psBodyImd->radius : 0;
+	Vector3i center(0,0,0);
+
+	if (!psBodyImd) return;
+
+	int radius = psBodyImd->sradius;
+	Vector3i proj;
 
 	/* get the screen corrdinates */
-	pie_ProjectSphere(origin, radius, &center);
+	pie_ProjectSphere(center, radius, &proj);
 
 	/* Deselect all the droids if we've released the drag box */
 	if(dragBox3D.status == DRAG_RELEASED)
 	{
-		if(inQuad(&center, &dragQuad) && psDroid->player == selectedPlayer)
+		Vector2i screenCoords(proj.r_xy());
+		if(inQuad(&screenCoords, &dragQuad) && psDroid->player == selectedPlayer)
 		{
 			//don't allow Transporter Droids to be selected here
 			//unless we're in multiPlayer mode!!!!
@@ -3501,14 +3505,15 @@ void calcScreenCoords(DROID *psDroid)
 		}
 	}
 
-	/* Store away the screen coordinates so we can select the droids without doing a trasform */
-	psDroid->sDisplay.screenX = center.x;
-	psDroid->sDisplay.screenY = center.y;
+	/* Store away the screen coordinates so we can select the droids without doing a transform */
+	psDroid->sDisplay.screenX = proj.x;
+	psDroid->sDisplay.screenY = proj.y;
 	psDroid->sDisplay.screenR = radius;
 }
 
 /**
  * Find the tile the mouse is currently over
+ * \pre tileScreenInfo data has been updated
  * \todo This is slow - speed it up
  */
 static void locateMouse(void)
@@ -3525,9 +3530,13 @@ static void locateMouse(void)
 	{
 		for (j = -visibleTiles.x/2, jdx=0; j < visibleTiles.x/2; j++,++jdx)
 		{
-			int tileZ = tileScreenInfo[idx][jdx].z;
+			const int tileZ = tileScreenInfo[idx][jdx].z;
+			const bool clipped = tileClippingInfo[idx+0][jdx+0]
+								&& tileClippingInfo[idx+0][jdx+1]
+								&& tileClippingInfo[idx+1][jdx+1]
+								&& tileClippingInfo[idx+1][jdx+0];
 
-			if (tileZ >= 0 && tileZ <= nearestZ)
+			if (tileZ >= 0 && !clipped && tileZ <= nearestZ)
 			{
 				QUAD quad;
 
@@ -3549,27 +3558,37 @@ static void locateMouse(void)
 					/* Store away match */
 					nearestZ = tileZ;
 					match = quad;
-					relativeTile = Vector2i(j,i);
+					relativeTile = Vector2i(j, i);
 				}
 			}
 		}
 	}
-	mouseInQuad = match;
 
-	mousePos = Vector2i(player.p.x, player.p.z) + world_coord(relativeTile) + positionInQuad(pt, match);
+	if (nearestZ == INT_MAX) // If no match is found, atleast ensure good behaviour
+	{
+		memset(mouseInQuad.coords,0,sizeof(mouseInQuad.coords));
+		mousePos = Vector2i(player.p.x, player.p.z);
+	}
+	else
+	{
+		mouseInQuad = match;
 
-	if (mousePos.x < 0)
-	mousePos.x = 0;
-	else if (mousePos.x > world_coord(mapWidth-1))
-	mousePos.x = world_coord(mapWidth-1);
-	if (mousePos.y < 0)
-	mousePos.y = 0;
-	else if (mousePos.y > world_coord(mapHeight-1))
-	mousePos.y = world_coord(mapHeight-1);
+		mousePos = Vector2i(player.p.x, player.p.z) + world_coord(relativeTile) + positionInQuad(pt, match);
+
+		if (mousePos.x < 0)
+			mousePos.x = 0;
+		else if (mousePos.x > world_coord(mapWidth-1))
+			mousePos.x = world_coord(mapWidth-1);
+		if (mousePos.y < 0)
+			mousePos.y = 0;
+		else if (mousePos.y > world_coord(mapHeight-1))
+			mousePos.y = world_coord(mapHeight-1);
+	}
 
 	mouseTileX = map_coord(mousePos.x);
 	mouseTileY = map_coord(mousePos.y);
 }
+
 
 /// Render the sky and surroundings
 static void renderSurroundings(void)
