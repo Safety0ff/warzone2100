@@ -63,10 +63,51 @@ static std::stack<Affine3, stdVectorAffine3> matrixStack;
 #define curMatrix matrixStack.top()
 #define curMatrixAs4x4 Eigen::Transform<MatScalarType,3, Eigen::Affine>(curMatrix).matrix()
 
+typedef Eigen::Vector4d Vector4;
+
 static int viewport[2][2];
 
-static Eigen::Transform<MatScalarType, 3, Eigen::Projective> Proj;
-typedef Eigen::Vector4d Vector4;
+/*
+ * A general perspective transformation
+ * It is stored as the following
+ * sparse 4x4 matrix:
+ * [ a 0  c 0 ]
+ * [ 0 b  d 0 ]
+ * [ 0 0  e f ]
+ * [ 0 0 -1 0 ]
+ */
+class PerspectiveTransform
+{
+	typedef MatScalarType s;
+	s a,b,c,d,e,f;
+public:
+	PerspectiveTransform() {}
+	void setAsglFrustum(s left, s right, s bottom, s top, s nearVal, s farVal)
+	{
+		a = 2*nearVal/(right-left);
+		b = 2*nearVal/(top-bottom);
+		c = (right+left)/(right-left);
+		d = (top+bottom)/(top-bottom);
+		e = -(farVal+nearVal)/(farVal-nearVal);
+		f = -2*farVal*nearVal/(farVal-nearVal);
+	}
+	/*
+	 * This is meant as an optimization
+	 * by not doing the whole 4x4 matrix multiplication
+	 */
+	inline Vector4 operator *(Vector4 const &v)
+	{
+		Vector4 result;
+		result.x() = a * v.x() + c * v.z();
+		result.y() = b * v.y() + d * v.z();
+		result.z() = e * v.z() + f * v.w();
+		result.w() = -v.z();
+		return result;
+	}
+};
+
+static PerspectiveTransform Proj;
+static bool current_is_perspective;
 
 //*************************************************************************
 
@@ -87,6 +128,7 @@ void pie_MatInit(void)
 
 	matrixStack.push(Affine3::Identity());
 	glLoadIdentity();
+	current_is_perspective = false;
 }
 
 void pie_SetViewport(int x, int y, int width, int height)
@@ -275,9 +317,8 @@ void pie_MatRotX(uint16_t x)
  */
 bool pie_Project(Vector3f const &obj, Vector3i *proj)
 {
+	ASSERT(current_is_perspective, "pie_Project called in orthographic projection mode.");
 	// v = Proj * ( ModelView * obj)
-	// I tried computing and caching Proj*Modelview, it wasn't worth it.
-	// optimizing for the sparseness of Proj would be the next step.
 	Vector4 v(Proj*(curMatrix*Vector4(obj.x, obj.y, obj.z, 1)));
 	// v in clip coords.
 
@@ -356,24 +397,10 @@ void pie_SetPerspectiveProj(void)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glFrustum(left, right, bottom, top, 330, 49152);
+	glFrustum(left, right, bottom, top, nearVal, farVal);
+	Proj.setAsglFrustum(left, right, bottom, top, nearVal, farVal);
 	glMatrixMode(GL_MODELVIEW);
-
-	/*
-	 * This is the simplified version of the perspective projection matrix
-	 * left = -right and bottom = -top, i.e. symmetric frustum
-	 * the general form is shown at the bottom.
-	 */
-	Proj.matrix() << nearVal/right, 0, 0, 0,
-			0, nearVal/top, 0, 0,
-			0, 0, -(farVal+nearVal)/(farVal-nearVal), -2*farVal*nearVal/(farVal-nearVal),
-			0, 0, -1, 0;
-#if 0
-	Proj << 2*nearVal/(right-left), 0, (right+left)/(right-left), 0,
-			0, 2*nearVal/(top-bottom), (top+bottom)/(top-bottom), 0,
-			0, 0, -(farVal+nearVal)/(farVal-nearVal), -2*farVal*nearVal/(farVal-nearVal),
-			0, 0, -1, 0;
-#endif
+	current_is_perspective = true;
 }
 
 void pie_SetOrthoProj(bool originAtTheTop)
@@ -390,10 +417,6 @@ void pie_SetOrthoProj(bool originAtTheTop)
 	glLoadIdentity();
 	glOrtho(left, right, bottom, top, nearVal, farVal);
 	glMatrixMode(GL_MODELVIEW);
-	Proj.matrix() << 2/(right-left), 0, 0, -(right+left)/(right-left),
-					0, 2/(top-bottom), 0, -(top+bottom)/(top-bottom),
-					0, 0, -2/(farVal-nearVal), -(farVal+nearVal)/(farVal-nearVal),
-					0, 0, 0, 1;
 }
 
 void pie_GetModelViewMatrix(float * const mat)
