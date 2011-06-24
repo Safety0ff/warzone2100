@@ -47,6 +47,8 @@ static SHADER_MODE currentShaderMode = SHADER_NONE;
 unsigned int pieStateCount = 0; // Used in pie_GetResetCounts
 static RENDER_STATE rendStates;
 
+bool drawing_interface = true;
+
 void rendStatesRendModeHack()
 {
 	rendStates.rendMode = REND_ALPHA;
@@ -561,6 +563,19 @@ void pie_SetMouse(CURSOR cursor)
 	MouseCursor = cursor;
 
 	frameSetCursor(MouseCursor);
+}
+
+
+void pie_Begin3DScene(void)
+{
+	glDepthRange(0.1, 1);
+	drawing_interface = false;
+}
+
+void pie_BeginInterface(void)
+{
+	glDepthRange(0, 0.1);
+	drawing_interface = true;
 }
 
 bool _glerrors(const char *function, const char *file, int line)

@@ -48,8 +48,6 @@
 #define TRIANGLES_PER_TILE 2
 #define VERTICES_PER_TILE (TRIANGLES_PER_TILE * VERTICES_PER_TRIANGLE)
 
-extern bool drawing_interface;
-
 /*
  *	Local Variables
  */

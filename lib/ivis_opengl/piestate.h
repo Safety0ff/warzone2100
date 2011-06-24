@@ -59,6 +59,7 @@ void rendStatesRendModeHack();  // Sets rendStates.rendMode = REND_ALPHA; (Added
 /***************************************************************************/
 
 extern unsigned int pieStateCount;
+extern bool drawing_interface;
 
 /***************************************************************************/
 /*
@@ -92,6 +93,9 @@ bool pie_LoadShaders(void);
 void pie_DeactivateShader(void);
 void pie_ActivateShader(SHADER_MODE shaderMode, PIELIGHT teamcolour, int maskpage, int normalpage);
 void pie_SetShaderStretchDepth(float stretch);
+
+extern void pie_Begin3DScene(void);
+extern void pie_BeginInterface(void);
 
 /* Errors control routine */
 #define glErrors() \
