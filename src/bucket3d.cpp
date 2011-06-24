@@ -103,21 +103,15 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			position = swapYZ(psSimpObj->pos);
 			position.l_xz() -= player.p.r_xz();
 
-			//if((objectType == RENDER_STRUCTURE) && (((STRUCTURE*)pObject)->
-			//	pStructureType->type >= REF_DEFENSE) &&
-			//	(((STRUCTURE*)pObject)->pStructureType->type<=REF_TOWER4))
 			if((objectType == RENDER_STRUCTURE) &&
 				((((STRUCTURE*)pObject)->pStructureType->type == REF_DEFENSE) ||
 				 (((STRUCTURE*)pObject)->pStructureType->type == REF_WALL) ||
 				 (((STRUCTURE*)pObject)->pStructureType->type == REF_WALLCORNER)))
 			{
-				position.y += 64;
-				radius = ((STRUCTURE*)pObject)->sDisplay.imd->radius;//walls guntowers and tank traps clip tightly
+				//walls guntowers and tank traps clip tightly
+				position.y += ((STRUCTURE*)pObject)->sDisplay.imd->max.y;
 			}
-			else
-			{
-				radius = (((STRUCTURE*)pObject)->sDisplay.imd->radius);
-			}
+			radius = (((STRUCTURE*)pObject)->sDisplay.imd->radius);
 
 			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
