@@ -64,7 +64,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 	COMPONENT_OBJECT	*psCompObj;
 	const iIMDShape		*pImd;
 	Spacetime			spacetime;
-	bool 				clipped = true;
+	bool 				clipped = false;
 
 	switch(objectType)
 	{
@@ -81,7 +81,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
                 ((PROJECTILE*)pObject)->psWStats->weaponSubClass == WSC_COMMAND ||
                 ((PROJECTILE*)pObject)->psWStats->weaponSubClass == WSC_EMP)
 			{
-				/* We don't do projectiles from these guys, cos there's an effect instead */
+				/* HACK: We don't do projectiles from these guys, cos there's an effect instead */
 				clipped = true;
 			}
 			else
@@ -98,7 +98,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 				clipped = pie_ProjectSphere(position, radius, &pixel);
 			}
 			break;
-		case RENDER_STRUCTURE://not depth sorted
+		case RENDER_STRUCTURE: // Pre-clipped/only clipped if behind cam.
 			psSimpObj = (SIMPLE_OBJECT*) pObject;
 
 			position = swapYZ(psSimpObj->pos);
@@ -114,18 +114,18 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			}
 			radius = (((STRUCTURE*)pObject)->sDisplay.imd->radius);
 
-			clipped = pie_ProjectSphere(position, radius, &pixel);
+			pie_ProjectSphere(position, radius, &pixel);
 			break;
-		case RENDER_FEATURE://not depth sorted
+		case RENDER_FEATURE: // Pre-clipped/only clipped if behind cam.
 			psSimpObj = (SIMPLE_OBJECT*) pObject;
 
 			position = swapYZ(psSimpObj->pos);
 			position.l_xz() -= player.p.r_xz();
 
 			radius = ((FEATURE*)pObject)->sDisplay.imd->radius;
-			clipped = pie_ProjectSphere(position, radius, &pixel);
+			pie_ProjectSphere(position, radius, &pixel);
 			break;
-		case RENDER_ANIMATION://not depth sorted
+		case RENDER_ANIMATION: // Pre-clipped/only clipped if behind cam.
 		{
 			psCompObj = (COMPONENT_OBJECT *) pObject;
 			spacetime = interpolateObjectSpacetime((SIMPLE_OBJECT *)psCompObj->psParent, graphicsTime);
@@ -155,11 +155,11 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 //			af.RotZ(-psCompObj->orientation.y);
 //			af.RotX(psCompObj->orientation.x);
 
-			clipped = pie_Project(af.translation() ,&pixel);
+			pie_Project(af.translation() ,&pixel);
 
 			break;
 		}
-		case RENDER_DROID:
+		case RENDER_DROID: // Pre-clipped/only clipped if behind cam.
 		case RENDER_SHADOW:
 			psDroid = (DROID*) pObject;
 
@@ -175,7 +175,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 			psBStats = asBodyStats + psDroid->asBits[COMP_BODY].nStat;
 			radius = psBStats->pIMD->radius;
-			clipped = pie_ProjectSphere(position, radius, &pixel);
+			pie_ProjectSphere(position, radius, &pixel);
 			break;
 		case RENDER_PROXMSG:
 			if (((PROXIMITY_DISPLAY *)pObject)->type == POS_PROXDATA)
@@ -246,46 +246,22 @@ void bucketAddTypeToList(RENDER_TYPE objectType, void* pObject)
 		case RENDER_EFFECT:
 			switch(((EFFECT*)pObject)->group)
 			{
-				case EFFECT_EXPLOSION:
-				case EFFECT_CONSTRUCTION:
-				case EFFECT_SMOKE:
-				case EFFECT_FIREWORK:
-					// Use calculated Z
-					break;
-
 				case EFFECT_WAYPOINT:
 					pie = ((EFFECT*)pObject)->imd;
 					z = INT32_MAX - pie->texpage;
 					break;
-
 				default:
-					z = INT32_MAX - 42;
+					// Use calculated Z
 					break;
 			}
 			break;
-		case RENDER_DROID:
-			pie = BODY_IMD(((DROID*)pObject),0);
-			z = INT32_MAX - pie->texpage;
-			break;
-		case RENDER_STRUCTURE:
-			pie = ((STRUCTURE*)pObject)->sDisplay.imd;
-			z = INT32_MAX - pie->texpage;
-			break;
-		case RENDER_FEATURE:
-			pie = ((FEATURE*)pObject)->sDisplay.imd;
-			z = INT32_MAX - pie->texpage;
-			break;
-		case RENDER_ANIMATION:
-			pie = ((COMPONENT_OBJECT*)pObject)->psShape;
-			z = INT32_MAX - pie->texpage;
-			break;
+		/* Nothing but terrain will render behind
+		 * these anyways.
+		 */
 		case RENDER_DELIVPOINT:
 			pie = pAssemblyPointIMDs[((FLAG_POSITION*)pObject)->
 			factoryType][((FLAG_POSITION*)pObject)->factoryInc];
 			z = INT32_MAX - pie->texpage;
-			break;
-		case RENDER_PARTICLE:
-			z = 0;
 			break;
 		default:
 			// Use calculated Z
