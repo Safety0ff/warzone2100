@@ -94,8 +94,9 @@ public:
 	/*
 	 * This is meant as an optimization
 	 * by not doing the whole 4x4 matrix multiplication
+	 * for projecting a vector
 	 */
-	inline Vector4 operator *(Vector4 const &v)
+	inline Vector4 operator *(Vector4 const &v) const
 	{
 		Vector4 result;
 		result.x() = a * v.x() + c * v.z();
@@ -104,10 +105,21 @@ public:
 		result.w() = -v.z();
 		return result;
 	}
+	inline Vector4 operator *(Vector3 const &v) const
+	{
+		Vector4 result;
+		result.x() = a * v.x() + c * v.z();
+		result.y() = b * v.y() + d * v.z();
+		result.z() = e * v.z() + f;
+		result.w() = -v.z();
+		return result;
+	}
 };
 
 static PerspectiveTransform Proj;
+#ifndef NDEBUG
 static bool current_is_perspective;
+#endif
 
 //*************************************************************************
 
@@ -128,7 +140,9 @@ void pie_MatInit(void)
 
 	matrixStack.push(Affine3::Identity());
 	glLoadIdentity();
+#ifndef NDEBUG
 	current_is_perspective = false;
+#endif
 }
 
 void pie_SetViewport(int x, int y, int width, int height)
@@ -317,7 +331,9 @@ void pie_MatRotX(uint16_t x)
  */
 bool pie_Project(Vector3f const &obj, Vector3i *proj)
 {
-	ASSERT(current_is_perspective, "pie_Project called in orthographic projection mode.");
+#ifndef NDEBUG
+	ASSERT(current_is_perspective, "called in orthographic projection mode.");
+#endif
 	// v = Proj * ( ModelView * obj)
 	Vector4 v(Proj*(curMatrix*Vector4(obj.x, obj.y, obj.z, 1)));
 	// v in clip coords.
@@ -361,11 +377,38 @@ bool pie_Project(Vector3f const &obj, Vector3i *proj)
 	return clipped;
 }
 
+bool pie_Project(Vector3i *proj)
+{
+	// See other pie_Project for comments.
+#ifndef NDEBUG
+	ASSERT(current_is_perspective, "called in orthographic projection mode.");
+#endif
+	Vector4 v(Proj*Vector3(curMatrix.translation())); // Vector3 construction is a workaround...
+	if (std::abs(v.w()) <= 0.000001) // At infinity (magic number = made up epsilon)
+	{
+		*proj = Vector3i(-1,-1,-1);
+		return true;
+	}
+	v *= 1/v.w();
+	bool clipped = std::abs(v.x()) > 1 || std::abs(v.y()) > 1 || std::abs(v.z()) > 1;
+	v.x() = v.x() * 0.5 + 0.5;
+	v.y() = 0.5 - v.y() * 0.5;
+	v.z() = v.z() * 0.5 + 0.5;
+	proj->x = v.x() * viewport[0][1] + viewport[0][0];
+	proj->y = v.y() * viewport[1][1] + viewport[1][0];
+	proj->z = v.z() * MAX_Z;
+	return clipped;
+}
+
 bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3i *proj)
 {
 	Vector3f ptOnSphere = obj;
 	Vector3i ptOnSphereProj;
 	bool clipped;
+
+#ifndef NDEBUG
+	ASSERT(current_is_perspective, "called in orthographic projection mode.");
+#endif
 
 	ptOnSphere.y += radius;
 	clipped = pie_Project(ptOnSphere, proj);
@@ -375,6 +418,28 @@ bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3i *proj)
 		 * this can be changed later to be something more meaningful (such as the min or max radius)
 		 */
 		pie_Project(obj, &ptOnSphereProj);
+		radius = iHypot(ptOnSphereProj.r_xy() - proj->r_xy());
+	}
+	else
+	{
+		radius = 0;
+	}
+	return clipped;
+}
+bool pie_ProjectSphere(int32_t &radius, Vector3i *proj)
+{
+	// See other pie_ProjectSphere for comments.
+	Vector3f ptOnSphere(0,radius,0);
+	Vector3i ptOnSphereProj;
+	bool clipped;
+#ifndef NDEBUG
+	ASSERT(current_is_perspective, "called in orthographic projection mode.");
+#endif
+
+	clipped = pie_Project(proj);
+	if (!clipped)
+	{
+		pie_Project(ptOnSphere, &ptOnSphereProj);
 		radius = iHypot(ptOnSphereProj.r_xy() - proj->r_xy());
 	}
 	else
@@ -400,7 +465,9 @@ void pie_SetPerspectiveProj(void)
 	glFrustum(left, right, bottom, top, nearVal, farVal);
 	Proj.setAsglFrustum(left, right, bottom, top, nearVal, farVal);
 	glMatrixMode(GL_MODELVIEW);
+#ifndef NDEBUG
 	current_is_perspective = true;
+#endif
 }
 
 void pie_SetOrthoProj(bool originAtTheTop)
@@ -409,7 +476,7 @@ void pie_SetOrthoProj(bool originAtTheTop)
 	const double right = pie_GetVideoBufferWidth();
 	const double bottom = originAtTheTop ? pie_GetVideoBufferHeight() : 0.0;
 	const double top = originAtTheTop ? 0.0 : pie_GetVideoBufferHeight();
-	// Magic numbers is a guess for the upper bound of the depth of an object rendered at the origin
+	// FIXME: Magic numbers is a guess for the upper bound of the depth of an object rendered at the origin
 	// in this mode. i.e. +-world_coord(3), 3 because of base width of the big buildings
 	const float nearVal = -128*(3);
 	const float farVal = 128*(3);
@@ -417,6 +484,9 @@ void pie_SetOrthoProj(bool originAtTheTop)
 	glLoadIdentity();
 	glOrtho(left, right, bottom, top, nearVal, farVal);
 	glMatrixMode(GL_MODELVIEW);
+#ifndef NDEBUG
+	current_is_perspective = false;
+#endif
 }
 
 void pie_GetModelViewMatrix(float * const mat)
