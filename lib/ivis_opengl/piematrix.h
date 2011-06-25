@@ -74,6 +74,7 @@ extern void pie_MatIdentity(void);
 // The y coordinate of the screen position is given in terms of a top left origin
 
 extern bool pie_Project(Vector3f const &obj, Vector3i *proj);
+extern bool pie_Project(Vector3i *proj); // Overload optimized for projecting the origin
 
 /** An approximation for the perspective projection of a sphere onto the screen
  * This approximates the ellipse that would result to a circle.
@@ -81,6 +82,7 @@ extern bool pie_Project(Vector3f const &obj, Vector3i *proj);
  * Radius is a input and output parameter.
  */
 extern bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3i *proj);
+extern bool pie_ProjectSphere(int32_t &radius, Vector3i *proj); // Overload optimized for projecting the origin
 
 //*************************************************************************
 // Projection matrix functions
