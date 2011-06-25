@@ -1419,8 +1419,7 @@ void displayStaticObjects( void )
 				if (psStructure->visible[selectedPlayer] || demoGetStatus())
 				{
 					if ( psStructure->pStructureType->type == REF_RESOURCE_EXTRACTOR &&
-						psStructure->psCurAnim == NULL &&
-						(psStructure->currentBuildPts > (SDWORD)psStructure->pStructureType->buildPoints) )
+						psStructure->psCurAnim == NULL && psStructure->status == SS_BUILT )
 					{
 						psStructure->psCurAnim = animObj_Add( psStructure, ID_ANIM_DERIK, 0, 0 );
 					}
@@ -1435,8 +1434,7 @@ void displayStaticObjects( void )
 					else
 					{
 						//check not a resource extractors
-						if (psStructure->pStructureType->type !=
-							REF_RESOURCE_EXTRACTOR)
+						if (psStructure->pStructureType->type != REF_RESOURCE_EXTRACTOR)
 						{
 							displayAnimation( psAnimObj, false );
 						}
