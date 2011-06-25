@@ -1400,7 +1400,6 @@ void displayStaticObjects( void )
 {
 	STRUCTURE	*psStructure;
 	UDWORD		clan;
-	UDWORD		test = 0;
 	ANIM_OBJECT	*psAnimObj;
 
 	// to solve the flickering edges of baseplates
@@ -1413,7 +1412,6 @@ void displayStaticObjects( void )
 		for(psStructure = apsStructLists[clan]; psStructure != NULL;
 			psStructure = psStructure->psNext)
 		{
-			test++;
 			/* Worth rendering the structure? */
 			if(clipXY(psStructure->pos.x,psStructure->pos.y))
 			{
