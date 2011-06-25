@@ -35,12 +35,14 @@ enum RENDER_TYPE
 	RENDER_PARTICLE
 };
 
-//function prototypes
-
-/* add an object to the current render list */
+/** Add an object to the list.
+ * Note: Droids, shadows, structures and
+ * features which are not in the view frustum
+ * should be culled before hand.
+ */
 void bucketAddTypeToList(RENDER_TYPE objectType, void *object);
 
-/* render Objects in list */
+/// Render Objects in list in reverse Z order
 void bucketRenderCurrentList(void);
 
 #endif // __INCLUDED_SRC_BUCKET3D_H__
