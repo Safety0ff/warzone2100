@@ -75,6 +75,7 @@ static int viewport[2][2];
  * [ 0 b  d 0 ]
  * [ 0 0  e f ]
  * [ 0 0 -1 0 ]
+ * Note: c and d are unnecessary for symmetric frusta
  */
 class PerspectiveTransform
 {
