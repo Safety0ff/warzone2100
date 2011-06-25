@@ -1132,11 +1132,8 @@ bool clipXY(SDWORD x, SDWORD y)
  */
 static void calcFlagPosScreenCoords(Vector3i * const screenPos, int32_t &radius)
 {
-	/* Get it's absolute dimensions */
-	Vector3i center3d(0, 0, 0);
-
-	/* Get the screen coordinates for last point*/
-	pie_ProjectSphere(center3d, radius, screenPos);
+	/* Get the screen coordinates for current origin*/
+	pie_ProjectSphere(radius, screenPos);
 }
 
 /// Decide whether to render a projectile, and make sure it will be drawn
@@ -1327,13 +1324,12 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 		//brightness and fog calculation
 		if (psParentObj->type == OBJ_STRUCTURE)
 		{
-			const Vector3i zero(0, 0, 0);
 			Vector3i s;
 			STRUCTURE *psStructure = (STRUCTURE*)psParentObj;
 
 			brightness = structureBrightness(psStructure);
 
-			pie_Project(zero, &s);
+			pie_Project(&s);
 			psStructure->sDisplay.screenX = s.x;
 			psStructure->sDisplay.screenY = s.y;
 		}
@@ -1908,8 +1904,8 @@ void	renderFeature(FEATURE *psFeature)
 
 	pie_Draw3DShape(psFeature->sDisplay.imd, 0, 0, brightness, shadowFlags, 0);
 
-	Vector3i zero(0, 0, 0), s;
-	pie_Project(zero, &s);
+	Vector3i s;
+	pie_Project(&s);
 	psFeature->sDisplay.screenX = s.x;
 	psFeature->sDisplay.screenY = s.y;
 
@@ -2390,9 +2386,9 @@ void	renderStructure(STRUCTURE *psStructure)
 		}
 	}
 
-	Vector3i zero(0, 0, 0), s;
+	Vector3i s;
 
-	pie_Project(zero, &s);
+	pie_Project(&s);
 	psStructure->sDisplay.screenX = s.x;
 	psStructure->sDisplay.screenY = s.y;
 
@@ -2583,9 +2579,9 @@ static bool	renderWallSection(STRUCTURE *psStructure)
 		imd->points = temp;
 
 		{
-			Vector3i zero(0, 0, 0), s;
+			Vector3i s;
 
-			pie_Project( zero, &s );
+			pie_Project(&s);
 			psStructure->sDisplay.screenX = s.x;
 			psStructure->sDisplay.screenY = s.y;
 		}
@@ -3460,7 +3456,6 @@ void calcScreenCoords(DROID *psDroid)
 {
 	/* Get it's absolute dimensions */
 	iIMDShape *psBodyImd = BODY_IMD(psDroid, psDroid->player);
-	Vector3i center(0,0,0);
 
 	if (!psBodyImd) return;
 
@@ -3468,7 +3463,7 @@ void calcScreenCoords(DROID *psDroid)
 	Vector3i proj;
 
 	/* get the screen corrdinates */
-	pie_ProjectSphere(center, radius, &proj);
+	pie_ProjectSphere(radius, &proj);
 
 	/* Deselect all the droids if we've released the drag box */
 	if(dragBox3D.status == DRAG_RELEASED)
