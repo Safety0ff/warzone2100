@@ -24,6 +24,7 @@
  */
 
 #include "lib/framework/frame.h"
+#include "lib/framework/geometry.h"
 #include "lib/ivis_opengl/piematrix.h"
 
 #include "atmos.h"
@@ -125,33 +126,39 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
 		case RENDER_ANIMATION://not depth sorted
+		{
 			psCompObj = (COMPONENT_OBJECT *) pObject;
 			spacetime = interpolateObjectSpacetime((SIMPLE_OBJECT *)psCompObj->psParent, graphicsTime);
 
-			pie_MatBegin();
+			/* Note: We're using this instead of piematrix
+			 * because we don't need to change the opengl state.
+			 * This can be changed when piematrix transformations
+			 * don't also change the opengl state.
+			 */
+			Affine3F af;
 
 			position = swapYZ(spacetime.pos);
 			position.l_xz() -= player.p.r_xz();
-			pie_TRANSLATE(position.x, position.y, position.z);
+
+			af.Trans(position.x, position.y, position.z);
 
 			/* parent object rotations */
-			pie_MatRotY(spacetime.rot.direction);
-			pie_MatRotX(spacetime.rot.pitch);
+			af.RotY(spacetime.rot.direction);
+			af.RotX(spacetime.rot.pitch);
 
 			/* object (animation) translations - ivis z and y flipped */
-			pie_TRANSLATE( psCompObj->position.x, psCompObj->position.z,
+			af.Trans( psCompObj->position.x, psCompObj->position.z,
 							-psCompObj->position.y );
 
-			/* object (animation) rotations */
-			pie_MatRotY(psCompObj->orientation.z);
-			pie_MatRotZ(-psCompObj->orientation.y);
-			pie_MatRotX(psCompObj->orientation.x);
+			/* object (animation) rotations (these are noops for our purposes)*/
+//			af.RotY(psCompObj->orientation.z);
+//			af.RotZ(-psCompObj->orientation.y);
+//			af.RotX(psCompObj->orientation.x);
 
-			clipped = pie_Project(Vector3f(0,0,0) ,&pixel);
-
-			pie_MatEnd();
+			clipped = pie_Project(af.translation() ,&pixel);
 
 			break;
+		}
 		case RENDER_DROID:
 		case RENDER_SHADOW:
 			psDroid = (DROID*) pObject;
