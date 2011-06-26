@@ -1761,7 +1761,7 @@ static void displayAnimation( ANIM_OBJECT * psAnimObj, bool bHoldOnFirstFrame )
 			psComp->orientation.y = vecRot.y;
 			psComp->orientation.z = vecRot.z;
 
-			bucketAddTypeToList( RENDER_ANIMATION, psComp );
+			renderAnimComponent(psComp);
 		}
 	}
 }
