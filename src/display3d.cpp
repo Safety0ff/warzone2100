@@ -1300,13 +1300,6 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 
 	ASSERT( psParentObj != NULL, "renderAnimComponent: invalid parent object pointer" );
 
-	/* only draw visible bits */
-	if( (psParentObj->type == OBJ_DROID) && !demoGetStatus() &&
-		((DROID*)psParentObj)->visible[selectedPlayer] != UBYTE_MAX )
-	{
-		return;
-	}
-
 	/* render */
 	if( clipXY( posX, posY ) )
 	{

@@ -36,9 +36,9 @@ enum RENDER_TYPE
 };
 
 /** Add an object to the list.
- * Note: Droids, shadows, structures and
- * features which are not in the view frustum
- * should be culled before hand.
+ * Note: Droids, shadows, structures,
+ * animations and features which are not
+ * in the view frustum should be culled before hand.
  */
 void bucketAddTypeToList(RENDER_TYPE objectType, void *object);
 
