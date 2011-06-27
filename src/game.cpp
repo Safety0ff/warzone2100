@@ -4845,30 +4845,6 @@ static bool loadSaveStructure2(const char *pFileName, STRUCTURE **ppList)
 		}
 		psStructure->body = healthValue(ini, structureBody(psStructure));
 		psStructure->currentBuildPts = ini.value("currentBuildPts", psStructure->pStructureType->buildPoints).toInt();
-		if (psStructure->status == SS_BUILT)
-		{
-			switch (psStructure->pStructureType->type)
-			{
-			case REF_POWER_GEN:
-				checkForResExtractors(psStructure);
-				if(selectedPlayer == psStructure->player)
-				{
-					audio_PlayObjStaticTrack(psStructure, ID_SOUND_POWER_HUM);
-				}
-				break;
-			case REF_RESOURCE_EXTRACTOR:
-				checkForPowerGen(psStructure);
-				/* GJ HACK! - add anim to deriks */
-				if (psStructure->psCurAnim == NULL)
-				{
-					psStructure->psCurAnim = animObj_Add(psStructure, ID_ANIM_DERIK, 0, 0);
-				}
-				break;
-			default:
-				//do nothing for factories etc
-				break;
-			}
-		}
 		// weapons
 		for (int j = 0; j < psStructure->pStructureType->numWeaps; j++)
 		{

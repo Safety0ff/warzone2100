@@ -164,7 +164,6 @@ static		UBYTE	lasSatExists[MAX_PLAYERS];
 
 static bool setFunctionality(STRUCTURE* psBuilding, STRUCTURE_TYPE functionType);
 static void setFlagPositionInc(FUNCTIONALITY* pFunctionality, UDWORD player, UBYTE factoryType);
-static void informPowerGen(STRUCTURE *psStruct);
 static bool electronicReward(STRUCTURE *psStructure, UBYTE attackPlayer);
 static void factoryReward(UBYTE losingPlayer, UBYTE rewardPlayer);
 static void repairFacilityReward(UBYTE losingPlayer, UBYTE rewardPlayer);
@@ -5364,6 +5363,52 @@ bool calcStructureMuzzleLocation(STRUCTURE *psStructure, Vector3i *muzzle, int w
 	return true;
 }
 
+static inline int countPGenExtractors(POWER_GEN *psPowerGen)
+{
+	int slot = 0, i;
+	for (i=0; i < NUM_POWER_MODULES; i++)
+	{
+		if (psPowerGen->apResExtractors[i] != NULL)
+		{
+			slot++;
+		}
+	}
+	return slot;
+}
+
+static inline void makeExtractorActive(STRUCTURE *psRes, STRUCTURE *psPowerGen)
+{
+	RES_EXTRACTOR *psResFunc = &psRes->pFunctionality->resourceExtractor;
+	//set the owning power gen up for the resource extractor
+	psResFunc->psPowerGen = psPowerGen;
+	//set the res Extr to active
+	psResFunc->active = true;
+}
+
+static inline void makeExtractorInactive(STRUCTURE *psRes)
+{
+	RES_EXTRACTOR *psResFunc = &psRes->pFunctionality->resourceExtractor;
+	psResFunc->psPowerGen = NULL;
+	psResFunc->active = false;
+}
+
+static inline void assignExtractorToPGen(STRUCTURE *psRes, STRUCTURE *psPowerGen)
+{
+	POWER_GEN *psPGenFunc = &psPowerGen->pFunctionality->powerGenerator;
+	int i;
+	//assign the extractor to the power generator - use first vacant slot
+	for (i = 0; i < NUM_POWER_MODULES; i++)
+	{
+		if (psPGenFunc->apResExtractors[i] == NULL)
+		{
+			psPGenFunc->apResExtractors[i] = psRes;
+			break;
+		}
+	}
+	makeExtractorActive(psRes, psPowerGen);
+}
+
+
 
 /*Looks through the list of structures to see if there are any inactive
 resource extractors*/
@@ -5372,7 +5417,6 @@ void checkForResExtractors(STRUCTURE *psBuilding)
 	STRUCTURE		*psCurr;
 	POWER_GEN		*psPowerGen;
 	RES_EXTRACTOR	*psResExtractor;
-	UDWORD			i;
 	SDWORD			slot;
 
 	if (psBuilding->pStructureType->type != REF_POWER_GEN)
@@ -5382,17 +5426,7 @@ void checkForResExtractors(STRUCTURE *psBuilding)
 	}
 	psPowerGen = &psBuilding->pFunctionality->powerGenerator;
 	//count the number of allocated slots
-	slot = 0;//-1;
-	for (i=0; i < NUM_POWER_MODULES; i++)
-	{
-		if (psPowerGen->apResExtractors[i] != NULL)
-		{
-			slot++;
-			//make sure the derrrick is active if any oil left
-			psResExtractor = &psPowerGen->apResExtractors[i]->pFunctionality->resourceExtractor;
-			psResExtractor->active = true;
-		}
-	}
+	slot = countPGenExtractors(psPowerGen);
 
 	psResExtractor = NULL;
 	//each Power Gen can cope with 4 Extractors now - 9/6/98 AB
@@ -5401,34 +5435,22 @@ void checkForResExtractors(STRUCTURE *psBuilding)
 	{
 		for (psCurr = apsExtractorLists[psBuilding->player]; psCurr != NULL; psCurr = psCurr->psNextFunc)
 		{
-				psResExtractor = &psCurr->pFunctionality->resourceExtractor;
+			psResExtractor = &psCurr->pFunctionality->resourceExtractor;
 
-				//check not connected and power left and built!
-				if (!psResExtractor->active
-				 && psCurr->status == SS_BUILT)
+			//check not connected and power left and built!
+			if (!psResExtractor->active
+				&& psCurr->status == SS_BUILT)
+			{
+				assignExtractorToPGen(psCurr, psBuilding);
+				slot++;
+				//each Power Gen can cope with 4 Extractors now - 9/6/98 AB
+				//check to see if any more vacant slots
+				if (slot >= NUM_POWER_MODULES)
 				{
-					//assign the extractor to the power generator - use first vacant slot
-					for (i = 0; i < NUM_POWER_MODULES; i++)
-					{
-						if (psPowerGen->apResExtractors[i] == NULL)
-						{
-							psPowerGen->apResExtractors[i] = psCurr;
-							break;
-						}
-					}
-					//set the owning power gen up for the resource extractor
-					psResExtractor->psPowerGen = psBuilding;
-					//set the res Extr to active
-					psResExtractor->active = true;
-					slot++;
-					//each Power Gen can cope with 4 Extractors now - 9/6/98 AB
-					//check to see if any more vacant slots
-					if (slot >= NUM_POWER_MODULES)
-					{
-						//full up so quit out
-						break;
-					}
+					//full up so quit out
+					break;
 				}
+			}
 		}
 	}
 }
@@ -5439,7 +5461,6 @@ with available slots for the new Res Ext*/
 void checkForPowerGen(STRUCTURE *psBuilding)
 {
 	STRUCTURE		*psCurr;
-	UDWORD			i;
 	SDWORD			slot;
 	POWER_GEN		*psPG;
 	RES_EXTRACTOR	*psRE;
@@ -5463,70 +5484,25 @@ void checkForPowerGen(STRUCTURE *psBuilding)
 		{
 			psPG = &psCurr->pFunctionality->powerGenerator;
 			//check capacity against number of filled slots
-			slot = 0;//-1;
-			for (i=0; i < NUM_POWER_MODULES; i++)
-			{
-				if (psPG->apResExtractors[i] != NULL)
-				{
-					slot++;
-				}
-			}
-			//each Power Gen can cope with 4 Extractors now - 9/6/98 AB
-			//each Power Gen can cope with 4 extractors
+			slot = countPGenExtractors(psPG);
+			//each Power Gen can cope with NUM_POWER_MODULES extractors
 			if (slot < NUM_POWER_MODULES )
 			{
-				//find the first vacant slot
-				for (i=0; i < NUM_POWER_MODULES; i++)
-				{
-					if (psPG->apResExtractors[i] == NULL)
-					{
-						psPG->apResExtractors[i] = psBuilding;
-						psRE->psPowerGen = psCurr;
-						psRE->active = true;
-						return;
-					}
-				}
+				assignExtractorToPGen(psBuilding, psCurr);
+				return;
 			}
 		}
 	}
 }
-
-
-/*initialise the slot the Resource Extractor filled in the owning Power Gen*/
-void informPowerGen(STRUCTURE *psStruct)
-{
-	UDWORD		i;
-	POWER_GEN	*psPowerGen;
-
-	if (psStruct->pStructureType->type != REF_RESOURCE_EXTRACTOR)
-	{
-		ASSERT(!"invalid structure type", "invalid structure type");
-		return;
-	}
-
-	//get the owning power generator
-	psPowerGen = &psStruct->pFunctionality->resourceExtractor.psPowerGen->pFunctionality->powerGenerator;
-	if (psPowerGen)
-	{
-		for (i=0; i < NUM_POWER_MODULES; i++)
-		{
-			if (psPowerGen->apResExtractors[i] == psStruct)
-			{
-				//initialise the 'slot'
-				psPowerGen->apResExtractors[i] = NULL;
-				break;
-			}
-		}
-	}
-}
-
 
 /*called when a Res extractor is destroyed or runs out of power or is disconnected
 adjusts the owning Power Gen so that it can link to a different Res Extractor if one
 is available*/
 void releaseResExtractor(STRUCTURE *psRelease)
 {
-	STRUCTURE	*psCurr;
+	STRUCTURE *psPowerGen = psRelease->pFunctionality->resourceExtractor.psPowerGen;
+	POWER_GEN	*psPowerGenFunc;
+	int i;
 
 	if (psRelease->pStructureType->type != REF_RESOURCE_EXTRACTOR)
 	{
@@ -5535,22 +5511,26 @@ void releaseResExtractor(STRUCTURE *psRelease)
 	}
 
 	//tell associated Power Gen
-	if (psRelease->pFunctionality->resourceExtractor.psPowerGen)
+	if (psPowerGen)
 	{
-		informPowerGen(psRelease);
-	}
-
-	psRelease->pFunctionality->resourceExtractor.psPowerGen = NULL;
-
-	//there may be spare resource extractors
-	for (psCurr = apsExtractorLists[psRelease->player]; psCurr != NULL; psCurr = psCurr->psNextFunc)
-	{
-		//check not connected and power left and built!
-		if (psCurr != psRelease && !psCurr->pFunctionality->resourceExtractor.active && psCurr->status == SS_BUILT)
+		psPowerGenFunc = &psPowerGen->pFunctionality->powerGenerator;
+		if (psPowerGenFunc)
 		{
-			checkForPowerGen(psCurr);
+			for (i=0; i < NUM_POWER_MODULES; i++)
+			{
+				if (psPowerGenFunc->apResExtractors[i] == psRelease)
+				{
+					psPowerGenFunc->apResExtractors[i] = NULL;
+					break;
+				}
+			}
+
+			// HACK: make sure it doesn't find this extractor in the following call
+			psRelease->pFunctionality->resourceExtractor.active = true;
+			checkForResExtractors(psPowerGen);
 		}
 	}
+	makeExtractorInactive(psRelease);
 }
 
 
@@ -5575,8 +5555,7 @@ void releasePowerGen(STRUCTURE *psRelease)
 	{
 		if (psPowerGen->apResExtractors[i])
 		{
-			psPowerGen->apResExtractors[i]->pFunctionality->resourceExtractor.active = false;
-			psPowerGen->apResExtractors[i]->pFunctionality->resourceExtractor.psPowerGen = NULL;
+			makeExtractorInactive(psPowerGen->apResExtractors[i]);
 			psPowerGen->apResExtractors[i] = NULL;
 		}
 	}
