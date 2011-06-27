@@ -5359,29 +5359,6 @@ bool loadSaveStructureV(char *pFileData, UDWORD filesize, UDWORD numStructures, 
 		else
 		{
 			psStructure->status = SS_BUILT;
-			switch (psStructure->pStructureType->type)
-			{
-				case REF_POWER_GEN:
-					checkForResExtractors(psStructure);
-					if(selectedPlayer == psStructure->player)
-					{
-						audio_PlayObjStaticTrack(psStructure, ID_SOUND_POWER_HUM);
-					}
-					break;
-				case REF_RESOURCE_EXTRACTOR:
-    					checkForPowerGen(psStructure);
-	    				/* GJ HACK! - add anim to deriks */
-		    			if (psStructure->psCurAnim == NULL)
-			    		{
-				    		psStructure->psCurAnim = animObj_Add(psStructure, ID_ANIM_DERIK, 0, 0);
-					    }
-					break;
-				case REF_RESEARCH:
-					break;
-				default:
-					//do nothing for factories etc
-					break;
-			}
 		}
 	}
 
