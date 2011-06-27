@@ -1310,6 +1310,7 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 			pieFlag |= pie_ECM;
 		}
 
+		/* Set frame numbers - look into this later?? FIXME!!!!!!!! */
 		psParentObj->sDisplay.frameNumber = currentGameFrame;
 
 		/* Push the current matrix */
@@ -1322,7 +1323,6 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 		pie_MatRotY(spacetime.rot.direction);
 		pie_MatRotX(spacetime.rot.pitch);
 
-		/* Set frame numbers - look into this later?? FIXME!!!!!!!! */
 		if( psParentObj->type == OBJ_DROID )
 		{
 			DROID *psDroid = (DROID*)psParentObj;
@@ -1335,9 +1335,6 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 			{
 				iPlayer = getPlayerColour(psParentObj->player);
 			}
-
-			/* Get the onscreen coordinates so we can draw a bounding box */
-			calcScreenCoords( psDroid );
 		}
 		else
 		{
@@ -1347,14 +1344,9 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 		//brightness and fog calculation
 		if (psParentObj->type == OBJ_STRUCTURE)
 		{
-			Vector3i s;
 			STRUCTURE *psStructure = (STRUCTURE*)psParentObj;
 
 			brightness = structureBrightness(psStructure);
-
-			pie_Project(&s);
-			psStructure->sDisplay.screenX = s.x;
-			psStructure->sDisplay.screenY = s.y;
 		}
 		else
 		{
@@ -1365,7 +1357,6 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 			}
 		}
 
-		// Do translation and rotation after setting sDisplay.screen[XY], so that the health bars for animated objects (such as oil derricks and cyborgs) will show on the stationary part.
 		// object (animation) translations - ivis z and y flipped
 		pie_TRANSLATE(psObj->position.x, psObj->position.z, -psObj->position.y);
 		// object (animation) rotations
@@ -1403,29 +1394,19 @@ void displayStaticObjects( void )
 				/* No point in adding it if you can't see it? */
 				if (psStructure->visible[selectedPlayer] || demoGetStatus())
 				{
-					if ( psStructure->pStructureType->type == REF_RESOURCE_EXTRACTOR &&
-						psStructure->psCurAnim == NULL && psStructure->status == SS_BUILT )
-					{
-						psStructure->psCurAnim = animObj_Add( psStructure, ID_ANIM_DERIK, 0, 0 );
-					}
+					renderStructure(psStructure);
 
-					if ( psStructure->psCurAnim == NULL ||
-							psStructure->psCurAnim->bVisible == false ||
-							(psAnimObj = animObj_Find( psStructure,
-							psStructure->psCurAnim->uwID )) == NULL )
+					if ( psStructure->psCurAnim != NULL &&
+						psStructure->psCurAnim->bVisible == true &&
+						(psAnimObj = animObj_Find( psStructure,
+												   psStructure->psCurAnim->uwID )) != NULL )
 					{
-						renderStructure(psStructure);
-					}
-					else
-					{
-						//check not a resource extractors
+						//check not a resource extractors (i.e. if we're not doing a HACK)
 						if (psStructure->pStructureType->type != REF_RESOURCE_EXTRACTOR)
 						{
 							displayAnimation( psAnimObj, false );
 						}
-						//check that a power gen exists before animationg res extrac
-						//else if (getPowerGenExists(psStructure->player))
-						/*check the building is active*/
+						/*check that the extractor is active*/
 						else if (psStructure->pFunctionality->resourceExtractor.active)
 						{
 							displayAnimation( psAnimObj, false );
@@ -1768,16 +1749,8 @@ void displayDynamicObjects( void )
 					{
 						psDroid->sDisplay.frameNumber = currentGameFrame;
 
-						// NOTE! : anything that has multiple (anim) frames *must* use the bucket to render
-						// In this case, AFAICT only DROID_CYBORG_SUPER had the issue.  (Same issue as oil pump anim)
-						if (psDroid->droidType != DROID_CYBORG_SUPER)
-						{
-							renderDroid(psDroid);
-						}
-						else
-						{
-							bucketAddTypeToList(RENDER_DROID, psDroid);
-						}
+						renderDroid(psDroid);
+
 						/* draw anim if visible */
 						if ( psDroid->psCurAnim != NULL &&
 							psDroid->psCurAnim->bVisible == true &&
