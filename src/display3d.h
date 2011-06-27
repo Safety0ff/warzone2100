@@ -107,9 +107,6 @@ extern void setUnderwaterTile(UDWORD num);
 extern UDWORD getRubbleTileNum( void );
 extern void setRubbleTile(UDWORD num);
 
-extern SDWORD	getCentreX( void );
-extern SDWORD	getCentreZ( void );
-
 STRUCTURE *getTileBlueprint(int mapX, int mapY);  ///< Gets the blueprint at those coordinates, if any.
 
 extern SDWORD mouseTileX, mouseTileY;
