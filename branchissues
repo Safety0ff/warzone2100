@@ -1,0 +1,40 @@
+todos:
+------
+* Switch the eigen matrix format to 4x4 single precision floats
+	Rationale:
+		- Since replacing querying opengl with retrieving the matrix from the stack, it will save any conversion overhead (i.e. the conversion from 4x3 double to 4x4 float)
+		- Consideration for 32 bit computers
+
+* Use the basis vectors of the camera in the "sphere project" function instead of the Z unit vector (i.e. Either U, R, or a linear combination (U+R)/2, where U and R are vectors. Note: U and R are coplanar with the view screen and in the world coordinate frame). The idea behind this is that it will cause the returned circle to have a radius which lies somewhere between the minimum and maximum dimension of the actual perspective projection of the sphere (which is good enough for what we need).
+
+* Make the far plane distance dynamic, so that using a precise frustum representation for culling, etc, is actually effective, we must use a resonably sized frustum! The current hardcoded value is for a huge frustum! It should be dynamic to take into account zoom: Z = zoom + length of vector colinear with forward vector which also intersects with XY plane + some constant for gui + skybox consideration/factor.
+
+ * Implied todo: Undo changes which changed depth value variables (i.e. ) from float to int, because the range is dynamic, it is easier to simply use floats. Also, to reiterate, graphics code should not be used for game state, so graphics code not being deterministic is not the problem, game state code using gfx stuff is the problem!
+
+* Pass a (const reference) of the camera object around to all the rendering functions so that they can set the appropriate offset (i.e. for camera relative rendering)
+
+* Return a const camera object from the function which updates it so that it can be used for sound. Caveat: using actual positions for sound may result not hearing anything if camera is at a high altitude. There is likely an openal setting which can be adjusted to resolve this.
+
+* Change the interface of wavecast/pointtree to a functional one, then change rendering code to use it to query the visible objects. Point tree will eliminate objects that aren't visible using the 2D AABB. Further refinement can be done using the precise 3d check of the camera object. At this time it has the caveat of computing the bounding sphere for each composite object (we don't curently have this in the template data, gui just recomputes for each object each frame, but that's not sufficient here). Maybe the gui's bounding sphere code can be moved somewhere where it computes the values for the templates? (note: it is gfx code, not game logic suitable code)
+
+* Remove the sound code from the game logic and rewrite such that it uses pointtree to query objects within a certain distance of the camera (i.e. sphere-sphere intersection).
+
+* Fix any other issues discovered along the way ;)
+
+* Rewrite the war/chase cam to work with the new changes.
+
+Issues:
+------
+* Some of the rotating objects on the intel screen (i.e. researched techs) aren't displayed, this is due to the refactoring of the gui / scaling code
+
+* Only code which is meant for graphics should use 
+
+* There is a function in the raycasting stuff which uses display3d, this function is for the war/chase cam and should be moved to those files to prevent accidental use of clipXY in other code. clipXY is for gfx stuff!
+
+* One of the commits I make assumptions in the builing/building animation code (or was is droid/droid animation code), anyways, I intended to replace that assumption by making the basic rendering function responsible for setting the state to an expected/assumed state. This needs to be dealt with so that it does not break when a innocent future dev massages that code.
+
+Notes:
+--------
+Since I stopped shortly after realising that I had to change the was the frustum size was handled the interfaces likely now need to be massaged to take this into account.
+
+Also, I didn't make any plans for the war/chase cam stuff.

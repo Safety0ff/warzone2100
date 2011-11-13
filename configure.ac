@@ -271,6 +271,11 @@ elif test "x$enable_debug" = "xoptimised" ; then
 	WZ_CXXFLAGS="${WZ_CXXFLAGS} -O2 -g -Werror ${WZ_WARNINGS_GCC_CXX}"
 	WZ_C99FLAGS="${WZ_C99FLAGS} -Wno-declaration-after-statement"
 	WZ_CPPFLAGS="${WZ_CPPFLAGS} -DDEBUG"
+elif test "x$enable_debug" = "xgcc42cpuopt" ; then
+	WZ_CFLAGS="${WZ_CFLAGS} -O2 -g -march=native -mno-avx -mfpmath=sse -ftree-vectorize -Werror ${WZ_WARNINGS_GCC_C}"
+	WZ_CXXFLAGS="${WZ_CXXFLAGS} -O2 -g -march=native -mno-avx -mfpmath=sse -ftree-vectorize -Werror ${WZ_WARNINGS_GCC_CXX}"
+	WZ_C99FLAGS="${WZ_C99FLAGS} -Wno-declaration-after-statement"
+	WZ_CPPFLAGS="${WZ_CPPFLAGS} -DNDEBUG"
 elif test "x$enable_debug" = "xrelaxed" ; then
 	WZ_CFLAGS="${WZ_CFLAGS} -g -O0 ${WZ_WARNINGS_GCC_C}"
 	WZ_CXXFLAGS="${WZ_CXXFLAGS} -g -O0 ${WZ_WARNINGS_GCC_CXX}"

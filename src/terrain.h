@@ -26,7 +26,8 @@
 bool initTerrain(void);
 void shutdownTerrain(void);
 
-void drawTerrain(void);
+class Camera;
+void drawTerrain(Camera const &);
 void drawWater(void);
 
 PIELIGHT getTileColour(int x, int y);

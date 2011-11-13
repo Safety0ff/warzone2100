@@ -4,9 +4,11 @@ AM_CXXFLAGS = $(WZ_CXXFLAGS) $(QT4_CFLAGS)
 
 noinst_LIBRARIES = libivis_opengl.a
 noinst_HEADERS = \
+	ba2d.h \
 	piematrix.h \
 	screen.h \
 	bitimage.h \
+	camera.h \
 	imd.h \
 	ivi.h \
 	ivisdef.h \
@@ -25,6 +27,8 @@ noinst_HEADERS = \
 	textdraw.h
 
 libivis_opengl_a_SOURCES = \
+	ba2d.cpp \
+	camera.cpp \
 	ivi.cpp \
 	pieblitfunc.cpp \
 	piedraw.cpp \

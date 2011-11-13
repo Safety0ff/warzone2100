@@ -69,7 +69,6 @@ struct Sector
 	int *textureIndexSize;   ///< The size of the indices for each layer
 	int decalOffset;         ///< Index into the decal VBO
 	int decalSize;           ///< Size of the part of the decal VBO we are going to use
-	bool draw;               ///< Do we draw this sector this frame?
 	bool dirty;              ///< Do we need to update the geometry for this sector?
 };
 
@@ -88,15 +87,9 @@ struct DecalVertex
 
 /// The lightmap texture
 static GLuint lightmap_tex_num;
-/// When are we going to update the lightmap next?
-static unsigned int lightmapNextUpdate;
 /// How big is the lightmap?
 static int lightmapWidth;
 static int lightmapHeight;
-/// Lightmap image
-static GLubyte *lightmapPixmap;
-/// Ticks per lightmap refresh
-static const unsigned int LIGHTMAP_REFRESH = 80;
 
 /// VBOs
 static GLuint geometryVBO, geometryIndexVBO, textureVBO, textureIndexVBO, decalVBO;
@@ -116,6 +109,8 @@ static int sectorSize = 15;
 static int terrainDistance;
 /// How many sectors have we actually got?
 static int xSectors, ySectors;
+/// Indices of sectors we are drawing this frame
+static std::vector<unsigned> sectorDrawList;
 
 /// Did we initialise the terrain renderer yet?
 static bool terrainInitalised = false;
@@ -1015,7 +1010,6 @@ bool initTerrain(void)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
 	lightmap_tex_num = 0;
-	lightmapNextUpdate = 0;
 	lightmapWidth = 1;
 	lightmapHeight = 1;
 	// determine the smallest power-of-two size we can use for the lightmap
@@ -1024,25 +1018,15 @@ bool initTerrain(void)
 	debug(LOG_TERRAIN, "the size of the map is %ix%i", mapWidth, mapHeight);
 	debug(LOG_TERRAIN, "lightmap texture size is %ix%i", lightmapWidth, lightmapHeight);
 
-	// Prepare the lightmap pixmap and texture
-	lightmapPixmap = (GLubyte *)calloc(lightmapWidth * lightmapHeight, 3 * sizeof(GLubyte));
-	if (lightmapPixmap == NULL)
-	{
-		debug(LOG_FATAL, "Out of memory!");
-		abort();
-		return false;
-	}
-
 	glGenTextures(1, &lightmap_tex_num);
 	glBindTexture(GL_TEXTURE_2D, lightmap_tex_num);
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, lightmapWidth, lightmapHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, lightmapPixmap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, lightmapWidth, lightmapHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
 	terrainInitalised = true;
 
@@ -1077,8 +1061,6 @@ void shutdownTerrain(void)
 	sectors = NULL;
 
 	glDeleteTextures(1, &lightmap_tex_num);
-	free(lightmapPixmap);
-	lightmapPixmap = NULL;
 
 	terrainInitalised = false;
 }
@@ -1088,15 +1070,17 @@ void shutdownTerrain(void)
  * This function first draws the terrain in black, and then uses additive blending to put the terrain layers
  * on it one by one. Finally the decals are drawn.
  */
-void drawTerrain(void)
+void drawTerrain(Camera const & cam)
 {
+	const GLfloat paramsX[4] = {1.0f/world_coord(mapWidth)*((float)mapWidth/lightmapWidth), 0, 0, 0};
+	const GLfloat paramsY[4] = {0, 0, 1.0f/world_coord(mapHeight)*((float)mapHeight/lightmapHeight), 0};
+	static std::vector<GLubyte> lightmapSubTex;
+	std::vector<unsigned>::iterator sectorIt;
+	float xPos, yPos, distance;
+	int offset, size;
 	int i, j, x, y;
 	int texPage;
 	int layer;
-	int offset, size;
-	float xPos, yPos, distance;
-	const GLfloat paramsX[4] = {1.0f/world_coord(mapWidth)*((float)mapWidth/lightmapWidth), 0, 0, 0};
-	const GLfloat paramsY[4] = {0, 0, 1.0f/world_coord(mapHeight)*((float)mapHeight/lightmapHeight), 0};
 
 	///////////////////////////////////
 	glError();	// clear error codes
@@ -1106,63 +1090,72 @@ void drawTerrain(void)
 	glBindTexture(GL_TEXTURE_2D, lightmap_tex_num);
 	glEnable(GL_TEXTURE_2D);
 
-	// we limit the framerate of the lightmap, because updating a texture is an expensive operation
-	if (gameTime >= lightmapNextUpdate)
+	// lightmap update
 	{
-		lightmapNextUpdate = gameTime + LIGHTMAP_REFRESH;
+		const Vector2f rounding(TILE_UNITS/2 + 0.5f, TILE_UNITS/2 + 0.5f);
+		Vector2i min = map_coord(Vector2f_To2i(cam.get2DAABB().getMin() - rounding));
+		Vector2i max = map_coord(Vector2f_To2i(cam.get2DAABB().getMax() + rounding));
 
-		for (j = 0; j < mapHeight; ++j)
+		if (min.x > mapWidth)	min.x = mapWidth;
+		else if (min.x < 0)		min.x = 0;
+		if (min.y > mapHeight)	min.y = mapHeight;
+		else if (min.y < 0)		min.y = 0;
+		if (max.x > mapWidth)	max.x = mapWidth;
+		else if (max.x < 0)		max.x = 0;
+		if (max.y > mapHeight)	max.y = mapHeight;
+		else if (max.y < 0)		max.y = 0;
+
+		lightmapSubTex.clear();
+
+		for (j = min.y; j < max.y; ++j)
 		{
-			for (i = 0; i < mapWidth; ++i)
+			for (i = min.x; i < max.x; ++i)
 			{
 				const PIELIGHT colour = getTileColour(i, j);
 
-				lightmapPixmap[(i + j * lightmapWidth) * 3 + 0] = colour.byte.r;
-				lightmapPixmap[(i + j * lightmapWidth) * 3 + 1] = colour.byte.g;
-				lightmapPixmap[(i + j * lightmapWidth) * 3 + 2] = colour.byte.b;
-
-				if (!pie_GetFogStatus())
-				{
-					// fade to black at the edges of the visible terrain area
-					const float playerX = map_coordf(player.p.x);
-					const float playerY = map_coordf(player.p.z);
-
-					const float distA = i-(playerX-visibleTiles.x/2);
-					const float distB = (playerX+visibleTiles.x/2)-i;
-					const float distC = j-(playerY-visibleTiles.y/2);
-					const float distD = (playerY+visibleTiles.y/2)-j;
-					float darken, distToEdge;
-
-					// calculate the distance to the closest edge of the visible map
-					// determine the smallest distance
-					distToEdge = distA;
-					if (distB < distToEdge) distToEdge = distB;
-					if (distC < distToEdge) distToEdge = distC;
-					if (distD < distToEdge) distToEdge = distD;
-
-					darken = (distToEdge)/2.0f;
-					if (darken <= 0)
-					{
-						lightmapPixmap[(i + j * lightmapWidth) * 3 + 0] = 0;
-						lightmapPixmap[(i + j * lightmapWidth) * 3 + 1] = 0;
-						lightmapPixmap[(i + j * lightmapWidth) * 3 + 2] = 0;
-					}
-					else if (darken < 1)
-					{
-						lightmapPixmap[(i + j * lightmapWidth) * 3 + 0] *= darken;
-						lightmapPixmap[(i + j * lightmapWidth) * 3 + 1] *= darken;
-						lightmapPixmap[(i + j * lightmapWidth) * 3 + 2] *= darken;
-					}
-				}
+				// I disabled edge fade since it looks bad because it is based off the AABB (dynamic)
+// 				if (pie_GetFogStatus())
+// 				{
+					lightmapSubTex.push_back(colour.byte.r);
+					lightmapSubTex.push_back(colour.byte.g);
+					lightmapSubTex.push_back(colour.byte.b);
+// 				}
+// 				else
+// 				{
+// 					// fade to black at the edges of the visible terrain area
+// 					const float distA = i-min.x;
+// 					const float distB = max.x-i;
+// 					const float distC = j-min.y;
+// 					const float distD = max.y-j;
+// 					float darken, distToEdge;
+//
+// 					// calculate the distance to the closest edge of the visible map
+// 					// determine the smallest distance
+// 					distToEdge = distA;
+// 					if (distB < distToEdge) distToEdge = distB;
+// 					if (distC < distToEdge) distToEdge = distC;
+// 					if (distD < distToEdge) distToEdge = distD;
+//
+// 					darken = (distToEdge)/2.0f;
+// 					if (darken <= 0)
+// 					{
+// 					}
+// 					else if (darken < 1)
+// 					{
+// 					}
+// 					else
+// 					{
+// 					}
+// 				}
 			}
 		}
-
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, lightmapWidth, lightmapHeight, GL_RGB, GL_UNSIGNED_BYTE, lightmapPixmap);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, min.x, min.y, max.x-min.x, max.y-min.y, GL_RGB, GL_UNSIGNED_BYTE, &lightmapSubTex[0]);
 	}
 
 	///////////////////////////////////
 	// terrain culling
+	sectorDrawList.clear();
 	for (x = 0; x < xSectors; x++)
 	{
 		for (y = 0; y < ySectors; y++)
@@ -1171,13 +1164,10 @@ void drawTerrain(void)
 			yPos = world_coord(y*sectorSize+sectorSize/2);
 			distance = pow(player.p.x - xPos, 2) + pow(player.p.z - yPos, 2);
 
-			if (distance > pow((double)world_coord(terrainDistance), 2))
+			if (distance <= pow((double)world_coord(terrainDistance), 2))
 			{
-				sectors[x*ySectors + y].draw = false;
-			}
-			else
-			{
-				sectors[x*ySectors + y].draw = true;
+				sectorDrawList.push_back(x*ySectors + y);
+
 				if (sectors[x*ySectors + y].dirty)
 				{
 					updateSectorGeometry(x,y);
@@ -1233,21 +1223,16 @@ void drawTerrain(void)
 	glBindBuffer(GL_ARRAY_BUFFER, geometryVBO); glError();
 
 	glVertexPointer(3, GL_FLOAT, sizeof(RenderVertex), BUFFER_OFFSET(0)); glError();
-	
-	for (x = 0; x < xSectors; x++)
+
+	for (sectorIt = sectorDrawList.begin(); sectorIt != sectorDrawList.end(); ++sectorIt)
 	{
-		for (y = 0; y < ySectors; y++)
-		{
-			if (sectors[x*ySectors + y].draw)
-			{
-				addDrawRangeElements(GL_TRIANGLES,
-				                     sectors[x*ySectors + y].geometryOffset,
-				                     sectors[x*ySectors + y].geometryOffset+sectors[x*ySectors + y].geometrySize,
-				                     sectors[x*ySectors + y].geometryIndexSize,
-				                     GL_UNSIGNED_INT,
-				                     sectors[x*ySectors + y].geometryIndexOffset);
-			}
-		}
+		const unsigned index = *sectorIt;
+		addDrawRangeElements(GL_TRIANGLES,
+							sectors[index].geometryOffset,
+							sectors[index].geometryOffset+sectors[index].geometrySize,
+							sectors[index].geometryIndexSize,
+							GL_UNSIGNED_INT,
+							sectors[index].geometryIndexOffset);
 	}
 	finishDrawRangeElements();
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -1314,20 +1299,15 @@ void drawTerrain(void)
 		// load the color buffer
 		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(PIELIGHT), BUFFER_OFFSET(sizeof(PIELIGHT)*xSectors*ySectors*(sectorSize+1)*(sectorSize+1)*2*layer));
 
-		for (x = 0; x < xSectors; x++)
+		for (sectorIt = sectorDrawList.begin(); sectorIt != sectorDrawList.end(); ++sectorIt)
 		{
-			for (y = 0; y < ySectors; y++)
-			{
-				if (sectors[x*ySectors + y].draw)
-				{
-					addDrawRangeElements(GL_TRIANGLES,
-										 sectors[x*ySectors + y].geometryOffset,
-										 sectors[x*ySectors + y].geometryOffset+sectors[x*ySectors + y].geometrySize,
-										 sectors[x*ySectors + y].textureIndexSize[layer],
-										 GL_UNSIGNED_INT,
-										 sectors[x*ySectors + y].textureIndexOffset[layer]);
-				}
-			}
+			const unsigned index = *sectorIt;
+			addDrawRangeElements(GL_TRIANGLES,
+								sectors[index].geometryOffset,
+								sectors[index].geometryOffset+sectors[index].geometrySize,
+								sectors[index].textureIndexSize[layer],
+								GL_UNSIGNED_INT,
+								sectors[index].textureIndexOffset[layer]);
 		}
 		finishDrawRangeElements();
 	}
@@ -1361,28 +1341,31 @@ void drawTerrain(void)
 
 	size = 0;
 	offset = 0;
-	for (x = 0; x < xSectors; x++)
+	for (sectorIt = sectorDrawList.begin(); sectorIt != sectorDrawList.end(); ++sectorIt)
 	{
-		for (y = 0; y < ySectors + 1; y++)
+		const unsigned index = *sectorIt;
+		if (offset + size == sectors[index].decalOffset)
 		{
-			if (y < ySectors && offset + size == sectors[x*ySectors + y].decalOffset && sectors[x*ySectors + y].draw)
-			{
-				// append
-				size += sectors[x*ySectors + y].decalSize;
-				continue;
-			}
-			// can't append, so draw what we have and start anew
-			if (size > 0)
-			{
-				glDrawArrays(GL_TRIANGLES, offset, size); glError();
-			}
-			size = 0;
-			if (y < ySectors && sectors[x*ySectors + y].draw)
-			{
-				offset = sectors[x*ySectors + y].decalOffset;
-				size = sectors[x*ySectors + y].decalSize;
-			}
+			// append
+			size += sectors[index].decalSize;
+			continue;
 		}
+		// can't append, so draw what we have and start anew
+		if (size > 0)
+		{
+			glDrawArrays(GL_TRIANGLES, offset, size); glError();
+			size = 0;
+		}
+
+		if (sectors[index].decalSize)
+		{
+			offset = sectors[index].decalOffset;
+			size = sectors[index].decalSize;
+		}
+	}
+	if (size > 0)
+	{
+		glDrawArrays(GL_TRIANGLES, offset, size); glError();
 	}
 
 	////////////////////////////////
@@ -1411,7 +1394,6 @@ void drawTerrain(void)
  */
 void drawWater(void)
 {
-	int x, y;
 	const GLfloat paramsX[4] = {0, 0, 1.0f/world_coord(4), 0};
 	const GLfloat paramsY[4] = {1.0f/world_coord(4), 0, 0, 0};
 	const GLfloat paramsX2[4] = {0, 0, 1.0f/world_coord(5), 0};
@@ -1421,6 +1403,7 @@ void drawWater(void)
 									pie_GetFogColour().byte.g/255.f,
 									pie_GetFogColour().byte.b/255.f,
 									pie_GetFogColour().byte.a/255.f};
+	std::vector<unsigned>::iterator sectorIt;
 
 	glEnable(GL_TEXTURE_GEN_S); glError();
 	glEnable(GL_TEXTURE_GEN_T); glError();
@@ -1472,20 +1455,15 @@ void drawWater(void)
 
 	glVertexPointer(3, GL_FLOAT, sizeof(RenderVertex), BUFFER_OFFSET(0)); glError();
 
-	for (x = 0; x < xSectors; x++)
+	for (sectorIt = sectorDrawList.begin(); sectorIt != sectorDrawList.end(); ++sectorIt)
 	{
-		for (y = 0; y < ySectors; y++)
-		{
-			if (sectors[x*ySectors + y].draw)
-			{
-				addDrawRangeElements(GL_TRIANGLES,
-				                     sectors[x*ySectors + y].geometryOffset,
-				                     sectors[x*ySectors + y].geometryOffset+sectors[x*ySectors + y].geometrySize,
-				                     sectors[x*ySectors + y].waterIndexSize,
-				                     GL_UNSIGNED_INT,
-				                     sectors[x*ySectors + y].waterIndexOffset);
-			}
-		}
+		const unsigned index = *sectorIt;
+		addDrawRangeElements(GL_TRIANGLES,
+							sectors[index].geometryOffset,
+							sectors[index].geometryOffset+sectors[index].geometrySize,
+							sectors[index].waterIndexSize,
+							GL_UNSIGNED_INT,
+							sectors[index].waterIndexOffset);
 	}
 	finishDrawRangeElements();
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

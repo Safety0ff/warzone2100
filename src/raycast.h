@@ -53,8 +53,12 @@ typedef bool (*RAY_CALLBACK)(Vector3i pos, int32_t dist, void* data);
 extern void rayCast(Vector3i pos, uint16_t dir, uint32_t length, RAY_CALLBACK callback, void *data);
 
 
-// Calculates the maximum height and distance found along a line from any
-// point to the edge of the grid
+/*
+ * Calculates the maximum height and distance found along a line from any
+ * point to the edge of the grid visible by the current camera.
+ * WARNING: Depends on display state and is not deterministic, use only
+ * for display purposes.
+ */
 extern void getBestPitchToEdgeOfGrid(UDWORD x, UDWORD y, uint16_t direction, uint16_t *pitch);
 
 #endif // __INCLUDED_SRC_RAYCAST_H__

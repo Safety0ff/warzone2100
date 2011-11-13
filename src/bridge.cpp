@@ -114,7 +114,7 @@ bool bridgeValid(int startX, int startY, int endX, int endY)
 */
 bool	renderBridgeSection(STRUCTURE *psStructure)
 {
-	Vector3i dv;
+	Vector3f dv;
 
 	/* Bomb out if it's not visible */
 	if (!psStructure->visible[selectedPlayer])
@@ -123,9 +123,8 @@ bool	renderBridgeSection(STRUCTURE *psStructure)
 	}
 
 	/* Establish where it is in the world */
-	dv.x = psStructure->pos.x - player.p.x;
-	dv.z = psStructure->pos.y - player.p.z;
-	dv.y = psStructure->pos.z;
+	dv = swapYZ(psStructure->pos);
+	dv.l_xz() -= player.p.r_xz();
 
 	/* Push the indentity matrix */
 	pie_MatBegin();

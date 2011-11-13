@@ -186,7 +186,7 @@ static void processParticle(ATPART *psPart)
 
 // -----------------------------------------------------------------------------
 /* Adds a particle to the system if it can */
-static void atmosAddParticle(Vector3i *pos, AP_TYPE type)
+static void atmosAddParticle(Vector3f const &pos, AP_TYPE type)
 {
 	UDWORD	activeCount;
 	UDWORD	i;
@@ -237,9 +237,7 @@ static void atmosAddParticle(Vector3i *pos, AP_TYPE type)
 	}
 
 	/* Setup position */
-	asAtmosParts[freeParticle].position.x = (float)pos->x;
-	asAtmosParts[freeParticle].position.y = (float)pos->y;
-	asAtmosParts[freeParticle].position.z = (float)pos->z;
+	asAtmosParts[freeParticle].position = pos;
 
 	/* Setup its velocity */
 	if(type == AP_RAIN)
@@ -262,7 +260,7 @@ void	atmosUpdateSystem( void )
 {
 	UDWORD	i;
 	UDWORD	numberToAdd;
-	Vector3i pos;
+	Vector3f pos;
 
 	// we don't want to do any of this while paused.
 	if(!gamePaused() && weather!=WT_NONE)
@@ -297,10 +295,10 @@ void	atmosUpdateSystem( void )
 				switch(weather)
 				{
 				case WT_SNOWING:
-					atmosAddParticle(&pos,AP_SNOW);
+					atmosAddParticle(pos,AP_SNOW);
 					break;
 				case WT_RAINING:
-					atmosAddParticle(&pos,AP_RAIN);
+					atmosAddParticle(pos,AP_RAIN);
 					break;
 				case WT_NONE:
 					break;
@@ -340,12 +338,12 @@ UDWORD	i;
 // -----------------------------------------------------------------------------
 void	renderParticle( ATPART *psPart )
 {
-	Vector3i dv;
+	Vector3f dv;
 
 	/* Transform it */
-	dv.x = psPart->position.x - player.p.x;
-	dv.y = psPart->position.y;
-	dv.z = psPart->position.z - player.p.z;
+	dv = psPart->position;
+	dv.l_xz() -= player.p.r_xz();
+
 	pie_MatBegin();					/* Push the current matrix */
 	pie_TRANSLATE(dv.x,dv.y,dv.z);
 	/* Make it face camera */

@@ -66,12 +66,13 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 	Spacetime			spacetime;
 	bool 				clipped = false;
 
+	position.l_xz() = -player.p.r_xz();
+	position.y = 0;
+
 	switch(objectType)
 	{
 		case RENDER_PARTICLE:
-			position = ((ATPART*)pObject)->position;
-
-			position.l_xz() -= player.p.r_xz();
+			position += ((ATPART*)pObject)->position;
 
 			radius = ((ATPART*)pObject)->imd->radius;
 			clipped = pie_ProjectSphere(position, radius, &pixel);
@@ -91,8 +92,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 				pImd = ((PROJECTILE*)pObject)->psWStats->pInFlightGraphic;
 				psSimpObj = (SIMPLE_OBJECT*) pObject;
 
-				position = swapYZ(psSimpObj->pos);
-				position.l_xz() -= player.p.r_xz();
+				position += swapYZ(psSimpObj->pos);
 
 				radius = pImd->radius;
 				clipped = pie_ProjectSphere(position, radius, &pixel);
@@ -101,8 +101,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 		case RENDER_STRUCTURE: // Pre-clipped/only clipped if behind cam.
 			psSimpObj = (SIMPLE_OBJECT*) pObject;
 
-			position = swapYZ(psSimpObj->pos);
-			position.l_xz() -= player.p.r_xz();
+			position += swapYZ(psSimpObj->pos);
 
 			if((objectType == RENDER_STRUCTURE) &&
 				((((STRUCTURE*)pObject)->pStructureType->type == REF_DEFENSE) ||
@@ -119,8 +118,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 		case RENDER_FEATURE: // Pre-clipped/only clipped if behind cam.
 			psSimpObj = (SIMPLE_OBJECT*) pObject;
 
-			position = swapYZ(psSimpObj->pos);
-			position.l_xz() -= player.p.r_xz();
+			position += swapYZ(psSimpObj->pos);
 
 			radius = ((FEATURE*)pObject)->sDisplay.imd->radius;
 			pie_ProjectSphere(position, radius, &pixel);
@@ -137,8 +135,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			 */
 			Affine3F af;
 
-			position = swapYZ(spacetime.pos);
-			position.l_xz() -= player.p.r_xz();
+			position += swapYZ(spacetime.pos);
 
 			af.Trans(position.x, position.y, position.z);
 
@@ -165,8 +162,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 
 			psSimpObj = (SIMPLE_OBJECT*) pObject;
 
-			position = swapYZ(psSimpObj->pos);
-			position.l_xz() -= player.p.r_xz();
+			position += swapYZ(psSimpObj->pos);
 
 			if(objectType == RENDER_SHADOW)
 			{
@@ -180,26 +176,24 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 		case RENDER_PROXMSG:
 			if (((PROXIMITY_DISPLAY *)pObject)->type == POS_PROXDATA)
 			{
-				position.x = ((VIEW_PROXIMITY *)((VIEWDATA *)((PROXIMITY_DISPLAY *)
+				position.x += ((VIEW_PROXIMITY *)((VIEWDATA *)((PROXIMITY_DISPLAY *)
 							pObject)->psMessage->pViewData)->pData)->x;
-				position.z = ((VIEW_PROXIMITY *)((VIEWDATA *)((PROXIMITY_DISPLAY *)
+				position.z += ((VIEW_PROXIMITY *)((VIEWDATA *)((PROXIMITY_DISPLAY *)
 							pObject)->psMessage->pViewData)->pData)->y;
-				position.y = ((VIEW_PROXIMITY *)((VIEWDATA *)((PROXIMITY_DISPLAY *)
+				position.y += ((VIEW_PROXIMITY *)((VIEWDATA *)((PROXIMITY_DISPLAY *)
 							pObject)->psMessage->pViewData)->pData)->z;
 			}
 			else if (((PROXIMITY_DISPLAY *)pObject)->type == POS_PROXOBJ)
 			{
-				position = ((BASE_OBJECT *)((PROXIMITY_DISPLAY *)pObject)->psMessage->pViewData)->pos;
+				position += ((BASE_OBJECT *)((PROXIMITY_DISPLAY *)pObject)->psMessage->pViewData)->pos;
 			}
-			position.l_xz() -= player.p.r_xz();
 
 			pImd = getImdFromIndex(MI_BLIP_ENEMY);//use MI_BLIP_ENEMY as all are same radius
 			radius = pImd->radius;
 			clipped = pie_ProjectSphere(position, radius, &pixel);
 			break;
 		case RENDER_EFFECT:
-			position = ((EFFECT*)pObject)->position;
-			position.l_xz() -= player.p.r_xz();
+			position += ((EFFECT*)pObject)->position;
 
 			pImd = ((EFFECT*)pObject)->imd;
 			radius = pImd ? pImd->radius : 0;
@@ -207,8 +201,7 @@ static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 			break;
 
 		case RENDER_DELIVPOINT:
-			position = swapYZ(((FLAG_POSITION *)pObject)->coords);
-			position.l_xz() -= player.p.r_xz();
+			position += swapYZ(((FLAG_POSITION *)pObject)->coords);
 
 			radius = pAssemblyPointIMDs[((FLAG_POSITION*)pObject)->factoryType][((FLAG_POSITION*)pObject)->factoryInc]->radius;
 			clipped = pie_ProjectSphere(position, radius, &pixel);
