@@ -356,7 +356,8 @@ static inline float fitToBounds(UISphere const &sphere, Vector2i const& /*Rot*/,
 
 static inline void setMatrix(Vector2i const &Rot, Vector3i const &Pos, bool RotXY)
 {
-	pie_SetOrthoProj(false);
+	// Magic number = estimate upper bound on object depth requirements
+	pie_SetOrthoProj(false, -world_coord(4), world_coord(4));
 	pie_MatBegin();
 
 	/*
@@ -379,7 +380,7 @@ static inline void setMatrix(Vector2i const &Rot, Vector3i const &Pos, bool RotX
 static void unsetMatrix(void)
 {
 	pie_MatEnd();
-	pie_SetOrthoProj(true);
+	pie_SetOrthoProj(true, -1, 1);
 }
 
 void displayIMDButton(iIMDShape *IMDShape, Vector2i const &Rot, Vector3i Pos, Vector2i const &bounds, bool RotXY)
@@ -1160,9 +1161,8 @@ void displayComponentObject(DROID *psDroid)
 	pie_MatBegin();
 
 	/* Get the real position */
-	position.x = st.pos.x - player.p.x;
-	position.z = st.pos.y - player.p.z;
-	position.y = st.pos.z;
+	position = swapYZ(st.pos);
+	position.l_xz() -= player.p.r_xz();
 
 	if(psDroid->droidType == DROID_TRANSPORTER)
 	{

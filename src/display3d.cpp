@@ -106,8 +106,8 @@ static void	renderWallSection(STRUCTURE *psStructure);
 static void	drawDragBox(void);
 static void	calcFlagPosScreenCoords(Vector3i * const screenPos, int32_t &radius);
 static void	displayTerrain(void);
-static iIMDShape *flattenImd(iIMDShape *imd, UDWORD structX, UDWORD structY, UDWORD direction, bool allPoints = false);
-static void	drawTiles(iView *player);
+static iIMDShape	*flattenImd(iIMDShape *imd, UDWORD structX, UDWORD structY, UDWORD direction, bool allPoints = false);
+static void	drawTiles(void);
 static void	display3DProjectiles(void);
 static void	drawDroidSelections(void);
 static void	drawStructureSelections(void);
@@ -152,15 +152,16 @@ UWORD barMode;
 /// Have we made a selection by clicking the mouse? - used for dragging etc
 bool	selectAttempt = false;
 
-/// Vectors that hold the player and camera directions and positions
+/// Cache variables for the camera directions and positions
 iView	player;
-
-/// How far away are we from the terrain
 static UDWORD distance;
 
-/// Stores the screen coordinates of the transformed terrain tiles
-static Vector3i tileScreenInfo[VISIBLE_YTILES+1][VISIBLE_XTILES+1];
-static bool tileClippingInfo[VISIBLE_YTILES+1][VISIBLE_XTILES+1];
+/// Actual player camera
+Camera playerCam;
+
+/** AABB enclosing visible tiles
+ */
+Vector2i visibleTiles(VISIBLE_XTILES,VISIBLE_YTILES);
 
 /// Records the present X and Y values for the current mouse tile (in tiles)
 SDWORD mouseTileX, mouseTileY;
@@ -188,11 +189,6 @@ static QUAD dragQuad;
 /// temporary buffer used for flattening IMDs
 #define iV_IMD_MAX_POINTS 500
 static Vector3f alteredPoints[iV_IMD_MAX_POINTS];
-
-/** Number of tiles visible
- * \todo This should become dynamic! (A function of resolution, angle and zoom maybe.)
- */
-Vector2i visibleTiles(VISIBLE_XTILES, VISIBLE_YTILES);
 
 /// The tile we use for drawing the bottom of a body of water
 static unsigned int underwaterTile = WATER_TILE;
@@ -301,6 +297,68 @@ static std::vector<Blueprint> blueprints;
 static const int BLUEPRINT_OPACITY=120;
 
 /********************  Functions  ********************/
+
+VisibleTileIterator::VisibleTileIterator(Camera const &cam)
+{
+	const Vector2f rounding(TILE_UNITS/2 + 0.5f, TILE_UNITS/2 + 0.5f);
+	min = map_coord(Vector2f_To2i(cam.get2DAABB().getMin() - rounding));
+	max = map_coord(Vector2f_To2i(cam.get2DAABB().getMax() + rounding));
+	if (min.x > mapWidth)	min.x = mapWidth;
+	else if (min.x < 0)		min.x = 0;
+	if (min.y > mapHeight)	min.y = mapHeight;
+	else if (min.y < 0)		min.y = 0;
+	if (max.x > mapWidth)	max.x = mapWidth;
+	else if (max.x < 0)		max.x = 0;
+	if (max.y > mapHeight)	max.y = mapHeight;
+	else if (max.y < 0)		max.y = 0;
+	x = min.x;
+	y = min.y;
+	psTile = mapTile(x,y);
+}
+
+void VisibleTileIterator::inc()
+{
+	if (++x > max.x)
+	{
+		x = min.x;
+		if (++y <= max.y)
+		{
+			psTile = mapTile(x,y);
+		}
+		else
+		{
+			y = max.y;
+			x = max.x;
+			psTile = NULL;
+		}
+	}
+	else
+	{
+		psTile = mapTile(x,y);
+	}
+}
+
+void VisibleTileIterator::dec()
+{
+	if (--x < min.x)
+	{
+		x = max.x;
+		if (--y >= min.y)
+		{
+			psTile = mapTile(x,y);
+		}
+		else
+		{
+			y = min.y;
+			x = min.x;
+			psTile = NULL;
+		}
+	}
+	else
+	{
+		psTile = mapTile(x,y);
+	}
+}
 
 void NotifyUserOfError(char *msg)
 {
@@ -651,50 +709,13 @@ void draw3DScene( void )
 		dragQuad.coords[3].y = dragBox3D.y2;
 	}
 
+	// Update player cam
+	playerCam.setEyeAsWzCam(player.p, player.r, distance, 1.f/pie_GetResScalingFactor());
+
 	pie_Begin3DScene();
 
 	// draw terrain
 	displayTerrain();
-
-	// BEGIN - DELETE ME DEBUG
-#if 0
-	pie_SetRendMode(REND_OPAQUE);
-	pie_SetTexturePage(TEXPAGE_NONE);
-	pie_SetAlphaTest(false);
-	glDisable(GL_CULL_FACE);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_OFF);
-	glColor3f(0.f, 0.5390625f, 0.f);
-	for (int i = 0; i < visibleTiles.y; i++)
-	{
-		for (int j = 0; j < visibleTiles.x; j++)
-		{
-			if (tileClippingInfo[i+0][j+0]
-				&& tileClippingInfo[i+0][j+1]
-				&& tileClippingInfo[i+1][j+1]
-				&& tileClippingInfo[i+1][j+0]
-				)
-				continue;
-			glBegin(GL_QUADS);
-			glVertex2f(tileScreenInfo[i+0][j+0].x, tileScreenInfo[i+0][j+0].y);
-			glVertex2f(tileScreenInfo[i+0][j+1].x, tileScreenInfo[i+0][j+1].y);
-			glVertex2f(tileScreenInfo[i+1][j+1].x, tileScreenInfo[i+1][j+1].y);
-			glVertex2f(tileScreenInfo[i+1][j+0].x, tileScreenInfo[i+1][j+0].y);
-			glEnd();
-		}
-	}
-	glColor3f(0.707f, 0.707f, 0.f);
-	glBegin(GL_QUADS);
-		glVertex2f(mouseInQuad.coords[0].x, mouseInQuad.coords[0].y);
-		glVertex2f(mouseInQuad.coords[1].x, mouseInQuad.coords[1].y);
-		glVertex2f(mouseInQuad.coords[2].x, mouseInQuad.coords[2].y);
-		glVertex2f(mouseInQuad.coords[3].x, mouseInQuad.coords[3].y);
-	glEnd();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
-	glEnable(GL_CULL_FACE);
-#endif
-	// END - DELETE ME DEBUG
 
 	pie_BeginInterface();
 	drawDroidSelections();
@@ -857,12 +878,14 @@ void draw3DScene( void )
 /// Draws the 3D textured terrain
 static void displayTerrain(void)
 {
+	pie_SetCamera(&playerCam);
+
 	pie_SetPerspectiveProj();
 
 	/* Now, draw the terrain */
-	drawTiles(&player);
+	drawTiles();
 
-	pie_SetOrthoProj(true);
+	pie_SetOrthoProj(true, -1, 1);
 
 	/* Show the drag Box if necessary */
 	drawDragBox();
@@ -927,10 +950,9 @@ static void calcAverageTerrainHeight(iView *player)
 }
 
 /// Draw the terrain and all droids, missiles and other objects on it
-static void drawTiles(iView *player)
+static void drawTiles(void)
 {
-	int i, j;
-	int idx, jdx;
+	const Vector3f camPos = playerCam.getEyePos();
 	Vector3f theSun;
 
 	/* ---------------------------------------------------------------- */
@@ -938,62 +960,41 @@ static void drawTiles(iView *player)
 	/* ---------------------------------------------------------------- */
 
 	/* Find our position in tile coordinates */
-	playerXTile = map_coord(player->p.x);
-	playerZTile = map_coord(player->p.z);
+	playerXTile = map_coord(player.p.x);
+	playerZTile = map_coord(player.p.z);
 
 	/* ---------------------------------------------------------------- */
-	/* Set up the geometry                                              */
+	/* Set up the view matrix                                           */
 	/* ---------------------------------------------------------------- */
 
-	/* ---------------------------------------------------------------- */
-	/* Push identity matrix onto stack */
+	/* Push current matrix onto stack */
 	pie_MatBegin();
 
-	/* Set the camera position */
+	/* Set the view matrix */
 	pie_TRANSLATE(0, 0, -distance);
 
 	// Now, scale the world according to what resolution we're running in
-	pie_MatScale(pie_GetResScalingFactor() / 100.f);
+	pie_MatScale(pie_GetResScalingFactor());
 
 	/* Rotate for the player */
-	pie_MatRotZ(-player->r.z);
-	pie_MatRotX(-player->r.x);
-	pie_MatRotY(-player->r.y);
+	pie_MatRotZ(-player.r.z);
+	pie_MatRotX(-player.r.x);
+	pie_MatRotY(-player.r.y);
 
-	/* Translate */
-	pie_TRANSLATE(0, -player->p.y, 0);
+	/* Translate (note: rendering with x and z relative) */
+	pie_TRANSLATE(0, -player.p.y, 0);
 
 	// this also detemines the length of the shadows
 	theSun = getTheSun();
 	pie_BeginLighting(&theSun, getDrawShadows());
 
-	// Project some tiles onto screen for the following mouse picking call
 	// and update the fog of war... FIXME: Remove this
-	for (i = -visibleTiles.y/2, idx=0; i <= visibleTiles.y/2; i++,++idx)
+	VisibleTileIterator visIt(playerCam);
+	while (visIt.valid())
 	{
-		/* Go through the x's */
-		for (j = -visibleTiles.x/2, jdx=0; j <= visibleTiles.x/2; j++,++jdx)
-		{
-			Vector3i screen;
-			Position pos;
-
-			pos.x = world_coord(j);
-			pos.z = world_coord(i);
-			pos.y = 0;
-
-			if (tileOnMap(playerXTile + j, playerZTile + i))
-			{
-				MAPTILE *psTile = mapTile(playerXTile + j, playerZTile + i);
-
-				pos.y = psTile->height;
-				setTileColour(playerXTile + j, playerZTile + i, pal_SetBrightness(psTile->level));
-			}
-			tileClippingInfo[idx][jdx] = pie_Project(pos, &tileScreenInfo[idx][jdx]);
-
-		}
+		setTileColour(visIt.tileCoords().x, visIt.tileCoords().y, pal_SetBrightness(visIt->level));
+		visIt++;
 	}
-
-	locateMouse();
 
 	/* This is done here as effects can light the terrain - pause mode problems though */
 	processEffects();
@@ -1005,11 +1006,14 @@ static void drawTiles(iView *player)
 	pie_SetFogStatus(true);
 
 	pie_MatBegin();
-	// also, make sure we can use world coordinates directly
-	pie_TRANSLATE(-player->p.x, 0, -player->p.z);
+
+	// allow rendering using non-relative coords
+	pie_TRANSLATE(-player.p.x, 0, -player.p.z);
+
+	locateMouse();
 
 	// and draw it
-	drawTerrain();
+	drawTerrain(playerCam);
 
 	// and to the warzone modelview transform
 	pie_MatEnd();
@@ -1041,8 +1045,9 @@ static void drawTiles(iView *player)
 	pie_SetFogStatus(true);
 
 	pie_MatBegin();
-	// also, make sure we can use world coordinates directly
-	pie_TRANSLATE(-player->p.x, 0, -player->p.z);
+
+	// allow rendering using non-relative coords
+	pie_TRANSLATE(-player.p.x, 0, -player.p.z);
 
 	drawWater();
 
@@ -1112,6 +1117,7 @@ bool init3DView(void)
 	// distance is not saved, so initialise it now
 	distance = START_DISTANCE; // distance
 
+
 	disp3d_resetView();	// clear player view variables
 
 	if (!initTerrain())
@@ -1133,7 +1139,7 @@ void disp3d_setView(iView *newView)
 void disp3d_resetView()
 {
 	player.r.z = 0; // roll
-	player.r.y = INITIAL_DESIRED_ROTATION; // rotation
+	player.r.y = DEG(360 + INITIAL_DESIRED_ROTATION); // rotation
 	player.r.x = DEG(360 + INITIAL_STARTING_PITCH); // angle
 
 	// and set the camera position
@@ -1230,7 +1236,7 @@ static void display3DProjectiles( void )
 void	renderProjectile(PROJECTILE *psCurr)
 {
 	WEAPON_STATS	*psStats;
-	Vector3i			dv;
+	Vector3f			dv;
 	iIMDShape		*pIMD;
 	Spacetime       st;
 
@@ -1256,13 +1262,9 @@ void	renderProjectile(PROJECTILE *psCurr)
 	if (clipXY(st.pos.x, st.pos.y))
 	{
 		/* Get bullet's x coord */
-		dv.x = st.pos.x - player.p.x;
+		dv = st.pos;
+		dv.l_xz() -= player.p.r_xz();
 
-		/* Get it's y coord (z coord in the 3d world */
-		dv.z = st.pos.y - player.p.z;
-
-		/* What's the present height of the bullet? */
-		dv.y = st.pos.z;
 		/* Set up the matrix */
 		pie_MatBegin();
 
@@ -1304,7 +1306,7 @@ void	renderAnimComponent( const COMPONENT_OBJECT *psObj )
 	if( clipXY( posX, posY ) )
 	{
 		/* get parent object translation */
-		const Vector3i dv(
+		const Vector3f dv(
 			spacetime.pos.x - player.p.x,
 			spacetime.pos.z,
 			spacetime.pos.y - player.p.z
@@ -2043,7 +2045,7 @@ void	renderStructure(STRUCTURE *psStructure)
 {
 	int			i, structX, structY, colour, rotation, frame, animFrame, pieFlag, pieFlagData, ecmFlag = 0;
 	PIELIGHT		buildingBrightness;
-	Vector3i		dv;
+	Vector3f		dv;
 	bool			bHitByElectronic = false;
 	bool			defensive = false;
 	iIMDShape		*strImd = psStructure->sDisplay.imd;
@@ -2100,14 +2102,15 @@ void	renderStructure(STRUCTURE *psStructure)
 	structX = psStructure->pos.x;
 	structY = psStructure->pos.y;
 
-	dv.x = structX - player.p.x;
-	dv.z = structY - player.p.z;
+	dv.l_xz() = psStructure->pos.r_xy() - player.p.r_xz();
+
 	if (defensive || structureIsBlueprint(psStructure))
 	{
 		dv.y = psStructure->pos.z;
 	} else {
 		dv.y = map_TileHeight(map_coord(structX), map_coord(structY));
 	}
+
 	/* Push the indentity matrix */
 	pie_MatBegin();
 
@@ -2492,7 +2495,7 @@ static void	renderWallSection(STRUCTURE *psStructure)
 	int			structX, structY, height, ecmFlag = 0;
 	PIELIGHT		brightness;
 	SDWORD			rotation;
-	Vector3i			dv;
+	Vector3f			dv;
 	int				pieFlag, pieFlagData;
 	MAPTILE			*psTile = worldTile(psStructure->pos.x, psStructure->pos.y);
 
@@ -2507,13 +2510,13 @@ static void	renderWallSection(STRUCTURE *psStructure)
 	structX = psStructure->pos.x;
 	structY = psStructure->pos.y;
 
+	/* Establish where it is in the world */
+	dv.l_xz() = psStructure->pos.r_xy() - player.p.r_xz();
+	dv.y = map_Height(structX, structY);
+
 	brightness = structureBrightness(psStructure);
 	pie_SetShaderStretchDepth(psStructure->pos.z - psStructure->foundationDepth);
 
-	/* Establish where it is in the world */
-	dv.x = structX - player.p.x;
-	dv.z = structY - player.p.z;
-	dv.y = map_Height(structX, structY);
 
 	if (psStructure->pStructureType->type == REF_GATE && psStructure->state == SAS_OPEN)
 	{
@@ -2583,15 +2586,14 @@ static void	renderWallSection(STRUCTURE *psStructure)
 /// Draws a shadow under a droid
 void renderShadow( DROID *psDroid, iIMDShape *psShadowIMD )
 {
-	Vector3i dv;
+	Vector3f dv;
 
-	dv.x = psDroid->pos.x - player.p.x;
+	dv.l_xz() = psDroid->pos.r_xy() - player.p.r_xz();
+	dv.y = map_Height(psDroid->pos.x, psDroid->pos.y);
 	if(psDroid->droidType == DROID_TRANSPORTER)
 	{
 		dv.x -= bobTransporterHeight()/2;
 	}
-	dv.z = psDroid->pos.y - player.p.z;
-	dv.y = map_Height(psDroid->pos.x, psDroid->pos.y);
 
 	/* Push the indentity matrix */
 	pie_MatBegin();
@@ -3362,8 +3364,8 @@ SDWORD	xShift,yShift;
 	{
 		xShift = GN_X_OFFSET;  // yeah yeah, I know
 		yShift = GN_Y_OFFSET;
-		xShift = ((xShift*pie_GetResScalingFactor())/100);
-		yShift = ((yShift*pie_GetResScalingFactor())/100);
+		xShift = xShift*pie_GetResScalingFactor();
+		yShift = yShift*pie_GetResScalingFactor();
 		iV_DrawImage(IntImages,id,psDroid->sDisplay.screenX-xShift,psDroid->sDisplay.screenY+yShift);
 		if(id2!=UDWORD_MAX)
 		{
@@ -3432,8 +3434,8 @@ SDWORD	xShift,yShift, index;
 	{
 		xShift = GN_X_OFFSET;  // yeah yeah, I know
 		yShift = GN_Y_OFFSET;
-		xShift = ((xShift*pie_GetResScalingFactor())/100);
-		yShift = ((yShift*pie_GetResScalingFactor())/100);
+		xShift = xShift*pie_GetResScalingFactor();
+		yShift = yShift*pie_GetResScalingFactor();
 		iV_DrawImage(IntImages,id2,psDroid->sDisplay.screenX-xShift-6,psDroid->sDisplay.screenY+yShift);
 		iV_DrawImage(IntImages,id,psDroid->sDisplay.screenX-xShift,psDroid->sDisplay.screenY+yShift);
 	}
@@ -3478,46 +3480,81 @@ void calcScreenCoords(DROID *psDroid)
 	psDroid->sDisplay.screenR = radius;
 }
 
+/// Stores the screen coordinates of the transformed terrain tiles
+struct onScreenTile
+{
+	Vector3i px;
+	bool clipped;
+};
+static std::vector<onScreenTile> tileScreenInfo;
+
 /**
  * Find the tile the mouse is currently over
- * \pre tileScreenInfo data has been updated
- * \todo This is slow - speed it up
+ * \pre view matrix has been set such that world coords can be used
+ * \pre playerCam has been updated.
  */
 static void locateMouse(void)
 {
+	const Vector2f rounding(TILE_UNITS/2 + 0.5f, TILE_UNITS/2 + 0.5f);
+	Vector2i min = map_coord(Vector2f_To2i(playerCam.get2DAABB().getMin() - rounding));
+	Vector2i max = map_coord(Vector2f_To2i(playerCam.get2DAABB().getMax() + rounding));
 	Vector2i pt(mouseX(), mouseY());
 	int i, j;
-	unsigned idx, jdx;
-	Vector2i relativeTile;
+	Vector2i tileOffset(0,0); // initialized to appease warning.
 	QUAD match;
 	int nearestZ = INT_MAX;
 
-	// Intentionally not the same range as in drawTiles()
-	for (i = -visibleTiles.y/2, idx=0; i < visibleTiles.y/2; i++,++idx)
+	if (min.x >= mapWidth)	min.x = mapWidth-1;
+	else if (min.x < 0)		min.x = 0;
+	if (min.y >= mapHeight)	min.y = mapHeight-1;
+	else if (min.y < 0)		min.y = 0;
+	if (max.x >= mapWidth)	max.x = mapWidth-1;
+	else if (max.x < 0)		max.x = 0;
+	if (max.y >= mapHeight)	max.y = mapHeight-1;
+	else if (max.y < 0)		max.y = 0;
+
+	tileScreenInfo.clear();
+
+	for (i = min.y; i <= max.y; ++i)
 	{
-		for (j = -visibleTiles.x/2, jdx=0; j < visibleTiles.x/2; j++,++jdx)
+		for (j = min.x; j <= max.x; ++j)
 		{
-			const int tileZ = tileScreenInfo[idx][jdx].z;
-			const bool clipped = tileClippingInfo[idx+0][jdx+0]
-								&& tileClippingInfo[idx+0][jdx+1]
-								&& tileClippingInfo[idx+1][jdx+1]
-								&& tileClippingInfo[idx+1][jdx+0];
+			MAPTILE *psTile = mapTile(j, i);
+			Vector3f pos(world_coord(j), psTile->height * ELEVATION_SCALE, world_coord(i));
+			onScreenTile tile;
+			tile.clipped = pie_Project(pos, &tile.px);
+			tileScreenInfo.push_back(tile);
+		}
+	}
+
+	const int width = max.x - min.x + 1;
+	const int height = max.y - min.y + 1;
+	// Intentionally not the same range as above
+	for (i = 0; i < height-1; ++i)
+	{
+		for (j = 0; j < width-1; ++j)
+		{
+			const int tileZ = tileScreenInfo[width*i+j].px.z;
+			const bool clipped =   tileScreenInfo[width*(i+0) + j+0].clipped
+								&& tileScreenInfo[width*(i+0) + j+1].clipped
+								&& tileScreenInfo[width*(i+1) + j+0].clipped
+								&& tileScreenInfo[width*(i+1) + j+1].clipped;
 
 			if (tileZ >= 0 && !clipped && tileZ <= nearestZ)
 			{
 				QUAD quad;
 
-				quad.coords[0].x = tileScreenInfo[idx+0][jdx+0].x;
-				quad.coords[0].y = tileScreenInfo[idx+0][jdx+0].y;
+				quad.coords[0].x = tileScreenInfo[width*(i+0) + j+0].px.x;
+				quad.coords[0].y = tileScreenInfo[width*(i+0) + j+0].px.y;
 
-				quad.coords[1].x = tileScreenInfo[idx+0][jdx+1].x;
-				quad.coords[1].y = tileScreenInfo[idx+0][jdx+1].y;
+				quad.coords[1].x = tileScreenInfo[width*(i+0) + j+1].px.x;
+				quad.coords[1].y = tileScreenInfo[width*(i+0) + j+1].px.y;
 
-				quad.coords[2].x = tileScreenInfo[idx+1][jdx+1].x;
-				quad.coords[2].y = tileScreenInfo[idx+1][jdx+1].y;
+				quad.coords[3].x = tileScreenInfo[width*(i+1) + j+0].px.x;
+				quad.coords[3].y = tileScreenInfo[width*(i+1) + j+0].px.y;
 
-				quad.coords[3].x = tileScreenInfo[idx+1][jdx+0].x;
-				quad.coords[3].y = tileScreenInfo[idx+1][jdx+0].y;
+				quad.coords[2].x = tileScreenInfo[width*(i+1) + j+1].px.x;
+				quad.coords[2].y = tileScreenInfo[width*(i+1) + j+1].px.y;
 
 				/* We've got a match for our mouse coords */
 				if (inQuad(&pt, &quad))
@@ -3525,7 +3562,7 @@ static void locateMouse(void)
 					/* Store away match */
 					nearestZ = tileZ;
 					match = quad;
-					relativeTile = Vector2i(j, i);
+					tileOffset = Vector2i(j, i);
 				}
 			}
 		}
@@ -3539,17 +3576,7 @@ static void locateMouse(void)
 	else
 	{
 		mouseInQuad = match;
-
-		mousePos = Vector2i(player.p.x, player.p.z) + world_coord(relativeTile) + positionInQuad(pt, match);
-
-		if (mousePos.x < 0)
-			mousePos.x = 0;
-		else if (mousePos.x > world_coord(mapWidth-1))
-			mousePos.x = world_coord(mapWidth-1);
-		if (mousePos.y < 0)
-			mousePos.y = 0;
-		else if (mousePos.y > world_coord(mapHeight-1))
-			mousePos.y = world_coord(mapHeight-1);
+		mousePos = world_coord(min) + world_coord(tileOffset) + positionInQuad(pt, match);
 	}
 
 	mouseTileX = map_coord(mousePos.x);
@@ -4197,16 +4224,14 @@ static void addConstructionLine(DROID *psDroid, STRUCTURE *psStructure)
 	Vector3f *point, pts[3];
 	UDWORD	pointIndex;
 	SDWORD	realY;
-	Vector3i null, vec;
+	Vector3f vec;
 	PIELIGHT colour;
 
-	null.x = null.y = null.z = 0;
 	each.x = psDroid->pos.x;
 	each.z = psDroid->pos.y;
 	each.y = psDroid->pos.z + 24;
 
-	vec.x = each.x - player.p.x;
-	vec.z = each.z - player.p.z;
+	vec.l_xz() = each.r_xz() - player.p.r_xz();
 	vec.y = each.y;
 
 	pts[0] = vec;
@@ -4225,8 +4250,7 @@ static void addConstructionLine(DROID *psDroid, STRUCTURE *psStructure)
 		addEffect(&each,EFFECT_EXPLOSION,EXPLOSION_TYPE_SPECIFIED,true,getImdFromIndex(MI_PLASMA),0);
 	}
 
-	vec.x = each.x - player.p.x;
-	vec.z = each.z - player.p.z;
+	vec.l_xz() = each.r_xz() - player.p.r_xz();
 	vec.y = each.y;
 
 	pts[1] = vec;
@@ -4239,8 +4263,7 @@ static void addConstructionLine(DROID *psDroid, STRUCTURE *psStructure)
 	each.y = psStructure->pos.z + realY;
 	each.z = psStructure->pos.y - point->z;
 
-	vec.x = each.x - player.p.x;
-	vec.z = each.z - player.p.z;
+	vec.l_xz() = each.r_xz() - player.p.r_xz();
 	vec.y = each.y;
 
 	pts[2] = vec;

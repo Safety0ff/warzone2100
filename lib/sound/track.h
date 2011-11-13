@@ -96,7 +96,6 @@ void	sound_ReleaseTrack( TRACK * psTrack );
 
 void	sound_StopTrack( AUDIO_SAMPLE *psSample );
 void	sound_PauseTrack( AUDIO_SAMPLE *psSample );
-void	sound_UpdateSample( AUDIO_SAMPLE *psSample );
 void	sound_CheckAllUnloaded( void );
 void sound_RemoveActiveSample( AUDIO_SAMPLE *psSample );
 bool	sound_CheckTrack( SDWORD iTrack );
@@ -107,20 +106,15 @@ SDWORD	sound_GetTrackVolume( SDWORD iTrack );
 const char *	sound_GetTrackName( SDWORD iTrack );
 
 bool	sound_TrackLooped( SDWORD iTrack );
-void	sound_SetCallbackFunction( void * fn );
 
 bool	sound_Play2DTrack( AUDIO_SAMPLE *psSample, bool bQueued );
 bool	sound_Play3DTrack( AUDIO_SAMPLE *psSample );
-void	sound_PlayWithCallback( AUDIO_SAMPLE *psSample, SDWORD iCurTime, AUDIO_CALLBACK pDoneFunc );
 void	sound_FinishedCallback( AUDIO_SAMPLE *psSample );
 
 bool	sound_GetSystemActive( void );
 SDWORD	sound_GetTrackID( TRACK *psTrack );
 SDWORD	sound_GetAvailableID( void );
 SDWORD	sound_GetNumPlaying( SDWORD iTrack );
-
-SDWORD	sound_GetGlobalVolume( void );
-void	sound_SetGlobalVolume( SDWORD iVol );
 
 void	sound_SetStoppedCallback( AUDIO_CALLBACK pStopTrackCallback );
 

@@ -67,6 +67,8 @@ typedef Eigen::Vector4d Vector4;
 
 static int viewport[2][2];
 
+static Camera * cam;
+
 /*
  * A general perspective transformation
  * It is stored as the following
@@ -141,6 +143,9 @@ void pie_MatInit(void)
 
 	matrixStack.push(Affine3::Identity());
 	glLoadIdentity();
+
+	cam = NULL;
+
 #ifndef NDEBUG
 	current_is_perspective = false;
 #endif
@@ -152,6 +157,11 @@ void pie_SetViewport(int x, int y, int width, int height)
 	viewport[0][1] = width;
 	viewport[1][0] = y;
 	viewport[1][1] = height;
+}
+
+void pie_SetCamera(Camera * camera)
+{
+	cam = camera;
 }
 
 //*************************************************************************
@@ -183,6 +193,16 @@ void pie_MatEnd(void)
 void pie_MatIdentity(void)
 {
 	curMatrix = Affine3::Identity();
+}
+
+void pie_MatLoadView(Eye::ViewMatrixType viewMatType)
+{
+	float viewMat[4][4];
+	cam->getViewMatrix(viewMat, viewMatType);
+	glLoadMatrixf((float*)viewMat);
+	for (int c = 0; c < 4; ++c)
+		for (int r = 0; r < 3; ++r)
+			curMatrix.matrix()(r,c) = viewMat[c][r];
 }
 
 void pie_TRANSLATE(int32_t x, int32_t y, int32_t z)
@@ -450,7 +470,7 @@ bool pie_ProjectSphere(int32_t &radius, Vector3i *proj)
 	return clipped;
 }
 
-void pie_SetPerspectiveProj(void)
+void pie_SetPerspectiveProj()
 {
 	const float width = pie_GetVideoBufferWidth();
 	const float height = pie_GetVideoBufferHeight();
@@ -464,26 +484,25 @@ void pie_SetPerspectiveProj(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glFrustum(left, right, bottom, top, nearVal, farVal);
-	Proj.setAsglFrustum(left, right, bottom, top, nearVal, farVal);
 	glMatrixMode(GL_MODELVIEW);
+
+	Proj.setAsglFrustum(left, right, bottom, top, nearVal, farVal);
+	cam->setAsGlFrustum(left, right, bottom, top, nearVal, farVal);
+
 #ifndef NDEBUG
 	current_is_perspective = true;
 #endif
 }
 
-void pie_SetOrthoProj(bool originAtTheTop)
+void pie_SetOrthoProj(bool originAtTheTop, float nearDepth, float farDepth)
 {
 	const double left = 0.0;
 	const double right = pie_GetVideoBufferWidth();
 	const double bottom = originAtTheTop ? pie_GetVideoBufferHeight() : 0.0;
 	const double top = originAtTheTop ? 0.0 : pie_GetVideoBufferHeight();
-	// FIXME: Magic numbers is a guess for the upper bound of the depth of an object rendered at the origin
-	// in this mode. i.e. +-world_coord(3), 3 because of base width of the big buildings
-	const float nearVal = -128*(3);
-	const float farVal = 128*(3);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(left, right, bottom, top, nearVal, farVal);
+	glOrtho(left, right, bottom, top, nearDepth, farDepth);
 	glMatrixMode(GL_MODELVIEW);
 #ifndef NDEBUG
 	current_is_perspective = false;

@@ -650,7 +650,7 @@ static void pie_DrawShadows(void)
 	glStencilFunc(GL_LESS, 0, ~0);
 	glColor4f(0, 0, 0, 0.5);
 
-	pie_SetOrthoProj(true);
+	pie_SetOrthoProj(true, -1, 1);
 	glLoadIdentity();
 	glDisable(GL_DEPTH_TEST);
 	glBegin(GL_TRIANGLE_STRIP);

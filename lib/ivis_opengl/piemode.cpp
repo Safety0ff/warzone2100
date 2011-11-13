@@ -116,12 +116,12 @@ void pie_ScreenFlip(int clearMode)
 }
 
 /***************************************************************************/
-UDWORD	pie_GetResScalingFactor(void)
+float pie_GetResScalingFactor(void)
 {
 	if (pie_GetVideoBufferWidth() * 4 > pie_GetVideoBufferHeight() * 5) {
-		return pie_GetVideoBufferHeight()*5/4/6;
+		return pie_GetVideoBufferHeight()*5/4/6/100.f;
 	} else {
-		return pie_GetVideoBufferWidth()/6;
+		return pie_GetVideoBufferWidth()/6/100.f;
 	}
 }
 
