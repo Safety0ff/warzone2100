@@ -25,6 +25,7 @@
 #include "display3ddef.h"	// This should be the only place including this file
 #include "lib/ivis_opengl/pietypes.h"
 #include "lib/ivis_opengl/piedef.h"
+#include "lib/ivis_opengl/camera.h"
 #include "objectdef.h"
 #include "message.h"
 
@@ -124,6 +125,31 @@ extern UDWORD  getDroidRankGraphic(DROID *psDroid);
 
 /* Visualize radius at position */
 extern void showRangeAtPos(SDWORD centerX, SDWORD centerY, SDWORD radius);
+
+class MAPTILE;
+class VisibleTileIterator
+{
+	MAPTILE* psTile;
+	Vector2i min, max;
+	int x, y;
+	void inc();
+	void dec();
+public:
+	VisibleTileIterator(Camera const &cam);
+	VisibleTileIterator() : psTile(NULL) {}
+	inline VisibleTileIterator& operator++()	{ inc(); return *this; }
+	inline VisibleTileIterator operator++(int)	{ inc(); return *this; }
+	inline VisibleTileIterator& operator--()	{ dec(); return *this; }
+	inline VisibleTileIterator operator--(int)	{ dec(); return *this; }
+	inline MAPTILE *operator->()	const		{ return psTile; }
+	inline MAPTILE& operator*()		const		{ return *psTile;}
+	inline operator MAPTILE*()		const		{ return psTile; }
+	inline operator bool()			const		{ return psTile; }
+	inline bool valid ()			const		{ return psTile; }
+	inline Vector2i tileCoords()	const		{ return Vector2i(x,y); }
+	inline Vector2i getMin()		const		{ return min; }
+	inline Vector2i getMax()		const		{ return max; }
+};
 
 #define	BASE_MUZZLE_FLASH_DURATION	(GAME_TICKS_PER_SEC/10)
 #define	EFFECT_MUZZLE_ADDITIVE		128

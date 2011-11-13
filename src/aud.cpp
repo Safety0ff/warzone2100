@@ -54,11 +54,7 @@ bool audio_ObjectDead(SIMPLE_OBJECT *psSimpleObj)
 
 Vector3f audio_GetPlayerPos(void)
 {
-	Vector3f pos;
-
-	pos.x = player.p.x;
-	pos.y = player.p.z;
-	pos.z = player.p.y;
+	Vector3f pos = swapYZ(player.p);
 
 	// Invert Y to match QSOUND axes
 	// @NOTE What is QSOUND? Why invert the Y axis?

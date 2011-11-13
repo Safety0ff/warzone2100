@@ -165,9 +165,9 @@ static inline WZ_DECL_PURE float operator *(Vector2f const &a, Vector2f const &b
 static inline WZ_DECL_PURE int   operator *(Vector3i const &a, Vector3i const &b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
 static inline WZ_DECL_PURE float operator *(Vector3f const &a, Vector3f const &b) { return a.x*b.x + a.y*b.y + a.z*b.z; }
 
-// normalise(vector) -> scalar
-static inline WZ_DECL_PURE Vector2f normalise(Vector2f const &a) { float sq = a*a; if (sq == 0.0f) return Vector2f(0.0f, 0.0f);       return a / sqrtf(sq); }
-static inline WZ_DECL_PURE Vector3f normalise(Vector3f const &a) { float sq = a*a; if (sq == 0.0f) return Vector3f(0.0f, 0.0f, 0.0f); return a / sqrtf(sq); }
+// normalize(vector) -> scalar
+static inline WZ_DECL_PURE Vector2f normalize(Vector2f const &a) { float sq = a*a; if (sq == 0.0f) return Vector2f(0.0f, 0.0f);       return a / sqrtf(sq); }
+static inline WZ_DECL_PURE Vector3f normalize(Vector3f const &a) { float sq = a*a; if (sq == 0.0f) return Vector3f(0.0f, 0.0f, 0.0f); return a / sqrtf(sq); }
 
 // iSinCosR(angle, scalar) -> 2d_vector
 static inline WZ_DECL_PURE Vector2i iSinCosR(uint16_t a, int32_t r) { return Vector2i(iSinR(a, r), iCosR(a, r)); }
@@ -183,9 +183,16 @@ static inline WZ_DECL_PURE int iHypot(Vector3i const &a) { return iHypot3(a.x, a
 static inline WZ_DECL_PURE Vector3i swapYZ(Vector3i a) { return Vector3i(a.x, a.z, a.y); }
 static inline WZ_DECL_PURE Vector3f swapYZ(Vector3f a) { return Vector3f(a.x, a.z, a.y); }
 
-// vector × vector -> scalar
+// vector × vector -> vector
 static inline WZ_DECL_PURE Vector3i crossProduct(Vector3i const &a, Vector3i const &b) { return Vector3i(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x); }
 static inline WZ_DECL_PURE Vector3f crossProduct(Vector3f const &a, Vector3f const &b) { return Vector3f(a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x); }
+
+// vector * ( vector × vector ) -> scalar
+static inline WZ_DECL_PURE float scalarTripleProduct(Vector3f const &a, Vector3f const &b, Vector3f const &c) { return a*crossProduct(b, c); }
+
+// project(v,u) -> project v onto u
+static inline WZ_DECL_PURE Vector2f project(Vector2f const &v, Vector2f const &u) { return u*(v*u)/(u*u); }
+static inline WZ_DECL_PURE Vector3f project(Vector3f const &v, Vector3f const &u) { return u*(v*u)/(u*u); }
 
 // vector += vector
 static inline Vector2i const &operator +=(Vector2i &a, Vector2i const &b) { return a = a + b; }
@@ -199,6 +206,19 @@ static inline Vector2f const &operator -=(Vector2f &a, Vector2f const &b) { retu
 static inline Vector3i const &operator -=(Vector3i &a, Vector3i const &b) { return a = a - b; }
 static inline Vector3f const &operator -=(Vector3f &a, Vector3f const &b) { return a = a - b; }
 
+/*!
+ * Convert a float vector to integer
+ * \param v Vector to convert
+ * \return Float vector
+ */
+static inline WZ_DECL_CONST Vector2i Vector2f_To2i(const Vector2f v)
+{
+	return Vector2i((int)v.x, (int)v.y);
+}
+static inline WZ_DECL_CONST Vector3i Vector3f_To3i(const Vector3f v)
+{
+	return Vector3i((int)v.x, (int)v.y, (int)v.z);
+}
 
 /*!
  * Rotate v

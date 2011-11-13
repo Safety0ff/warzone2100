@@ -28,6 +28,8 @@
 
 #include "wzglobal.h"
 
+#include "lib/framework/types.h"
+
 //! PSX-style float emulation: 12 digit semi-floats stored in an int
 // FIXME!
 #define FP12_SHIFT 12
@@ -48,5 +50,7 @@ static inline WZ_DECL_CONST float UNDEG(uint16_t angle) { return angle * (360 / 
 
 // fixed * pi / 2^15
 #define FP2RAD(fixed) ((fixed)* 0.00009587379924285258)
+
+#define RAD2FP(rad) ((rad) * 10430.37835047045272495834)
 
 #endif // FIXEDPOINT_H

@@ -126,7 +126,10 @@ void rayCast(Vector2i src, Vector2i dst, RAY_CALLBACK callback, void *data)
 }
 
 //-----------------------------------------------------------------------------------
-/* Will return false when we've hit the edge of the grid */
+/* Will return false when we've hit the edge of the grid
+ * WARNING: Depends on display state and is not deterministic, use only
+ * for display purposes.
+ */
 static bool getTileHeightCallback(Vector2i pos, int32_t dist, void *data)
 {
 	HeightCallbackHelp_t *help = (HeightCallbackHelp_t *)data;

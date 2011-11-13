@@ -429,10 +429,10 @@ void initEffectsSystem(void)
 static void positionEffect(const EFFECT *psEffect)
 {
 	/* Establish world position */
-	Vector3i dv(
+	Vector3f dv(
 		psEffect->position.x - player.p.x,
 		psEffect->position.y,
-		psEffect->position.z - player.p.z
+		psEffect->position.z -  player.p.z
 	);
 
 	/* Push the indentity matrix */
