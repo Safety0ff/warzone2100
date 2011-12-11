@@ -1,15 +1,7 @@
 todos:
 ------
-* Switch the eigen matrix format to 4x4 single precision floats
-	Rationale:
-		- Since replacing querying opengl with retrieving the matrix from the stack, it will save any conversion overhead (i.e. the conversion from 4x3 double to 4x4 float)
-		- Consideration for 32 bit computers
-
-* Use the basis vectors of the camera in the "sphere project" function instead of the Z unit vector (i.e. Either U, R, or a linear combination (U+R)/2, where U and R are vectors. Note: U and R are coplanar with the view screen and in the world coordinate frame). The idea behind this is that it will cause the returned circle to have a radius which lies somewhere between the minimum and maximum dimension of the actual perspective projection of the sphere (which is good enough for what we need).
 
 * Make the far plane distance dynamic, so that using a precise frustum representation for culling, etc, is actually effective, we must use a resonably sized frustum! The current hardcoded value is for a huge frustum! It should be dynamic to take into account zoom: Z = zoom + length of vector colinear with forward vector which also intersects with XY plane + some constant for gui + skybox consideration/factor.
-
- * Implied todo: Undo changes which changed depth value variables (i.e. ) from float to int, because the range is dynamic, it is easier to simply use floats. Also, to reiterate, graphics code should not be used for game state, so graphics code not being deterministic is not the problem, game state code using gfx stuff is the problem!
 
 * Pass a (const reference) of the camera object around to all the rendering functions so that they can set the appropriate offset (i.e. for camera relative rendering)
 

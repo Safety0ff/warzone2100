@@ -48,7 +48,7 @@ struct BUCKET_TAG
 
 	RENDER_TYPE     objectType; //type of object held
 	void *          pObject;    //pointer to the object
-	int32_t         actualZ;
+	float           actualZ;
 };
 
 static std::vector<BUCKET_TAG> bucketArray;
@@ -56,7 +56,7 @@ static std::vector<BUCKET_TAG> bucketArray;
 static SDWORD bucketCalculateZ(RENDER_TYPE objectType, void* pObject)
 {
 	SDWORD				radius;
-	Vector3i			pixel;
+	Vector3f			pixel;
 	Vector3f			position;
 	DROID				*psDroid;
 	BODY_STATS			*psBStats;
