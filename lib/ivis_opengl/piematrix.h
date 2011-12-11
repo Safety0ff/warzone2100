@@ -80,16 +80,18 @@ extern void pie_MatLoadView(Eye::ViewMatrixType viewMatType);
 // Note: They are only for use with perspective projection!
 // The y coordinate of the screen position is given in terms of a top left origin
 
-extern bool pie_Project(Vector3f const &obj, Vector3i *proj);
-extern bool pie_Project(Vector3i *proj); // Overload optimized for projecting the origin
+extern bool pie_Project(Vector3f const &obj, Vector3f *proj);
+extern bool pie_Project(Vector3f *proj); // Overload optimized for projecting the origin
 
 /** An approximation for the perspective projection of a sphere onto the screen
  * This approximates the ellipse that would result to a circle.
  * Note: the approximation will be somewhat arbitrary but it's better than using a hack
  * Radius is a input and output parameter.
+ * obj parameter is assumed to be coordinates at the bottom of the sphere.
  */
-extern bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3i *proj);
-extern bool pie_ProjectSphere(int32_t &radius, Vector3i *proj); // Overload optimized for projecting the origin
+extern bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3f *proj);
+// Overload optimized for projecting the origin (assumes the matrix is set to some local reference frame.)
+extern bool pie_ProjectSphere(int32_t &radius, Vector3f *proj);
 
 //*************************************************************************
 // Projection matrix functions

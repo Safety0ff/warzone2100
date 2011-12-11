@@ -47,12 +47,8 @@
 
 #define MATRIX_MAX 8
 
-/**
- * 3x4 matrix, that's used as a 4x4 matrix with the last row containing
- * [ 0 0 0 1 ].
- */
-typedef double MatScalarType;
-typedef Eigen::Transform<MatScalarType, 3, Eigen::AffineCompact> Affine3;
+typedef float MatScalarType;
+typedef Eigen::Transform<MatScalarType, 3, Eigen::Affine> Affine3;
 typedef Affine3::VectorType Vector3;
 
 typedef std::vector<Affine3, Eigen::aligned_allocator<Affine3> > stdVectorAffine3;
@@ -61,9 +57,8 @@ typedef std::vector<Affine3, Eigen::aligned_allocator<Affine3> > stdVectorAffine
 static std::stack<Affine3, stdVectorAffine3> matrixStack;
 
 #define curMatrix matrixStack.top()
-#define curMatrixAs4x4 Eigen::Transform<MatScalarType,3, Eigen::Affine>(curMatrix).matrix()
 
-typedef Eigen::Vector4d Vector4;
+typedef Eigen::Vector4f Vector4;
 
 static int viewport[2][2];
 
@@ -350,7 +345,7 @@ void pie_MatRotX(uint16_t x)
  * \param[out] v3d  resulting 2D vector + depth in a 3D vector
  * \return Whether the vertice is outside the clipping planes.
  */
-bool pie_Project(Vector3f const &obj, Vector3i *proj)
+bool pie_Project(Vector3f const &obj, Vector3f *proj)
 {
 #ifndef NDEBUG
 	ASSERT(current_is_perspective, "called in orthographic projection mode.");
@@ -388,17 +383,12 @@ bool pie_Project(Vector3f const &obj, Vector3i *proj)
 	// Map to window coords
 	proj->x = v.x() * viewport[0][1] + viewport[0][0];
 	proj->y = v.y() * viewport[1][1] + viewport[1][0];
-	proj->z = v.z() * MAX_Z;
-	/*
-	 * Though the multiplication by MAX_Z is a workaround
-	 * it should be consistent with what people have assumed about the depth values.
-	 * This is so that the float->int conversion doesn't kill the [0-1] depth.
-	 */
+	proj->z = v.z();
 
 	return clipped;
 }
 
-bool pie_Project(Vector3i *proj)
+bool pie_Project(Vector3f *proj)
 {
 	// See other pie_Project for comments.
 #ifndef NDEBUG
@@ -417,29 +407,30 @@ bool pie_Project(Vector3i *proj)
 	v.z() = v.z() * 0.5 + 0.5;
 	proj->x = v.x() * viewport[0][1] + viewport[0][0];
 	proj->y = v.y() * viewport[1][1] + viewport[1][0];
-	proj->z = v.z() * MAX_Z;
+	proj->z = v.z();
 	return clipped;
 }
 
-bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3i *proj)
+bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3f *proj)
 {
 	Vector3f ptOnSphere = obj;
-	Vector3i ptOnSphereProj;
+	Vector3f ptOnSphereProj;
 	bool clipped;
 
 #ifndef NDEBUG
 	ASSERT(current_is_perspective, "called in orthographic projection mode.");
 #endif
 
-	ptOnSphere.y += radius;
+	ptOnSphere.y += radius; // Because we assume obj is the bottom, add radius to get to center
 	clipped = pie_Project(ptOnSphere, proj);
 	if (!clipped)
 	{
-		/* For now just take the point on the bottom of the sphere
-		 * this can be changed later to be something more meaningful (such as the min or max radius)
+		/* Use the camera's vectors to get something that will be somewhere
+		 * in between the min and max radius (such as the min or max radius).
 		 */
-		pie_Project(obj, &ptOnSphereProj);
-		radius = iHypot(ptOnSphereProj.r_xy() - proj->r_xy());
+		pie_Project(ptOnSphere+(cam->getEyeU()+cam->getEyeL())*radius/2, &ptOnSphereProj);
+		Vector2f hypotTmp = ptOnSphereProj.r_xy() - proj->r_xy();
+		radius = sqrt(hypotTmp*hypotTmp);
 	}
 	else
 	{
@@ -447,11 +438,11 @@ bool pie_ProjectSphere(Vector3f const &obj, int32_t &radius, Vector3i *proj)
 	}
 	return clipped;
 }
-bool pie_ProjectSphere(int32_t &radius, Vector3i *proj)
+bool pie_ProjectSphere(int32_t &radius, Vector3f *proj)
 {
 	// See other pie_ProjectSphere for comments.
 	Vector3f ptOnSphere(0,radius,0);
-	Vector3i ptOnSphereProj;
+	Vector3f ptOnSphereProj;
 	bool clipped;
 #ifndef NDEBUG
 	ASSERT(current_is_perspective, "called in orthographic projection mode.");
@@ -460,8 +451,12 @@ bool pie_ProjectSphere(int32_t &radius, Vector3i *proj)
 	clipped = pie_Project(proj);
 	if (!clipped)
 	{
+		/* We have no idea where the min of max are since we're in some local frame
+		 * So this is close to the best we can do considering all factors..
+		 */
 		pie_Project(ptOnSphere, &ptOnSphereProj);
-		radius = iHypot(ptOnSphereProj.r_xy() - proj->r_xy());
+		Vector2f hypotTmp = ptOnSphereProj.r_xy() - proj->r_xy();
+		radius = sqrt(hypotTmp*hypotTmp);
 	}
 	else
 	{
@@ -511,7 +506,5 @@ void pie_SetOrthoProj(bool originAtTheTop, float nearDepth, float farDepth)
 
 void pie_GetModelViewMatrix(float * const mat)
 {
-	const Eigen::Transform<float,3, Eigen::Affine>::MatrixType
-	MV (curMatrixAs4x4.cast<float>());
-	memcpy(mat, MV.data(), 16*sizeof(float));
+	memcpy(mat, curMatrix.data(), 16*sizeof(float));
 }

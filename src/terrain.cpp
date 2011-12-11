@@ -1113,40 +1113,9 @@ void drawTerrain(Camera const & cam)
 			{
 				const PIELIGHT colour = getTileColour(i, j);
 
-				// I disabled edge fade since it looks bad because it is based off the AABB (dynamic)
-// 				if (pie_GetFogStatus())
-// 				{
-					lightmapSubTex.push_back(colour.byte.r);
-					lightmapSubTex.push_back(colour.byte.g);
-					lightmapSubTex.push_back(colour.byte.b);
-// 				}
-// 				else
-// 				{
-// 					// fade to black at the edges of the visible terrain area
-// 					const float distA = i-min.x;
-// 					const float distB = max.x-i;
-// 					const float distC = j-min.y;
-// 					const float distD = max.y-j;
-// 					float darken, distToEdge;
-//
-// 					// calculate the distance to the closest edge of the visible map
-// 					// determine the smallest distance
-// 					distToEdge = distA;
-// 					if (distB < distToEdge) distToEdge = distB;
-// 					if (distC < distToEdge) distToEdge = distC;
-// 					if (distD < distToEdge) distToEdge = distD;
-//
-// 					darken = (distToEdge)/2.0f;
-// 					if (darken <= 0)
-// 					{
-// 					}
-// 					else if (darken < 1)
-// 					{
-// 					}
-// 					else
-// 					{
-// 					}
-// 				}
+				lightmapSubTex.push_back(colour.byte.r);
+				lightmapSubTex.push_back(colour.byte.g);
+				lightmapSubTex.push_back(colour.byte.b);
 			}
 		}
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
