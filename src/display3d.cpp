@@ -730,6 +730,25 @@ void draw3DScene( void )
 	// draw terrain
 	displayTerrain();
 
+	// BEGIN - DELETE ME DEBUG
+#if 0
+	pie_SetRendMode(REND_OPAQUE);
+	pie_SetTexturePage(TEXPAGE_NONE);
+	pie_SetAlphaTest(false);
+	glDisable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	pie_SetDepthBufferStatus(DEPTH_CMP_ALWAYS_WRT_OFF);
+	glColor3f(0.707f, 0.707f, 0.f);
+	glBegin(GL_QUADS);
+		glVertex2f(mouseInQuad.coords[0].x, mouseInQuad.coords[0].y);
+		glVertex2f(mouseInQuad.coords[1].x, mouseInQuad.coords[1].y);
+		glVertex2f(mouseInQuad.coords[2].x, mouseInQuad.coords[2].y);
+		glVertex2f(mouseInQuad.coords[3].x, mouseInQuad.coords[3].y);
+	glEnd();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
+	glEnable(GL_CULL_FACE);
+#endif
 	pie_BeginInterface();
 	drawDroidSelections();
 
@@ -1072,7 +1091,7 @@ static void drawTiles(void)
 	pie_SetRendMode(REND_ALPHA);
 	glEnable(GL_POINT_SMOOTH);
 	glBegin(GL_POINTS);
-	glVertex3f(mousePos.x, 0.f, mousePos.y);
+	glVertex3f(mousePos.x, map_Height(Vector2f_To2i(mousePos)), mousePos.y);
 	glEnd();
 	glColor3f(1.f, 1.f, 1.f);
 	pie_SetDepthBufferStatus(DEPTH_CMP_LEQ_WRT_ON);
@@ -3503,7 +3522,7 @@ static void locateMouse(void)
 		for (j = min.x; j <= max.x; ++j)
 		{
 			MAPTILE *psTile = mapTile(j, i);
-			Vector3f pos(world_coord(j), psTile->height * ELEVATION_SCALE, world_coord(i));
+			Vector3f pos(world_coord(j), psTile->height, world_coord(i));
 			onScreenTile tile;
 			Vector3f px = tile.px;
 			tile.clipped = pie_Project(pos, &px);
