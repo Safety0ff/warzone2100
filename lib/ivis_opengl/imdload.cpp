@@ -246,11 +246,11 @@ static bool _imd_load_points( const char **ppFileData, iIMDShape *s )
 		return false;
 	}
 
-	s->max.x = s->max.y = s->max.z = -FP12_MULTIPLIER;
-	s->min.x = s->min.y = s->min.z = FP12_MULTIPLIER;
+	s->max.x = s->max.y = s->max.z = -INT_MAX;
+	s->min.x = s->min.y = s->min.z = INT_MAX;
 
-	vxmax.x = vymax.y = vzmax.z = -FP12_MULTIPLIER;
-	vxmin.x = vymin.y = vzmin.z = FP12_MULTIPLIER;
+	vxmax.x = vymax.y = vzmax.z = -INT_MAX;
+	vxmin.x = vymin.y = vzmin.z = INT_MAX;
 
 	// set up bounding data for minimum number of vertices
 	for (p = s->points; p < s->points + s->npoints; p++)
@@ -507,15 +507,19 @@ static iIMDShape *_imd_load_level(const char **ppFileData, const char *FileDataE
 	s->tcmaskpage = iV_TEX_INVALID;
 	s->normalpage = iV_TEX_INVALID;
 	memset(s->material, 0, sizeof(s->material));
-	s->material[LIGHT_AMBIENT][3] = 1.0f;
-	s->material[LIGHT_DIFFUSE][3] = 1.0f;
-	s->material[LIGHT_SPECULAR][3] = 1.0f;
+	s->material[MAT_AMBIENT][3] = 1.0f;
+	s->material[MAT_DIFFUSE][3] = 1.0f;
+	s->material[MAT_SPECULAR][3] = 1.0f;
+	s->material[MAT_EMISSIVE][0] = 0.0f;
+	s->material[MAT_EMISSIVE][1] = 0.0f;
+	s->material[MAT_EMISSIVE][2] = 0.0f;
+	s->material[MAT_EMISSIVE][3] = 1.0f;
 	if (strcmp(buffer, "MATERIALS") == 0)
 	{
 		i = sscanf(pFileData, "%255s %f %f %f %f %f %f %f %f %f %f%n", buffer,
-		           &s->material[LIGHT_AMBIENT][0], &s->material[LIGHT_AMBIENT][1], &s->material[LIGHT_AMBIENT][2],
-		           &s->material[LIGHT_DIFFUSE][0], &s->material[LIGHT_DIFFUSE][1], &s->material[LIGHT_DIFFUSE][2],
-	                   &s->material[LIGHT_SPECULAR][0], &s->material[LIGHT_SPECULAR][1], &s->material[LIGHT_SPECULAR][2],
+		           &s->material[MAT_AMBIENT][0], &s->material[MAT_AMBIENT][1], &s->material[MAT_AMBIENT][2],
+		           &s->material[MAT_DIFFUSE][0], &s->material[MAT_DIFFUSE][1], &s->material[MAT_DIFFUSE][2],
+	                   &s->material[MAT_SPECULAR][0], &s->material[MAT_SPECULAR][1], &s->material[MAT_SPECULAR][2],
 		           &s->shininess, &cnt);
 		ASSERT_OR_RETURN(NULL, i == 11, "Bad MATERIALS directive");
 		pFileData += cnt;
@@ -523,15 +527,16 @@ static iIMDShape *_imd_load_level(const char **ppFileData, const char *FileDataE
 	else
 	{
 		// Set default values
-		s->material[LIGHT_AMBIENT][0] = 1.0f;
-		s->material[LIGHT_AMBIENT][1] = 1.0f;
-		s->material[LIGHT_AMBIENT][2] = 1.0f;
-		s->material[LIGHT_DIFFUSE][0] = 1.0f;
-		s->material[LIGHT_DIFFUSE][1] = 1.0f;
-		s->material[LIGHT_DIFFUSE][2] = 1.0f;
-		s->material[LIGHT_SPECULAR][0] = 1.0f;
-		s->material[LIGHT_SPECULAR][1] = 1.0f;
-		s->material[LIGHT_SPECULAR][2] = 1.0f;
+		s->material[MAT_AMBIENT][0] = 1.0f;
+		s->material[MAT_AMBIENT][1] = 1.0f;
+		s->material[MAT_AMBIENT][2] = 1.0f;
+		s->material[MAT_DIFFUSE][0] = 1.0f;
+		s->material[MAT_DIFFUSE][1] = 1.0f;
+		s->material[MAT_DIFFUSE][2] = 1.0f;
+		s->material[MAT_SPECULAR][0] = 1.0f;
+		s->material[MAT_SPECULAR][1] = 1.0f;
+		s->material[MAT_SPECULAR][2] = 1.0f;
+
 		s->shininess = 10;
 		pFileData = pTmp;
 	}

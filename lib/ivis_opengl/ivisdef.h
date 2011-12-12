@@ -99,7 +99,7 @@ struct iIMDShape
 
 	unsigned int nShadowEdges;
 	EDGE *shadowEdgeList;
-	float material[LIGHT_MAX][4];
+	float material[MAT_MAX][4];
 	float shininess;
 
 	iIMDShape *next;  // next pie in multilevel pies (NULL for non multilevel !)

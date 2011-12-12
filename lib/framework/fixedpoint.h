@@ -30,12 +30,6 @@
 
 #include "lib/framework/types.h"
 
-//! PSX-style float emulation: 12 digit semi-floats stored in an int
-// FIXME!
-#define FP12_SHIFT 12
-#define FP12_MULTIPLIER (1 << FP12_SHIFT)
-
-
 /*
  *	Global Definitions (CONSTANTS)
  */

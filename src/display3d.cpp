@@ -1003,10 +1003,6 @@ static void drawTiles(void)
 	/* Translate (note: rendering with x and z relative) */
 	pie_TRANSLATE(0, -player.p.y, 0);
 
-	// this also detemines the length of the shadows
-	theSun = getTheSun();
-	pie_BeginLighting(&theSun, getDrawShadows());
-
 	// and update the fog of war... FIXME: Remove this
 	VisibleTileIterator visIt(playerCam);
 	while (visIt.valid())
@@ -1030,6 +1026,9 @@ static void drawTiles(void)
 	pie_TRANSLATE(-player.p.x, 0, -player.p.z);
 
 	locateMouse();
+
+	theSun = getTheSun();
+	pie_BeginLighting(&theSun, getDrawShadows());
 
 	// and draw it
 	drawTerrain(playerCam);
