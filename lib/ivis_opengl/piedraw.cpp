@@ -58,7 +58,8 @@
 static unsigned int pieCount = 0;
 static unsigned int polyCount = 0;
 static bool shadows = false;
-static GLfloat lighting0[LIGHT_MAX][4] = {{0.0f, 0.0f, 0.0f, 1.0f},  {0.5f, 0.5f, 0.5f, 1.0f},  {0.8f, 0.8f, 0.8f, 1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}};
+static GLfloat lighting0[LIGHT_MAX][4] = { {0.5f, 0.5f, 0.5f, 1.0f},  {0.8f, 0.8f, 0.8f, 1.0f},  {1.0f, 1.0f, 1.0f, 1.0f}};
+static GLfloat lightingGlobalAmbient[4] = {0.4f, 0.4f, 0.4f, 1.0f};
 
 /*
  *	Source
@@ -72,11 +73,19 @@ void pie_Lighting0(LIGHTING_TYPE entry, float value[4])
 	lighting0[entry][3] = value[3];
 }
 
+void pie_LightingGlobal(float value[4])
+{
+	lightingGlobalAmbient[0] = value[0];
+	lightingGlobalAmbient[0] = value[1];
+	lightingGlobalAmbient[0] = value[2];
+	lightingGlobalAmbient[0] = value[3];
+}
+
 void pie_BeginLighting(const Vector3f *light, bool drawshadows)
 {
 	const float pos[4] = {light->x, light->y, light->z, 0.0f};
 
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lighting0[LIGHT_EMISSIVE]);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lightingGlobalAmbient);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, lighting0[LIGHT_AMBIENT]);
@@ -192,11 +201,11 @@ static void pie_Draw3DShape2(iIMDShape *shape, int frame, PIELIGHT colour, PIELI
 
 	if (light)
 	{
-		glMaterialfv(GL_FRONT, GL_AMBIENT, shape->material[LIGHT_AMBIENT]);
-		glMaterialfv(GL_FRONT, GL_DIFFUSE, shape->material[LIGHT_DIFFUSE]);
-		glMaterialfv(GL_FRONT, GL_SPECULAR, shape->material[LIGHT_SPECULAR]);
+		glMaterialfv(GL_FRONT, GL_AMBIENT, shape->material[MAT_AMBIENT]);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, shape->material[MAT_DIFFUSE]);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, shape->material[MAT_SPECULAR]);
 		glMaterialf(GL_FRONT, GL_SHININESS, shape->shininess);
-		glMaterialfv(GL_FRONT, GL_EMISSION, shape->material[LIGHT_EMISSIVE]);
+		glMaterialfv(GL_FRONT, GL_EMISSION, shape->material[MAT_EMISSIVE]);
 		if (shaders)
 		{
 			pie_ActivateShader(SHADER_COMPONENT, shape, teamcolour, colour);
@@ -506,7 +515,7 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int
 		{
 			if(pieFlag & pie_SHADOW || pieFlag & pie_STATIC_SHADOW)
 			{
-				float distance;
+				float distanceSq;
 
 				// draw a shadow
 				if (scshapes_size <= nb_scshapes)
@@ -526,13 +535,13 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int
 					}
 				}
 
-				glGetFloatv(GL_MODELVIEW_MATRIX, scshapes[nb_scshapes].matrix);
-				distance = scshapes[nb_scshapes].matrix[12] * scshapes[nb_scshapes].matrix[12];
-				distance += scshapes[nb_scshapes].matrix[13] * scshapes[nb_scshapes].matrix[13];
-				distance += scshapes[nb_scshapes].matrix[14] * scshapes[nb_scshapes].matrix[14];
+				pie_GetModelViewMatrix(scshapes[nb_scshapes].matrix);
+				distanceSq = scshapes[nb_scshapes].matrix[12] * scshapes[nb_scshapes].matrix[12];
+				distanceSq += scshapes[nb_scshapes].matrix[13] * scshapes[nb_scshapes].matrix[13];
+				distanceSq += scshapes[nb_scshapes].matrix[14] * scshapes[nb_scshapes].matrix[14];
 
 				// if object is too far in the fog don't generate a shadow.
-				if (distance < SHADOW_END_DISTANCE)
+				if (distanceSq < SHADOW_END_DISTANCE)
 				{
 					float invmat[9], pos_light0[4];
 
@@ -540,9 +549,13 @@ void pie_Draw3DShape(iIMDShape *shape, int frame, int team, PIELIGHT colour, int
 
 					// Calculate the light position relative to the object
 					glGetLightfv(GL_LIGHT0, GL_POSITION, pos_light0);
+
 					scshapes[nb_scshapes].light.x = invmat[0] * pos_light0[0] + invmat[3] * pos_light0[1] + invmat[6] * pos_light0[2];
 					scshapes[nb_scshapes].light.y = invmat[1] * pos_light0[0] + invmat[4] * pos_light0[1] + invmat[7] * pos_light0[2];
 					scshapes[nb_scshapes].light.z = invmat[2] * pos_light0[0] + invmat[5] * pos_light0[1] + invmat[8] * pos_light0[2];
+
+					// Magic number is a large number such that shadow volume is large enough to shadow all occludees
+					scshapes[nb_scshapes].light = scshapes[nb_scshapes].light * 1024;
 
 					scshapes[nb_scshapes].shape = shape;
 					scshapes[nb_scshapes].flag = pieFlag;
