@@ -518,6 +518,8 @@
 		43AA704413C7FD570015B52B /* QJson.framework in Copy frameworks */ = {isa = PBXBuildFile; fileRef = 43AA702A13C7FC640015B52B /* QJson.framework */; };
 		43B8F285127C8F9D006F5A13 /* crc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43B8F282127C8F9D006F5A13 /* crc.cpp */; };
 		43B8F288127C8FDD006F5A13 /* netqueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43B8F286127C8FDD006F5A13 /* netqueue.cpp */; };
+		43B8F5F71489DB05009F7C51 /* ba2d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43B8F5F01489DB04009F7C51 /* ba2d.cpp */; };
+		43B8F5F81489DB05009F7C51 /* camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43B8F5F21489DB05009F7C51 /* camera.cpp */; };
 		43B8FC9A127CB06C006F5A13 /* Zlib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 02356D830BD3BB4100E9A019 /* Zlib.framework */; };
 		43B8FCB7127CB072006F5A13 /* PhysFS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 02DDA8B10BD3C2F20049AB60 /* PhysFS.framework */; };
 		43B8FCB8127CB07C006F5A13 /* Png.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 02356DC20BD3BBFC00E9A019 /* Png.framework */; };
@@ -1844,6 +1846,13 @@
 		43B8F284127C8F9D006F5A13 /* opengl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = opengl.h; path = ../lib/framework/opengl.h; sourceTree = SOURCE_ROOT; };
 		43B8F286127C8FDD006F5A13 /* netqueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = netqueue.cpp; path = ../lib/netplay/netqueue.cpp; sourceTree = SOURCE_ROOT; };
 		43B8F287127C8FDD006F5A13 /* netqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = netqueue.h; path = ../lib/netplay/netqueue.h; sourceTree = SOURCE_ROOT; };
+		43B8F5F01489DB04009F7C51 /* ba2d.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ba2d.cpp; path = ../lib/ivis_opengl/ba2d.cpp; sourceTree = SOURCE_ROOT; };
+		43B8F5F11489DB05009F7C51 /* ba2d.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ba2d.h; path = ../lib/ivis_opengl/ba2d.h; sourceTree = SOURCE_ROOT; };
+		43B8F5F21489DB05009F7C51 /* camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = camera.cpp; path = ../lib/ivis_opengl/camera.cpp; sourceTree = SOURCE_ROOT; };
+		43B8F5F31489DB05009F7C51 /* camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = camera.h; path = ../lib/ivis_opengl/camera.h; sourceTree = SOURCE_ROOT; };
+		43B8F5F41489DB05009F7C51 /* piestate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = piestate.h; path = ../lib/ivis_opengl/piestate.h; sourceTree = SOURCE_ROOT; };
+		43B8F5F51489DB05009F7C51 /* pietypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pietypes.h; path = ../lib/ivis_opengl/pietypes.h; sourceTree = SOURCE_ROOT; };
+		43B8F5F61489DB05009F7C51 /* plane.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = plane.h; path = ../lib/ivis_opengl/plane.h; sourceTree = SOURCE_ROOT; };
 		43B8FD2D127CB13F006F5A13 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		43B8FD32127CB13F006F5A13 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		43B8FD34127CB13F006F5A13 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -2389,6 +2398,13 @@
 		0246A1090BD3CC2D004D1C70 /* Ivis OpenGL */ = {
 			isa = PBXGroup;
 			children = (
+				43B8F5F01489DB04009F7C51 /* ba2d.cpp */,
+				43B8F5F11489DB05009F7C51 /* ba2d.h */,
+				43B8F5F21489DB05009F7C51 /* camera.cpp */,
+				43B8F5F31489DB05009F7C51 /* camera.h */,
+				43B8F5F41489DB05009F7C51 /* piestate.h */,
+				43B8F5F51489DB05009F7C51 /* pietypes.h */,
+				43B8F5F61489DB05009F7C51 /* plane.h */,
 				0246A0EA0BD3CC29004D1C70 /* bitimage.cpp */,
 				0246A0EB0BD3CC29004D1C70 /* bitimage.h */,
 				0246A0EE0BD3CC29004D1C70 /* imd.cpp */,
@@ -4879,6 +4895,8 @@
 				43DD1BCE13662006003AA9EC /* netlobby.cpp in Sources */,
 				437FB24D13CE5CA900E7EF5B /* swapinterval.mm in Sources */,
 				BFFD67691421661B00967210 /* macosx_screen_resolutions.cpp in Sources */,
+				43B8F5F71489DB05009F7C51 /* ba2d.cpp in Sources */,
+				43B8F5F81489DB05009F7C51 /* camera.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
