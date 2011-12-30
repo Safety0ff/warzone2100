@@ -70,8 +70,8 @@ void rayCast(Vector2i src, Vector2i dst, RAY_CALLBACK callback, void *data)
 		return;  // Callback gave up after the first point, or there are no other points.
 	}
 
-	Vector2i srcM = map_coord(src.r_xy());
-	Vector2i dstM = map_coord(dst.r_xy());
+	Vector2i srcM = map_coord(src);
+	Vector2i dstM = map_coord(dst);
 
 	Vector2i step, tile, cur, end;
 	initSteps(srcM.x, dstM.x, tile.x, step.x, cur.x, end.x);
@@ -118,7 +118,7 @@ void rayCast(Vector2i src, Vector2i dst, RAY_CALLBACK callback, void *data)
 	}
 
 	// Include the endpoint.
-	if (!worldOnMap(dst.r_xy()))
+	if (!worldOnMap(dst))
 	{
 		return;  // Stop, since reached the edge of the map.
 	}
@@ -197,7 +197,7 @@ void getBestPitchToEdgeOfGrid(UDWORD x, UDWORD y, uint16_t direction, uint16_t *
 
 	Vector3i src(x, y, 0);
 	Vector3i delta(iSinCosR(direction, 5430), 0);
-	rayCast(src, src + delta, getTileHeightCallback, &help); // FIXME Magic value
+	rayCast(removeZ(src), removeZ(src + delta), getTileHeightCallback, &help); // FIXME Magic value
 
 	*pitch = help.pitch;
 }

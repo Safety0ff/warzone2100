@@ -114,4 +114,6 @@ extern void pie_SetPerspectiveProj(void);
  */
 extern void pie_SetOrthoProj(bool originAtTheTop, float nearDepth, float farDepth);
 
+extern Vector3f pie_GetMouseDirVec(unsigned ix, unsigned iy);
+
 #endif

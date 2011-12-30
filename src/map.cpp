@@ -111,6 +111,8 @@ struct ZONEMAP_SAVEHEADER
 
 /* The size and contents of the map */
 SDWORD	mapWidth = 0, mapHeight = 0;
+int32_t worldWidth = 0, worldHeight = 0;
+int32_t worldMaxWidth = 0, worldMaxHeight = 0;
 MAPTILE	*psMapTiles = NULL;
 uint8_t *psBlockMap[AUX_MAX];
 uint8_t *psAuxMap[MAX_PLAYERS + AUX_MAX];        // yes, we waste one element... eyes wide open... makes API nicer
@@ -203,8 +205,8 @@ bool mapNew(UDWORD width, UDWORD height)
 		psTile++;
 	}
 
-	mapWidth = width;
-	mapHeight = height;
+	setMapWidth(width);
+	setMapHeight(height);
 
 	intSetMapPos(mapWidth * TILE_UNITS/2, mapHeight * TILE_UNITS/2);
 
@@ -807,8 +809,8 @@ bool mapLoad(char *filename, bool preview)
 	psMapTiles = (MAPTILE *)calloc(width * height, sizeof(MAPTILE));
 	ASSERT(psMapTiles != NULL, "Out of memory" );
 
-	mapWidth = width;
-	mapHeight = height;
+	setMapWidth(width);
+	setMapHeight(height);
 	
 	// FIXME: the map preview code loads the map without setting the tileset
 	if (!tileset)
@@ -1099,7 +1101,8 @@ bool mapShutdown(void)
 	psGroundTypes = NULL;
 	mapDecals = NULL;
 	psMapTiles = NULL;
-	mapWidth = mapHeight = 0;
+	setMapHeight(0);
+	setMapWidth(0);
 	numTile_names = 0;
 	Tile_names = NULL;
 	return true;
@@ -1389,10 +1392,10 @@ extern int32_t map_Height(int x, int y)
 	ASSERT(y >= -TILE_UNITS, "map_Height: y value is too small (%d,%d) in %dx%d",map_coord(x),map_coord(y),mapWidth,mapHeight);
 	x = MAX(x, 0);
 	y = MAX(y, 0);
-	ASSERT(x < world_coord(mapWidth)+TILE_UNITS, "map_Height: x value is too big (%d,%d) in %dx%d",map_coord(x),map_coord(y),mapWidth,mapHeight);
-	ASSERT(y < world_coord(mapHeight)+TILE_UNITS, "map_Height: y value is too big (%d,%d) in %dx%d",map_coord(x),map_coord(y),mapWidth,mapHeight);
-	x = MIN(x, world_coord(mapWidth) - 1);
-	y = MIN(y, world_coord(mapHeight) - 1);
+	ASSERT(x < worldWidth+TILE_UNITS, "map_Height: x value is too big (%d,%d) in %dx%d",map_coord(x),map_coord(y),mapWidth,mapHeight);
+	ASSERT(y < worldHeight+TILE_UNITS, "map_Height: y value is too big (%d,%d) in %dx%d",map_coord(x),map_coord(y),mapWidth,mapHeight);
+	x = MIN(x, worldMaxWidth);
+	y = MIN(y, worldMaxHeight);
 
 	// on which tile are these coords?
 	tileX = map_coord(x);
@@ -1521,6 +1524,70 @@ void getTileMaxMin(int x, int y, int *pMax, int *pMin)
 	}
 }
 
+// Helpers
+// cs1 = clip seg one (since using fixed point in case this gets used for game state)
+static const int64_t cs1 = ((int64_t)1)<<32;
+bool clipTest(int32_t num, int32_t denom, int64_t* tE, int64_t* tL)
+{
+	int64_t t;
+
+	if (!denom)
+		return num >= 0;
+
+	t = (num * cs1) / (int64_t)denom;
+
+	if (denom > 0)
+	{
+		if (t < *tE) return false;
+		if (t < *tL) *tL = t;
+	}
+	else
+	{
+		if (t > *tL) return false;
+		if (t > *tE) *tE = t;
+	}
+	return true;
+}
+
+bool insideBounds(Vector3i* pt)
+{
+	return (pt->x >= 0 && pt->x <= worldMaxWidth
+			&& pt->y >= 0 && pt->y <= worldMaxHeight);
+}
+
+// Liang-Barsky clipping (from http://hinjang.com/articles/04.html, https://en.wikipedia.org/wiki/Liang%E2%80%93Barsky_algorithm)
+bool map_ClipSeg(Vector3i* endPt1, Vector3i* endPt2)
+{
+	int32_t dx = endPt2->x - endPt1->x;
+	int32_t dy = endPt2->y - endPt1->y;
+	int32_t dz = endPt2->z - endPt1->z;
+	int64_t tL = cs1;
+	int64_t tE = 0;
+
+	if (!dx && !dy)
+		return insideBounds(endPt1);
+
+	if (clipTest(endPt1->x - 0, -dx, &tE, &tL) &&
+		clipTest(worldMaxWidth - endPt1->x, dx, &tE, &tL) &&
+		clipTest(endPt1->y - 0, -dy, &tE, &tL) &&
+		clipTest(worldMaxHeight - endPt1->y, dy, &tE, &tL))
+	{
+		if (tL < cs1)
+		{
+			endPt2->x = endPt1->x + (tL * dx)/cs1;
+			endPt2->y = endPt1->y + (tL * dy)/cs1;
+			endPt2->z = endPt1->z + (tL * dz)/cs1;
+		}
+		if (tE > 0)
+		{
+			endPt1->x += (tE * dx)/cs1;
+			endPt1->y += (tE * dy)/cs1;
+			endPt1->z += (tE * dz)/cs1;
+		}
+		return true;
+	}
+	return false;
+}
 
 // -----------------------------------------------------------------------------------
 /* This will save out the visibility data */

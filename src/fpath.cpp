@@ -473,8 +473,8 @@ FPATH_RETVAL fpathDroidRoute(DROID* psDroid, SDWORD tX, SDWORD tY, FPATH_MOVETYP
 	// Check whether the start and end points of the route are blocking tiles and find an alternative if they are.
 	Position startPos = psDroid->pos;
 	Position endPos = Position(tX, tY, 0);
-	BASE_OBJECT *srcStructure = worldTile(startPos)->psObject;
-	BASE_OBJECT *dstStructure = worldTile(endPos)->psObject;
+	BASE_OBJECT *srcStructure = worldTile(removeZ(startPos))->psObject;
+	BASE_OBJECT *dstStructure = worldTile(removeZ(endPos))->psObject;
 	if (psDroid->sMove.Status != MOVEWAITROUTE)
 	{
 		if (srcStructure == NULL)  // If there's a structure over the source, ignore it, otherwise pathfind from somewhere around the obstruction.

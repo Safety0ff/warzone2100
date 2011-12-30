@@ -508,3 +508,23 @@ void pie_GetModelViewMatrix(float * const mat)
 {
 	memcpy(mat, curMatrix.data(), 16*sizeof(float));
 }
+
+Vector3f pie_GetMouseDirVec(unsigned ix, unsigned iy)
+{
+	const float width = pie_GetVideoBufferWidth();
+	const float height = pie_GetVideoBufferHeight();
+	const float nearHalfWidth = width/6;
+	const float nearHalfHeight = height/6;
+	const int nearVal = 330; // last 3 taken from SetPerspectiveProj
+	Vector3f ray;
+	float x, y;
+	// Assumes symmetric frustum
+	x = ((double)ix)/width - 0.5;
+	y = ((double)iy)/height - 0.5;
+	x *= 2.0 * nearHalfWidth;
+	y *=-2.0 * nearHalfHeight; // see pie_Project comments
+	ray  = cam->getEyeF() * (float) nearVal;
+	ray +=-cam->getEyeL() * x;
+	ray += cam->getEyeU() * y;
+	return normalize(ray);
+}

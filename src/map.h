@@ -114,6 +114,8 @@ struct MAPTILE
 
 /* The size and contents of the map */
 extern SDWORD	mapWidth, mapHeight;
+extern int32_t	worldWidth, worldHeight; // Above in world coords
+extern int32_t	worldMaxWidth, worldMaxHeight; // Above minus 1
 extern MAPTILE *psMapTiles;
 extern float waterLevel;
 extern GROUND_TYPE *psGroundTypes;
@@ -391,6 +393,22 @@ static inline Vector2i map_coord(Vector2i const &worldCoord)
 	return Vector2i(map_coord(worldCoord.x), map_coord(worldCoord.y));
 }
 
+static inline void setMapWidth(int32_t width)
+{
+	mapWidth = width;
+	worldWidth = world_coord(width);
+	worldMaxWidth = worldWidth - 1;
+	if (worldMaxWidth < 0) worldWidth = 0;
+}
+
+static inline void setMapHeight(int32_t height)
+{
+	mapHeight = height;
+	worldHeight = world_coord(height);
+	worldMaxHeight = worldHeight - 1;
+	if (worldMaxHeight < 0) worldHeight = 0;
+}
+
 /* Make sure world coordinates are inside the map */
 /** Clip world coordinates to make sure they're inside the map's boundaries
  *  \param worldX a pointer to a X coordinate inside the map
@@ -403,9 +421,17 @@ static inline void clip_world_offmap(int* worldX, int* worldY)
 	// x,y must be > 0
 	*worldX = MAX(1, *worldX);
 	*worldY = MAX(1, *worldY);
-	*worldX = MIN(world_coord(mapWidth) - 1, *worldX);
-	*worldY = MIN(world_coord(mapHeight) - 1, *worldY);
+	*worldX = MIN(worldMaxWidth, *worldX);
+	*worldY = MIN(worldMaxHeight, *worldY);
 }
+
+/**
+ * Clips a segment defined by endPt1 and endPt2
+ * In the case that the entire segment is out of bounds
+ *  returns false.
+ * Assumes world coordinates.
+ */
+bool map_ClipSeg(Vector3i* endPt1, Vector3i* endPt2);
 
 /* maps a position down to the corner of a tile */
 #define map_round(coord) ((coord) & (TILE_UNITS - 1))
