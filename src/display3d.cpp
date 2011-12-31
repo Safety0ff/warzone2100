@@ -1255,7 +1255,7 @@ void	renderProjectile(PROJECTILE *psCurr)
 	if (clipXY(st.pos.x, st.pos.y))
 	{
 		/* Get bullet's x coord */
-		dv = st.pos;
+		dv = swapYZ(st.pos);
 		dv.l_xz() -= player.p.r_xz();
 
 		/* Set up the matrix */
