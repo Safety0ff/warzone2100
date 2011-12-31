@@ -1549,12 +1549,6 @@ bool clipTest(int32_t num, int32_t denom, int64_t* tE, int64_t* tL)
 	return true;
 }
 
-bool insideBounds(Vector3i* pt)
-{
-	return (pt->x >= 0 && pt->x <= worldMaxWidth
-			&& pt->y >= 0 && pt->y <= worldMaxHeight);
-}
-
 // Liang-Barsky clipping (from http://hinjang.com/articles/04.html, https://en.wikipedia.org/wiki/Liang%E2%80%93Barsky_algorithm)
 bool map_ClipSeg(Vector3i* endPt1, Vector3i* endPt2)
 {
@@ -1565,7 +1559,7 @@ bool map_ClipSeg(Vector3i* endPt1, Vector3i* endPt2)
 	int64_t tE = 0;
 
 	if (!dx && !dy)
-		return insideBounds(endPt1);
+		return worldOnMap(removeZ(*endPt1));
 
 	if (clipTest(endPt1->x - 0, -dx, &tE, &tL) &&
 		clipTest(worldMaxWidth - endPt1->x, dx, &tE, &tL) &&

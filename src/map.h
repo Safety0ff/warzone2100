@@ -526,8 +526,8 @@ WZ_DECL_ALWAYS_INLINE static inline bool tileOnMap(Vector2i pos)
 /* Return whether a world coordinate is on the map */
 WZ_DECL_ALWAYS_INLINE static inline bool worldOnMap(int x, int y)
 {
-	return (x >= 0) && (x < ((SDWORD)mapWidth << TILE_SHIFT)) &&
-		   (y >= 0) && (y < ((SDWORD)mapHeight << TILE_SHIFT));
+	return (x >= 0) && (x < worldWidth) &&
+		   (y >= 0) && (y < worldHeight);
 }
 
 
